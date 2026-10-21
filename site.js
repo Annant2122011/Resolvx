@@ -168,6 +168,11 @@
   const openSearch = () => {
     if (!overlay || !globalInput) return;
     previousFocus = document.activeElement;
+    if (menuToggle && nav) {
+      nav.classList.remove('open');
+      menuToggle.setAttribute('aria-expanded', 'false');
+      menuToggle.setAttribute('aria-label', 'Open navigation');
+    }
     overlay.hidden = false;
     document.body.classList.add('search-open');
     globalInput.value = '';
@@ -231,9 +236,22 @@
         closeSearch();
         return;
       }
+      if (!overlay.hidden && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+        const results = $('.global-search-result', globalResults || document);
+        if (results.length) {
+          event.preventDefault();
+          const currentIndex = results.indexOf(document.activeElement);
+          let nextIndex;
+          if (document.activeElement === globalInput) nextIndex = event.key === 'ArrowDown' ? 0 : results.length - 1;
+          else if (currentIndex < 0) nextIndex = 0;
+          else nextIndex = (currentIndex + (event.key === 'ArrowDown' ? 1 : -1) + results.length) % results.length;
+          results[nextIndex].focus();
+          return;
+        }
+      }
       const target = event.target;
       const typing = target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
-      if (event.key === 'k' && (event.ctrlKey || event.metaKey)) {
+      if (event.key.toLowerCase() === 'k' && (event.ctrlKey || event.metaKey)) {
         event.preventDefault();
         if (overlay.hidden) openSearch();
         else closeSearch();
