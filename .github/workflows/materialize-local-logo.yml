@@ -38,7 +38,14 @@ jobs:
           if not data.startswith(b'\x89PNG\r\n\x1a\n') or len(data) < 100:
               raise SystemExit('Optimized local logo failed PNG validation.')
           import base64
-          encoded = base64.b64encode(data).decode('ascii')
+          with Image.open(path) as logo:
+              favicon_image = logo.copy()
+              favicon_image.thumbnail((128, 128), Image.Resampling.LANCZOS)
+              if favicon_image.mode not in ('RGB', 'RGBA'):
+                  favicon_image = favicon_image.convert('RGBA')
+              favicon_image.save('assets/resolvx-favicon.png', format='PNG', optimize=True)
+          favicon_data = Path('assets/resolvx-favicon.png').read_bytes()
+          encoded = base64.b64encode(favicon_data).decode('ascii')
           svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
             <title>ResolvX</title>
             <rect width="128" height="128" rx="20" fill="#080a12"/>
@@ -48,7 +55,7 @@ jobs:
           </svg>
           '''
           Path('favicon-local.svg').write_text(svg, encoding='utf-8')
-          print(f'Optimized local logo to {len(data)} bytes and created a self-contained favicon.')
+          print(f'Optimized brand logo to {len(data)} bytes, favicon raster to {len(favicon_data)} bytes, and created a self-contained favicon.')
           PY
       - name: Commit optimized local logo and self-contained favicon
         shell: bash
@@ -56,6 +63,6 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add assets/resolvx-logo.png favicon-local.svg
+          git add assets/resolvx-logo.png assets/resolvx-favicon.png favicon-local.svg
           git commit -m 'chore: materialize local ResolvX logo asset'
           git push origin HEAD:fix/favicon-local-ai-provider-logos
