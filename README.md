@@ -11,7 +11,8 @@ The website is a product introduction and documentation experience. It does **no
 - \`wiki.html\` — searchable how-to documentation, setup guidance, lifecycle instructions, recovery limits, a command explorer, and FAQs.
 - \`styles.css\` — shared visual system, responsive layouts, accessibility and reduced-motion refinements.
 - \`site.js\` — responsive navigation, global search, wiki filtering, command-copy helpers, reading progress, and the local lifecycle explainer.
-- \`favicon.svg\` — ResolvX site icon.
+- \`favicon-local.svg\` — self-contained SVG favicon with the official logo embedded locally, plus \`assets/resolvx-favicon.png\` as the PNG fallback.
+- \`assets/resolvx-logo.png\` — optimized local copy of the official supplied ResolvX logo used in the page header, footer, and CTA artwork.
 
 ## Interaction notes
 
