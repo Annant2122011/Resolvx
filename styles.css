@@ -2515,3 +2515,33 @@ a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visibl
     transition-duration: .01ms !important;
   }
 }
+
+
+/* The caption is a brand line, not a status chip. Preserve its title case. */
+.hero-banner-caption {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 13px auto 0;
+  padding-inline: 8px;
+  color: #aeb7c8;
+  font-family: var(--font);
+  font-size: clamp(10px, 1vw, 12px);
+  font-weight: 700;
+  line-height: 1.65;
+  letter-spacing: .018em;
+  text-align: center;
+  text-transform: none;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+@media (max-width: 700px) {
+  .hero-banner-caption {
+    margin-top: 11px;
+    padding-inline: 4px;
+    font-size: 10px;
+    line-height: 1.65;
+    letter-spacing: 0;
+  }
+}
