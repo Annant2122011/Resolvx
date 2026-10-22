@@ -136,7 +136,7 @@
   }
 
   const searchItems = [
-    { title: 'Overview: what ResolveX does', description: 'Product purpose, architecture direction, and how the support journey fits together.', url: 'index.html#system-at-a-glance', keywords: 'about overview bot support discord product' },
+    { title: 'Overview: what ResolvX does', description: 'Product purpose, architecture direction, and how the support journey fits together.', url: 'index.html#system-at-a-glance', keywords: 'about overview bot support discord product' },
     { title: 'Ticket lifecycle', description: 'Create, claim, unclaim, pause, resume, close, reopen, and archive tickets.', url: 'features.html#ticket-lifecycle', keywords: 'tickets state status close reopen archive create claim pending' },
     { title: 'Departments and tags', description: 'Route requests to teams and keep issue labels consistent.', url: 'features.html#departments', keywords: 'category categories routing tag tags department' },
     { title: 'Forms and templates', description: 'Build versioned forms, add validation, and reuse templates.', url: 'features.html#forms', keywords: 'form forms schema validation field conditional template' },
