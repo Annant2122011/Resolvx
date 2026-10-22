@@ -137,7 +137,7 @@
 
   // Global index: feature page is a catalogue; detailed destinations live in the wiki.
   const searchItems = [
-    { title: 'ResolvX overview', description: 'Product purpose, current scope, and the boundary between the static site and Discord bot.', url: 'wiki.html#overview', keywords: 'about overview bot support discord help desk helpdesk product purpose static website' },
+    { title: 'QueryFixr overview', description: 'Product purpose, current scope, and the boundary between the static site and Discord bot.', url: 'wiki.html#overview', keywords: 'about overview bot support discord help desk helpdesk product purpose static website' },
     { title: 'Feature catalogue', description: 'Search the inventory of capabilities represented in the bot project.', url: 'features.html#feature-catalog', keywords: 'feature features capability capabilities list catalogue catalog inventory implemented current' },
     { title: 'Getting started and permissions', description: 'Prepare the bot, database, permissions, and a safe first test ticket.', url: 'wiki.html#first-steps', keywords: 'start install setup onboarding requirements token permissions invite deploy test guild' },
     { title: 'Ticket lifecycle and statuses', description: 'Create, claim, pend, resume, close, reopen, and archive a ticket.', url: 'wiki.html#ticket-lifecycle', keywords: 'ticket tickets request case open claimed pending waiting resume close reopen archive status state' },
@@ -191,7 +191,7 @@
     'panel-activity': 'panel activity auto move move controls reposition ticket panel message cap visual line budget minimum messages threshold bottom placement control ordering',
     'premium-demo': 'premium demo entitlements tier status toggle simulated billing subscription payment no checkout free pro product mode',
     'troubleshooting': 'troubleshooting troubleshoot diagnostic stack trace error exception command registration invalid command application command 25 subcommands interaction failed unknown interaction unknown message unknown channel missing permissions permission overwrites database connection timeout postgres neon retry-after rate limit stale panel command deploy slash command startup build',
-    'commands': 'command slash commands syntax copy reference /supportforge settings-reports reporting taxonomy report-categories report-subcategory-add report-subcategory-edit report-subcategory-remove panel-create template-save locale',
+    'commands': 'command slash commands syntax copy reference /qf settings-reports reporting taxonomy report-categories report-subcategory-add report-subcategory-edit report-subcategory-remove panel-create template-save locale',
     'faq': 'faq questions answers troubleshooting help guide common problem error issue invite website disconnected production acceptance privacy translation locales restore limitations database use-case settings-reports',
     'roadmap': 'planned future not available roadmap workflow graph knowledge base quick replies sla csat customer satisfaction surveys api web dashboard oauth multi channel ai generative retrieval rag vector database real billing',
     'storage-deployment': 'neon postgresql postgres database persistence durable store outbox retry deploy deployment hosting github actions systemd env connection pool timeout rate limits backoff event record storage provider',
@@ -362,21 +362,21 @@
     $('[data-wiki-faq]', article).forEach((item) => originalWikiFaqText.set(item, item.textContent || ''));
   });
   const FAQ_SEARCH_KEYWORDS = {
-    'What does ResolvX do?': 'purpose overview discord support ticket helpdesk request management',
+    'What does QueryFixr do?': 'purpose overview discord support ticket helpdesk request management',
     'Can I invite the bot from this website?': 'invite install add bot discord oauth authorization link missing setup',
     'Does the website run bot commands or show live tickets?': 'website static github pages vercel dashboard login api live data connection',
-    'Why do command examples say /supportforge instead of /resolvx?': 'slash command root rename brand registered name deployed command',
+    'Why do command examples say /qf instead of /resolvx?': 'slash command root rename brand registered name deployed command',
     'What does a member do to open a ticket?': 'create new support request ticket panel button department form intake',
     'Can I customize multiple public support panels?': 'multi-panel builder draft publish entry button roles emoji style order',
     'Are form templates the same as active forms?': 'template activate deactivate schema version form builder',
-    'Can ResolvX restore a deleted ticket exactly as it was?': 'restore recover recovery undelete delete accidental channel original ids authors replay transcript limit',
+    'Can QueryFixr restore a deleted ticket exactly as it was?': 'restore recover recovery undelete delete accidental channel original ids authors replay transcript limit',
     'What happens to attachments during recovery?': 'attachment files size limit archived message media unavailable expired',
     'Which database should production use?': 'neon postgresql postgres sqlite durable database persistence',
     'Are slash commands and button controls both supported?': 'fallback parity command interaction component button select menu live guild testing',
     'Does Premium demo mode mean billing is connected?': 'premium payments subscription billing toggle entitlement demo fake simulated',
     'What should I check if a button or command does nothing?': 'troubleshoot error timeout permissions interaction expired database logs command registration',
     'Can I hide repair or destructive controls when customizing Settings?': 'settings layout builder protected repair refresh reset delete everything safety hide controls',
-    'Does ResolvX provide AI answers, a knowledge base, SLA timers, or customer satisfaction surveys now?': 'roadmap planned ai knowledge base kb sla service level agreement business hours csat survey translation channels',
+    'Does QueryFixr provide AI answers, a knowledge base, SLA timers, or customer satisfaction surveys now?': 'roadmap planned ai knowledge base kb sla service level agreement business hours csat survey translation channels',
     "Does changing the website language change the bot's language?": 'website translator browser site copy external endpoint bot locale server language separate setting user-authored ticket text',
     'Which languages does the bot message catalog include?': '21 twenty-one English Hindi Bengali Spanish French German Portuguese Brazil Arabic Japanese Italian Indonesian Korean Russian Chinese Turkish Dutch Polish Ukrainian Greek Czech Swedish',
     'Will website translation translate code or ticket data?': 'public text code commands protected technical identifiers privacy no Discord data external translator machine translation',
@@ -529,8 +529,8 @@
   const defaultDocumentTitle = document.title;
   const defaultDocumentDir = document.documentElement.getAttribute('dir');
   const SITE_TRANSLATION_ENDPOINTS = [
-    (typeof window.RESOLVX_TRANSLATION_ENDPOINT === 'string' && window.RESOLVX_TRANSLATION_ENDPOINT.trim())
-      ? window.RESOLVX_TRANSLATION_ENDPOINT.trim()
+    (typeof window.QUERYFIXR_TRANSLATION_ENDPOINT === 'string' && window.QUERYFIXR_TRANSLATION_ENDPOINT.trim())
+      ? window.QUERYFIXR_TRANSLATION_ENDPOINT.trim()
       : 'https://translate.argosopentech.com/translate',
     'https://libretranslate.de/translate',
   ];
@@ -588,7 +588,7 @@
     for (const endpoint of SITE_TRANSLATION_ENDPOINTS) {
       try {
         const body = { q: values, source: 'en', target: targetApi, format: 'text' };
-        if (typeof window.RESOLVX_TRANSLATION_API_KEY === 'string' && window.RESOLVX_TRANSLATION_API_KEY.trim()) body.api_key = window.RESOLVX_TRANSLATION_API_KEY.trim();
+        if (typeof window.QUERYFIXR_TRANSLATION_API_KEY === 'string' && window.QUERYFIXR_TRANSLATION_API_KEY.trim()) body.api_key = window.QUERYFIXR_TRANSLATION_API_KEY.trim();
         const response = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
@@ -659,7 +659,7 @@
       restoreOriginalPageText();
       activeSiteLocale = 'en-US';
       statusNode.textContent = translateUiCopy(locale, 'failed');
-      console.warn('ResolvX site translation failed:', error);
+      console.warn('QueryFixr site translation failed:', error);
     } finally {
       applyButton.disabled = false;
       const current = SITE_LANGUAGES.find((language) => language.code === locale);
