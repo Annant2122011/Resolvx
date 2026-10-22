@@ -16,31 +16,46 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: fix/favicon-local-ai-provider-logos
-      - name: Fetch and verify the exact supplied PNG
+      - name: Optimize the exact supplied PNG for web use
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p assets
-          curl --fail --location --retry 3 --retry-all-errors --connect-timeout 15 --max-time 60 'https://i.ibb.co/q3qpf1rZ/XQa-IFERa-A-67-MKxhti-O-S-8wzv-ABc-R.png' --output assets/resolvx-logo.png
-          test "$(xxd -p -l 8 assets/resolvx-logo.png)" = "89504e470d0a1a0a"
-          test "$(stat -c%s assets/resolvx-logo.png)" -gt 100
-          LOGO_BASE64="$(base64 -w0 assets/resolvx-logo.png)"
-          cat > favicon.svg <<SVG
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+          test -s assets/resolvx-logo.png
+          python3 -m pip install --disable-pip-version-check --quiet Pillow
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+
+          path = Path('assets/resolvx-logo.png')
+          with Image.open(path) as original:
+              original.verify()
+          with Image.open(path) as image:
+              image.thumbnail((512, 512), Image.Resampling.LANCZOS)
+              if image.mode not in ('RGB', 'RGBA'):
+                  image = image.convert('RGBA')
+              image.save(path, format='PNG', optimize=True)
+          data = path.read_bytes()
+          if not data.startswith(b'\x89PNG\r\n\x1a\n') or len(data) < 100:
+              raise SystemExit('Optimized local logo failed PNG validation.')
+          import base64
+          encoded = base64.b64encode(data).decode('ascii')
+          svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
             <title>ResolvX</title>
             <rect width="128" height="128" rx="20" fill="#080a12"/>
             <defs><clipPath id="icon-clip"><rect width="128" height="128" rx="20"/></clipPath></defs>
-            <image href="data:image/png;base64,${LOGO_BASE64}" x="-12" y="-12" width="152" height="152" preserveAspectRatio="xMidYMid slice" clip-path="url(#icon-clip)"/>
+            <image href="data:image/png;base64,{encoded}" x="-12" y="-12" width="152" height="152"
+              preserveAspectRatio="xMidYMid slice" clip-path="url(#icon-clip)"/>
           </svg>
-          SVG
-          grep -q 'data:image/png;base64,' favicon.svg
-          echo "Verified the supplied PNG and created a self-contained favicon."
-      - name: Commit logo asset and self-contained favicon
+          '''
+          Path('favicon-local.svg').write_text(svg, encoding='utf-8')
+          print(f'Optimized local logo to {len(data)} bytes and created a self-contained favicon.')
+          PY
+      - name: Commit optimized local logo and self-contained favicon
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add assets/resolvx-logo.png favicon.svg
+          git add assets/resolvx-logo.png favicon-local.svg
           git commit -m 'chore: materialize local ResolvX logo asset'
           git push origin HEAD:fix/favicon-local-ai-provider-logos
