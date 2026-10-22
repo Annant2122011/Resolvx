@@ -3379,3 +3379,23 @@ a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visibl
     flex-basis: 132px;
   }
 }
+
+
+/* The supplied full wordmark is wide; keep its aspect ratio in the CTA orbit. */
+.cta-decoration .cta-logo,
+.compact-cta .cta-decoration .cta-logo,
+.closing-cta:not(.compact-cta) .cta-decoration .cta-logo {
+  width: 190px;
+  height: 95px;
+  object-fit: contain;
+  object-position: center;
+  mix-blend-mode: normal;
+  filter: none;
+}
+@media (max-width: 700px) {
+  .closing-cta:not(.compact-cta) .cta-decoration .cta-logo,
+  .compact-cta .cta-decoration .cta-logo {
+    width: 145px;
+    height: 73px;
+  }
+}
