@@ -1,4 +1,4 @@
-name: Deploy ResolveX website to GitHub Pages
+name: Deploy QueryFixr website to GitHub Pages
 
 on:
   push:
