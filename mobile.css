@@ -1,6 +1,8 @@
 /* QueryFixr mobile system
    Loaded after styles.css so phone layouts have one clear, maintained override layer. */
 
+.wiki-toc-hint { display: none; }
+
 @media (max-width: 760px) {
   :root {
     scroll-padding-top: 78px;
@@ -898,15 +900,13 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  @media (max-width: 760px) {
-    .nav-links,
-    .button,
-    .wiki-toc,
-    .feature-card {
-      scroll-behavior: auto;
-      transition: none;
-      animation: none;
-    }
+@media (prefers-reduced-motion: reduce) and (max-width: 760px) {
+.nav-links,
+  .button,
+  .wiki-toc,
+  .feature-card {
+    scroll-behavior: auto;
+    transition: none;
+    animation: none;
   }
 }
