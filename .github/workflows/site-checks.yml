@@ -20,5 +20,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Check JavaScript syntax
+        run: node --check site.js && node --check scripts/validate-site.mjs
       - name: Check links, anchors, IDs, branding, and CSS structure
         run: node scripts/validate-site.mjs
