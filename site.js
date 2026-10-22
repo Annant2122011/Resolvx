@@ -20,7 +20,16 @@
     $$('a, button', nav).forEach((item) => item.addEventListener('click', (event) => {
       if (!event.currentTarget.matches('[data-open-search]') && event.currentTarget.matches('a')) closeMenu();
     }));
-    document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeMenu(); });
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || menuToggle.getAttribute('aria-expanded') !== 'true') return;
+      closeMenu();
+      menuToggle.focus();
+    });
+    document.addEventListener('pointerdown', (event) => {
+      if (menuToggle.getAttribute('aria-expanded') !== 'true') return;
+      const target = event.target;
+      if (target instanceof Element && !target.closest('.site-header')) closeMenu();
+    });
   }
 
   $$('[data-year]').forEach((node) => { node.textContent = String(new Date().getFullYear()); });
