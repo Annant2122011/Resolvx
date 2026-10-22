@@ -3336,3 +3336,46 @@ a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visibl
   .feature-scope-note { padding: 14px; }
   .feature-catalog-grid .catalog-card { min-height: 0; }
 }
+
+
+/* QueryFixr's supplied wordmark is wide artwork, not a square icon. */
+.header-brand .brand-full-logo {
+  display: block;
+  width: 178px;
+  height: 48px;
+  flex: 0 0 178px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  object-fit: contain;
+  object-position: left center;
+  box-shadow: none;
+  background: transparent;
+}
+.footer-brand .brand-full-logo {
+  width: 150px;
+  height: 40px;
+  flex: 0 0 150px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  object-fit: contain;
+  object-position: left center;
+  box-shadow: none;
+  background: transparent;
+}
+@media (max-width: 700px) {
+  .header-brand .brand-full-logo {
+    width: 132px;
+    height: 40px;
+    flex-basis: 132px;
+  }
+  .header-brand .brand-tagline {
+    display: none;
+  }
+  .footer-brand .brand-full-logo {
+    width: 132px;
+    height: 36px;
+    flex-basis: 132px;
+  }
+}
