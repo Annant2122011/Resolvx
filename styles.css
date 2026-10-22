@@ -2657,3 +2657,79 @@ a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visibl
     flex-basis: 42px;
   }
 }
+
+/* Local brand artwork and restrained AI-provider mark row. */
+.cta-content {
+  width: min(100%, 680px);
+  min-width: 0;
+}
+.cta-logo {
+  display: block;
+  width: 57px;
+  height: 57px;
+  object-fit: contain;
+  border-radius: 13px;
+}
+.provider-strip {
+  position: relative;
+  z-index: 2;
+  max-width: 660px;
+  margin-top: 23px;
+}
+.provider-strip-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 11px;
+  color: #778199;
+  font: 8px var(--mono);
+  letter-spacing: 1.25px;
+}
+.provider-note {
+  color: #586279;
+  font: 8px var(--mono);
+  letter-spacing: .2px;
+}
+.provider-mark-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 11px 17px;
+  min-width: 0;
+}
+.provider-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: #8f99b1;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.provider-mark svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+.provider-gemini { color: #a0afff; }
+.provider-anthropic { color: #d58d72; }
+.provider-deepseek { color: #77bfff; }
+.provider-meta { color: #83a9ff; }
+.provider-mistral { color: #efa47f; }
+.provider-microsoft { color: #cbd1df; }
+@media (max-width: 980px) {
+  .cta-content { max-width: 100%; }
+  .provider-mark-list { gap: 10px 14px; }
+}
+@media (max-width: 700px) {
+  .cta-content { width: 100%; }
+  .cta-logo { width: 52px; height: 52px; }
+  .provider-strip { margin-top: 20px; max-width: 100%; }
+  .provider-strip-heading { margin-bottom: 9px; }
+  .provider-mark-list { gap: 10px 13px; }
+  .provider-mark { font-size: 10px; }
+}
