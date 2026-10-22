@@ -1,6 +1,6 @@
-# ResolveX website
+# ResolvX website
 
-A responsive, three-page static website for ResolveX, a Discord-first support ticket system. Built with plain HTML, CSS, and JavaScript, with no build step or package installation required.
+A responsive, three-page static website for ResolvX, a Discord-first support ticket system. Built with plain HTML, CSS, and JavaScript, with no build step or package installation required.
 
 The website is a product introduction and documentation experience. It does **not** connect to Discord, access live tickets, execute bot commands, or configure a server.
 
@@ -11,7 +11,7 @@ The website is a product introduction and documentation experience. It does **no
 - \`wiki.html\` — searchable how-to documentation, setup guidance, lifecycle instructions, recovery limits, a command explorer, and FAQs.
 - \`styles.css\` — shared visual system, responsive layouts, accessibility and reduced-motion refinements.
 - \`site.js\` — responsive navigation, global search, wiki filtering, command-copy helpers, reading progress, and the local lifecycle explainer.
-- \`favicon.svg\` — ResolveX site icon.
+- \`favicon.svg\` — ResolvX site icon.
 
 ## Interaction notes
 
@@ -23,11 +23,11 @@ The website is a product introduction and documentation experience. It does **no
 
 ## Deploy to GitHub Pages with \`resolvx.int.yt\`
 
-1. Create a repository named **ResolveX** under \`Annant2122011\`. For the simplest setup, make it public.
+1. Create a repository named **ResolvX** under \`Annant2122011\`. For the simplest setup, make it public.
 2. Upload/push the contents of this project to the repository's \`main\` branch. Keep the \`.github/workflows/pages.yml\` file and \`CNAME\` file at the paths shown.
 3. In **Settings → Pages**, select **GitHub Actions** as the build and deployment source if it is not selected already.
 4. In **Settings → Pages → Custom domain**, enter \`resolvx.int.yt\` and save it. This setting must be made in GitHub; the \`CNAME\` file alone does not configure a custom domain when using a custom Actions workflow.
-5. Wait for the **Deploy ResolveX website to GitHub Pages** workflow to complete, then check \`https://resolvx.int.yt\`. If GitHub rejects the domain because ownership verification is unresolved, the existing account-level verification issue must be fixed first or GitHub must clarify an alternative.
+5. Wait for the **Deploy ResolvX website to GitHub Pages** workflow to complete, then check \`https://resolvx.int.yt\`. If GitHub rejects the domain because ownership verification is unresolved, the existing account-level verification issue must be fixed first or GitHub must clarify an alternative.
 
 ## DNS
 
@@ -42,4 +42,4 @@ The GitHub Pages domain-verification TXT challenge is managed separately in the 
 
 ## Notes
 
-The public invite is intentionally omitted until a verified bot invitation URL is supplied. The feature and wiki pages are documentation, not a connected admin dashboard. The bot repository's command examples may still use the \`/supportforge\` root even though the product brand is ResolveX; always use the command names registered by the deployed bot.
+The public invite is intentionally omitted until a verified bot invitation URL is supplied. The feature and wiki pages are documentation, not a connected admin dashboard. The bot repository's command examples may still use the \`/supportforge\` root even though the product brand is ResolvX; always use the command names registered by the deployed bot.
