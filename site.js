@@ -159,6 +159,9 @@
     { title: 'How to build a form', description: 'Create fields, add validation and conditions, template, activate, and test.', url: 'wiki.html#forms', keywords: 'create form fields validation conditional activate template' },
     { title: 'How to publish a ticket panel', description: 'Configure buttons and role access, preview, then publish a panel snapshot.', url: 'wiki.html#panels', keywords: 'create panel configure button label emoji role preview publish' },
     { title: 'Language and automation settings', description: 'Choose supported bot-message locales and configure time zones, inactivity rules, and ticket workspace modes.', url: 'wiki.html#language-automation', keywords: 'language locale translation localization internationalization multilingual server-language support-hours timezone time-zone inactivity idle auto-close thread channel workspace' },
+    { title: 'Support hours and inactivity automation', description: 'Configure IANA time zones, opening intervals, outside-hours intake, idle warnings, grace periods, and exemptions.', url: 'features.html#support-hours', keywords: 'support hours opening schedule timezone time zone IANA closed outside hours restrict inactivity idle auto-close warning grace roles department exemptions SLA business hours' },
+    { title: 'Ticket workspace: private channels or threads', description: 'Choose the resource type used for newly created tickets and test its permission model.', url: 'features.html#ticket-workspace', keywords: 'ticket workspace private text channel channels threads private thread permissions create new ticket Discord' },
+    { title: 'Bot message localization: fifteen languages', description: 'Set the server-level language for supported bot messages, with English fallback for unmigrated copy.', url: 'features.html#localization', keywords: 'translate translation language locale native language i18n localization Italian Indonesian Korean Russian Chinese Turkish Hindi Bengali Spanish French German Portuguese Arabic Japanese bot messages' },
   ];
 
 
@@ -187,6 +190,10 @@
     'reports-voice': 'report categories subcategories thresholds user report flag voice audio conversation safety moderation',
     'team-tools': 'notes participants add-user remove-user reassignment owner priorities',
     'language-automation': 'locale language languages translation translate translated native language internationalization i18n italian indonesian korean russian chinese simplified turkish hindi bengali spanish french german portuguese arabic japanese support-hours timezone schedule opening hours closed behavior outside-hours inactivity idle grace auto-close exemptions roles departments workspace private-threads private text channels panel automation',
+    'support-hours': 'support hours opening schedule timezone time zone IANA intervals weekday split shift closed outside-hours allow restrict intake next opening business hours support availability not SLA',
+    'ticket-workspace': 'ticket workspace private text channel private thread channels threads new-ticket permissions member staff visibility archive create resource mode',
+    'localization': 'bot message language locale translation localization i18n fifteen supported catalogs English Hindi Bengali Spanish French German Brazilian Portuguese Arabic Japanese Italian Indonesian Korean Russian Simplified Chinese Turkish native locale setting server language translated strings fallback user-authored text',
+
     'retention': 'eligibility deletion authorization review approvals policy data retention archive',
     'ticket-lifecycle': 'open claimed pending reopened closed archived ticket channel conversation status',
   };
