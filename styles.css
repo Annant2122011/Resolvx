@@ -2,7 +2,7 @@
 
 
 /* ==========================================================================
-   ResolvX Signature Layer
+   QueryFixr Signature Layer
    A luminous, editorial interface with disciplined motion and clear contrast.
    ========================================================================== */
 
@@ -1183,7 +1183,7 @@ h1 {
 
 
 /* ==========================================================================
-   ResolvX Website Experience — documentation, search and interaction layer
+   QueryFixr Website Experience — documentation, search and interaction layer
    ========================================================================== */
 [hidden] { display: none !important; }
 button, input { color: inherit; }
@@ -1732,7 +1732,7 @@ body.search-open { overflow:hidden; }
 
 
 
-/* ResolvX wordmark and user-supplied artwork */
+/* QueryFixr wordmark and user-supplied artwork */
 .header-brand {
   display: inline-flex;
   align-items: center;
@@ -2659,7 +2659,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visibl
 }
 
 
-/* ResolvX logo treatment: preserve the full artwork and let dark pixels sit naturally on the page. */
+/* QueryFixr logo treatment: preserve the full artwork and let dark pixels sit naturally on the page. */
 .header-brand .brand-image,
 .footer-brand-image {
   object-fit: contain;
