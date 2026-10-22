@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   copy-logo:
-    if: github.event.head_commit.message != 'chore: materialize local ResolvX logo asset'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout feature branch
@@ -22,34 +21,22 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p assets
-          curl --fail --location --retry 3 --retry-all-errors --connect-timeout 15 --max-time 60 \
-            'https://i.ibb.co/q3qpf1rZ/XQa-IFERa-A-67-MKxhti-O-S-8wzv-ABc-R.png' \
-            --output assets/resolvx-logo.png
-          python - <<'PY'
-          from pathlib import Path
-          path = Path('assets/resolvx-logo.png')
-          data = path.read_bytes()
-          if not data.startswith(b'\x89PNG\r\n\x1a\n'):
-              raise SystemExit('The supplied URL did not return a valid PNG; refusing to commit it.')
-          if len(data) < 100:
-              raise SystemExit('The supplied PNG is unexpectedly small; refusing to commit it.')
-          import base64
-          encoded = base64.b64encode(data).decode('ascii')
-          svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+          curl --fail --location --retry 3 --retry-all-errors --connect-timeout 15 --max-time 60 'https://i.ibb.co/q3qpf1rZ/XQa-IFERa-A-67-MKxhti-O-S-8wzv-ABc-R.png' --output assets/resolvx-logo.png
+          test "$(xxd -p -l 8 assets/resolvx-logo.png)" = "89504e470d0a1a0a"
+          test "$(stat -c%s assets/resolvx-logo.png)" -gt 100
+          LOGO_BASE64="$(base64 -w0 assets/resolvx-logo.png)"
+          cat > favicon.svg <<SVG
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
             <title>ResolvX</title>
             <rect width="128" height="128" rx="20" fill="#080a12"/>
             <defs><clipPath id="icon-clip"><rect width="128" height="128" rx="20"/></clipPath></defs>
-            <image href="data:image/png;base64,{encoded}" x="-12" y="-12" width="152" height="152"
-              preserveAspectRatio="xMidYMid slice" clip-path="url(#icon-clip)"/>
+            <image href="data:image/png;base64,${LOGO_BASE64}" x="-12" y="-12" width="152" height="152" preserveAspectRatio="xMidYMid slice" clip-path="url(#icon-clip)"/>
           </svg>
-          '''
-          Path('favicon.svg').write_text(svg, encoding='utf-8')
-          print(f'Verified and embedded supplied PNG ({len(data)} bytes) into self-contained favicon.svg.')
-          PY
-      - name: Commit local brand asset and self-contained favicon
+          SVG
+          grep -q 'data:image/png;base64,' favicon.svg
+          echo "Verified the supplied PNG and created a self-contained favicon."
+      - name: Commit logo asset and self-contained favicon
         shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
