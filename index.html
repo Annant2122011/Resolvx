@@ -4,82 +4,138 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#080a12">
-  <meta name="description" content="ResolveX is a smarter support experience for Discord communities. Keep requests organized, give teams context, and make support feel less chaotic.">
-  <meta property="og:title" content="ResolveX — Support, resolved.">
-  <meta property="og:description" content="A clearer way to run support on Discord.">
+  <meta name="description" content="Meet ResolvX: a Discord-first support system designed around structured tickets, thoughtful team workflows, reusable forms, and reliable recovery.">
+  <meta property="og:title" content="ResolvX — Queries Solved. Support Evolved.">
+  <meta property="og:description" content="Explore the product vision, detailed feature library, and practical ResolvX wiki.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://resolvx.int.yt/">
-  <title>ResolveX — Support, resolved.</title>
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <title>ResolvX — A clearer path to resolution</title>
+  <link rel="icon" href="https://i.ibb.co/Kxd9fvrF/imgupscaler-enhanced-1.jpg" type="image/jpeg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script src="site.js" defer></script>
 </head>
-<body>
+<body class="home-page">
+  <div class="reading-progress" aria-hidden="true"><span data-reading-progress></span></div>
   <div class="ambient ambient-one" aria-hidden="true"></div>
   <div class="ambient ambient-two" aria-hidden="true"></div>
   <header class="site-header">
-    <a class="brand" href="./" aria-label="ResolveX home">
-      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M8 10.5 20 4l12 6.5v13L20 30 8 23.5z"/><path d="m14 13 6-3 6 3-6 3z"/><path d="M14 18.5v5l6 3 6-3v-5l-6 3z"/><path d="m20 16 6 2.5-6 3-6-3z"/></svg></span>
-      <span>Resolve<span class="brand-accent">X</span></span>
-    </a>
+    <a class="brand header-brand" href="./" aria-label="ResolvX home"><img class="brand-image" src="https://i.ibb.co/Kxd9fvrF/imgupscaler-enhanced-1.jpg" alt="" width="44" height="44" fetchpriority="high"><span class="brand-name">ResolvX</span><span class="brand-tagline"><span class="brand-dash">—</span> Queries Solved. Support Evolved.</span></a>
     <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="primary-nav"><span></span><span></span></button>
     <nav class="nav-links" id="primary-nav" aria-label="Main navigation">
-      <a class="nav-link active" href="./">Home</a>
+      <a class="nav-link active" href="./" aria-current="page">Overview</a>
       <a class="nav-link" href="features.html">Features</a>
-      <a class="nav-link" href="features.html#faq">FAQs</a>
-      <a class="nav-cta" href="features.html">Explore ResolveX <span aria-hidden="true">↗</span></a>
+      <a class="nav-link" href="wiki.html">Wiki</a>
+      <button class="quick-search" type="button" data-open-search aria-label="Search ResolvX website"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.7"/><path d="m16 16 4.2 4.2"/></svg><span>Search</span><kbd>Ctrl K</kbd></button>
+      <a class="nav-cta" href="wiki.html#first-steps">Start here <span aria-hidden="true">↗</span></a>
     </nav>
   </header>
 
   <main>
     <section class="hero wrap">
       <div class="hero-copy">
-        <div class="eyebrow"><span class="status-dot"></span> A better kind of support bot</div>
-        <h1>Support that<br>moves <span class="gradient-text">things forward.</span></h1>
-        <p class="hero-lede">ResolveX helps Discord communities turn scattered questions into clear, manageable conversations. Less chaos for your team. A better experience for everyone.</p>
+        <div class="eyebrow"><span class="status-dot"></span> DISCORD-FIRST SUPPORT, RE-ENGINEERED</div>
+        <h1>Queries solved.<br><span class="gradient-text">Support evolved.</span></h1>
+        <p class="hero-lede">ResolvX is a support system designed to bring structure to busy Discord communities: guided request intake, clear ownership, useful context, and recovery-minded operations.</p>
         <div class="hero-actions">
-          <a class="button button-primary" href="features.html">Discover the features <span aria-hidden="true">→</span></a>
-          <a class="button button-quiet" href="#why-resolvex">Why ResolveX <span aria-hidden="true">↓</span></a>
+          <a class="button button-primary" href="features.html">Explore the feature library <span aria-hidden="true">→</span></a>
+          <a class="button button-quiet" href="wiki.html">Read the field guide <span aria-hidden="true">↗</span></a>
         </div>
-        <div class="trust-line"><span class="avatar-stack" aria-hidden="true"><i>R</i><i>↗</i><i>✓</i></span><span>Built for teams that take support seriously.</span></div>
+        <div class="hero-proof"><span class="proof-icon">✓</span><span><strong>Built around clarity.</strong> Documented honestly, without fake live stats.</span></div>
+        <div class="hero-tags"><span>Ticket lifecycle</span><span>Forms & panels</span><span>Audit & recovery</span></div>
       </div>
 
-      <div class="hero-art" aria-label="Illustration of a support queue interface">
-        <div class="orbit orbit-a"></div><div class="orbit orbit-b"></div>
-        <div class="dashboard-card">
-          <div class="dash-top"><div class="dash-title"><span class="tiny-mark">R</span><div><strong>Support overview</strong><small>COMMUNITY WORKSPACE</small></div></div><span class="online-pill"><span></span> LIVE PREVIEW</span></div>
-          <div class="dash-summary"><div><small>OPEN REQUESTS</small><strong>08</strong><span class="positive">Ready to triage</span></div><div><small>TEAM STATUS</small><strong class="team-status">On it <span class="pulse-dot"></span></strong><span class="muted-small">Keeping things moving</span></div></div>
-          <div class="queue-label"><span>RECENT REQUESTS</span><span>PRIORITY <span class="chevron">⌄</span></span></div>
-          <div class="ticket-row"><span class="ticket-symbol sym-violet">↗</span><div class="ticket-details"><strong>Order status question</strong><span>#1048 · customer-support</span></div><span class="priority priority-high">High</span></div>
-          <div class="ticket-row"><span class="ticket-symbol sym-blue">◇</span><div class="ticket-details"><strong>Account access help</strong><span>#1047 · account-help</span></div><span class="priority priority-normal">Normal</span></div>
-          <div class="ticket-row"><span class="ticket-symbol sym-mint">✓</span><div class="ticket-details"><strong>Integration feedback</strong><span>#1046 · product-feedback</span></div><span class="priority priority-low">Low</span></div>
-          <div class="dash-bottom"><span><span class="mini-check">✓</span> A little more order, every day.</span><span class="mono">RESOLVEX / 01</span></div>
+      <div class="hero-art hero-banner-art" aria-label="ResolvX banner artwork"><img class="hero-banner-image" src="https://i.ibb.co/277Z1tDg/imgupscaler-enhanced.jpg" alt="ResolvX product banner artwork" width="1200" height="800" fetchpriority="high"><div class="hero-banner-caption"><span class="status-dot"></span> RESOLVX · QUERIES SOLVED. SUPPORT EVOLVED.</div></div>
+      <a class="scroll-cue" href="#system-at-a-glance"><span class="scroll-line"></span> EXPLORE THE SYSTEM</a>
+    </section>
+
+    <section class="trust-banner wrap" aria-label="Project status notice">
+      <div class="trust-banner-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 7v5c0 4.1-3 7.1-8 9-5-1.9-8-4.9-8-9V7z"/><path d="M12 8v4m0 3h.01"/></svg></div>
+      <div><strong>This is the public product guide, not a connected bot dashboard.</strong><p>No Discord account, live ticket data, or bot controls are connected to this website. Feature status is described transparently in the documentation.</p></div>
+      <a class="text-link" href="wiki.html#availability">Understand project status <span aria-hidden="true">→</span></a>
+    </section>
+
+    <section class="intro-band" id="system-at-a-glance">
+      <div class="wrap intro-grid">
+        <div><span class="section-kicker">THE RESOLVEX PRINCIPLE</span><h2>Support should feel like a process, not a scavenger hunt.</h2></div>
+        <div class="intro-text"><p>When help requests live in scattered channels, the details vanish, ownership gets fuzzy, and the same questions come back around. ResolvX is designed to give every request a home, every staff action a clear path, and every important change a traceable record.</p><a class="text-link" href="features.html">Explore every feature <span aria-hidden="true">→</span></a></div>
+      </div>
+    </section>
+
+    <section class="section wrap" id="capabilities">
+      <div class="section-heading"><div><span class="section-kicker">A SUPPORT TOOLKIT, NOT A BUTTON COLLECTION</span><h2>Built for the entire<br><span class="muted-heading">support journey.</span></h2></div><p>From the first intake question to the final archive, the goal is to reduce friction while keeping humans in control.</p></div>
+      <div class="capability-grid">
+        <a class="capability-card" href="features.html#ticket-lifecycle"><span class="capability-icon violet">01</span><span class="capability-label">LIFECYCLE</span><h3>Tickets with clear states</h3><p>Create, claim, pause, resume, reopen, close, and archive requests through a deliberate workflow.</p><span class="capability-arrow">↗</span></a>
+        <a class="capability-card" href="features.html#forms"><span class="capability-icon blue">02</span><span class="capability-label">INTAKE</span><h3>Forms that ask better questions</h3><p>Versioned forms, validation, conditional steps, and reusable templates for consistent request details.</p><span class="capability-arrow">↗</span></a>
+        <a class="capability-card" href="features.html#panels"><span class="capability-icon mint">03</span><span class="capability-label">CUSTOMIZATION</span><h3>Panels shaped for your server</h3><p>Organize multiple public support entry points with custom targets, role access, branding, and ordering.</p><span class="capability-arrow">↗</span></a>
+        <a class="capability-card" href="features.html#team-tools"><span class="capability-icon amber">04</span><span class="capability-label">COLLABORATION</span><h3>Visible ownership and priority</h3><p>Help staff coordinate assignment, priority, notes, participants, routing, and ticket history.</p><span class="capability-arrow">↗</span></a>
+        <a class="capability-card" href="features.html#recovery"><span class="capability-icon blue">05</span><span class="capability-label">RECOVERY</span><h3>Designed with mistakes in mind</h3><p>Archive supported ticket messages and metadata so some accidental channel deletions can be rebuilt.</p><span class="capability-arrow">↗</span></a>
+        <a class="capability-card" href="features.html#operations"><span class="capability-icon violet">06</span><span class="capability-label">OPERATIONS</span><h3>Settings, audit, and repair</h3><p>Keep setup, appearance, retention review, operational checks, and sensitive actions easier to govern.</p><span class="capability-arrow">↗</span></a>
+      </div>
+      <div class="section-footnote"><span class="footnote-mark">i</span><p>These descriptions reflect the project documentation. Code presence is not the same as a verified production release; live guild acceptance and deployment status remain separate.</p><a href="wiki.html#availability">Read the status guide →</a></div>
+    </section>
+
+    <section class="workflow-section">
+      <div class="wrap workflow-layout">
+        <div class="workflow-copy"><span class="section-kicker">INTERACTIVE EXPLAINER</span><h2>Follow a request<br><span class="gradient-text">from start to finish.</span></h2><p>Choose a state to see what it means, what staff generally do next, and why the distinction matters.</p><div class="demo-note"><span class="demo-note-icon">⌁</span><span><strong>A guided website demo</strong><small>It changes this illustration only. It does not create or modify a Discord ticket.</small></span></div></div>
+        <div class="workflow-demo" data-workflow-demo>
+          <div class="workflow-demo-header"><span class="mono">TICKET LIFECYCLE / WALKTHROUGH</span><span class="demo-state-dot"><i></i> LOCAL DEMO</span></div>
+          <div class="workflow-steps" role="group" aria-label="Choose a ticket lifecycle state">
+            <button type="button" class="workflow-step active" data-demo-state="open" aria-pressed="true"><span>01</span>Open</button>
+            <button type="button" class="workflow-step" data-demo-state="claimed" aria-pressed="false"><span>02</span>Claimed</button>
+            <button type="button" class="workflow-step" data-demo-state="pending" aria-pressed="false"><span>03</span>Pending</button>
+            <button type="button" class="workflow-step" data-demo-state="reopened" aria-pressed="false"><span>04</span>Reopened</button>
+            <button type="button" class="workflow-step" data-demo-state="closed" aria-pressed="false"><span>05</span>Closed</button>
+            <button type="button" class="workflow-step" data-demo-state="archived" aria-pressed="false"><span>06</span>Archived</button>
+          </div>
+          <div class="workflow-state-panel" aria-live="polite">
+            <div class="workflow-state-top"><span class="state-orb" data-state-orb>↗</span><div><span class="section-kicker">CURRENT EXAMPLE STATE</span><h3 data-state-title>Open · ready for triage</h3></div></div>
+            <p data-state-description>A member has submitted a request. The team can review the details, confirm the department, and decide who should take ownership.</p>
+            <div class="workflow-next"><span>NEXT USEFUL ACTION</span><strong data-state-next>Review the request and assign an owner.</strong></div>
+            <div class="workflow-meter" aria-hidden="true"><span data-state-meter style="width:16.67%"></span></div>
+          </div>
+          <div class="workflow-disclaimer">Illustrative sequence. Real state transitions depend on permissions, persisted ticket state, and the deployed bot version.</div>
         </div>
-        <div class="float-chip chip-top"><span class="chip-icon">✳</span><span><strong>Clear by design</strong><small>Less back-and-forth</small></span></div>
-        <div class="float-chip chip-bottom"><span class="chip-icon chip-green">↗</span><span><strong>Keep context close</strong><small>Give every request a path</small></span></div>
-      </div>
-      <a class="scroll-cue" href="#why-resolvex"><span class="scroll-line"></span> SCROLL TO EXPLORE</a>
-    </section>
-
-    <section class="intro-band" id="why-resolvex">
-      <div class="wrap intro-grid"><div><span class="section-kicker">THE IDEA</span><h2>Good support shouldn't<br>feel like detective work.</h2></div><div class="intro-text"><p>Important details shouldn't disappear in a busy channel. Requests shouldn't depend on who happens to be online. ResolveX is being designed to give support teams a more consistent way to organize requests, coordinate work, and follow through.</p><a class="text-link" href="features.html">See what it’s built for <span aria-hidden="true">→</span></a></div></div>
-    </section>
-
-    <section class="section wrap" id="highlights">
-      <div class="section-heading"><div><span class="section-kicker">MADE FOR REAL COMMUNITIES</span><h2>Less noise.<br><span class="muted-heading">More resolution.</span></h2></div><p>Thoughtful support starts with the small things: knowing what needs attention, who owns it, and what happened last.</p></div>
-      <div class="feature-grid">
-        <article class="feature-card"><div class="feature-icon icon-violet"><svg viewBox="0 0 24 24"><path d="M5 5.5h14v10H11l-4.5 3v-3H5z"/><path d="M8 9h8M8 12h5"/></svg></div><span class="card-number">01 / ORGANIZE</span><h3>One clear place to start</h3><p>Give members a predictable way to ask for help instead of sending them hunting through channels.</p><a href="features.html#ticketing" class="card-link" aria-label="Learn about ticket organization">↗</a></article>
-        <article class="feature-card"><div class="feature-icon icon-blue"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"/><path d="M5.5 19c.4-3.2 2.6-5 6.5-5s6.1 1.8 6.5 5M18 5.5l1.5 1.5L22 4.5"/></svg></div><span class="card-number">02 / COORDINATE</span><h3>A team on the same page</h3><p>Make ownership and priority easier to understand, so fewer requests get lost in the scroll.</p><a href="features.html#team-tools" class="card-link" aria-label="Learn about team coordination">↗</a></article>
-        <article class="feature-card"><div class="feature-icon icon-mint"><svg viewBox="0 0 24 24"><path d="M12 3.5 19 6v5.3c0 4.1-2.8 7.2-7 9.2-4.2-2-7-5.1-7-9.2V6z"/><path d="m8.5 12 2.2 2.2 4.8-4.8"/></svg></div><span class="card-number">03 / FOLLOW THROUGH</span><h3>Keep the useful context</h3><p>Build a more consistent support process with clear states, history, and fewer guesswork moments.</p><a href="features.html#reliability" class="card-link" aria-label="Learn about support history">↗</a></article>
       </div>
     </section>
 
-    <section class="closing-cta wrap"><div class="cta-orb" aria-hidden="true"></div><div class="cta-content"><span class="section-kicker">A CALMER SUPPORT WORKFLOW</span><h2>Make room for<br><span class="gradient-text">better conversations.</span></h2><p>Explore the ideas behind ResolveX and the support experience we’re building.</p><a class="button button-primary" href="features.html">Explore features <span aria-hidden="true">→</span></a></div><div class="cta-decoration" aria-hidden="true"><div class="deco-ring ring-one"></div><div class="deco-ring ring-two"></div><div class="deco-center">R<span>X</span></div><span class="spark spark-one">✳</span><span class="spark spark-two">✦</span></div></section>
+    <section class="section wrap">
+      <div class="section-heading"><div><span class="section-kicker">THREE THINGS THAT SET THE DIRECTION</span><h2>More than ticket creation.</h2></div><p>A support tool earns trust through the unglamorous details: repeatable setup, recoverable records, and honest controls.</p></div>
+      <div class="principle-grid">
+        <article class="principle-card"><span class="principle-number">A / 01</span><div class="principle-symbol">⌘</div><h3>Configuration without code edits</h3><p>Visual builders are intended to let server administrators configure forms, public ticket panels, and settings navigation without routinely changing source files.</p><a href="wiki.html#panels">How the builders work <span>→</span></a></article>
+        <article class="principle-card"><span class="principle-number">A / 02</span><div class="principle-symbol">↻</div><h3>Recovery that explains its limits</h3><p>Supported recovery flows rebuild a replacement channel from archived data. They do not impersonate original authors or magically restore Discord's deleted IDs.</p><a href="wiki.html#recovery">Read recovery guidance <span>→</span></a></article>
+        <article class="principle-card"><span class="principle-number">A / 03</span><div class="principle-symbol">⌁</div><h3>Traceability over mystery</h3><p>Ticket history, server audit views, and explicit confirmation flows are designed to make sensitive actions easier to understand and review.</p><a href="wiki.html#audit">Explore audit and safety <span>→</span></a></article>
+      </div>
+    </section>
+
+    <section class="faq-preview wrap">
+      <div><span class="section-kicker">BEFORE YOU DIVE IN</span><h2>Useful answers, without the mystery tour.</h2><p>The wiki explains what ResolvX is, how its workflows are intended to be used, and which areas still need release verification.</p><a class="button button-quiet" href="wiki.html">Open the complete wiki <span aria-hidden="true">↗</span></a></div>
+      <div class="faq-preview-list">
+        <a href="wiki.html#availability"><span>01</span><div><strong>Is ResolvX live and ready to invite?</strong><small>Availability, implementation status, and what this website can do.</small></div><b>↗</b></a>
+        <a href="wiki.html#first-steps"><span>02</span><div><strong>How does a server get started?</strong><small>Prerequisites, setup, permissions, and safe first-run steps.</small></div><b>↗</b></a>
+        <a href="wiki.html#faq"><span>03</span><div><strong>Where are the answers to common questions?</strong><small>Searchable documentation, commands, and practical how-to guides.</small></div><b>↗</b></a>
+      </div>
+    </section>
+
+    <section class="closing-cta wrap"><div class="cta-orb" aria-hidden="true"></div><div class="cta-content"><span class="section-kicker">YOUR NEXT STEP</span><h2>Get the whole picture.<br><span class="gradient-text">Then build with confidence.</span></h2><p>Explore the full capability map or go straight to the hands-on documentation.</p><div class="hero-actions"><a class="button button-primary" href="features.html">All features <span aria-hidden="true">→</span></a><a class="button button-quiet" href="wiki.html">Read the wiki <span aria-hidden="true">↗</span></a></div></div><div class="cta-decoration" aria-hidden="true"><div class="deco-ring ring-one"></div><div class="deco-ring ring-two"></div><div class="deco-center">R<span>X</span></div><span class="spark spark-one">✳</span><span class="spark spark-two">✦</span></div></section>
   </main>
 
-  <footer class="site-footer wrap"><a class="brand footer-brand" href="./"><span class="brand-mark small-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M8 10.5 20 4l12 6.5v13L20 30 8 23.5z"/><path d="m14 13 6-3 6 3-6 3z"/><path d="M14 18.5v5l6 3 6-3v-5l-6 3z"/><path d="m20 16 6 2.5-6 3-6-3z"/></svg></span><span>Resolve<span class="brand-accent">X</span></span></a><p>Thoughtful tools for people helping people.</p><div class="footer-links"><a href="features.html">Features & FAQs</a><a href="https://github.com/Annant2122011/Resolvx">GitHub</a></div><span class="copyright">© <span data-year>2026</span> ResolveX</span></footer>
+  <footer class="site-footer wrap">
+    <a class="brand footer-brand" href="./" aria-label="ResolvX home"><img class="brand-image footer-brand-image" src="https://i.ibb.co/Kxd9fvrF/imgupscaler-enhanced-1.jpg" alt="" width="34" height="34" loading="lazy"><span class="brand-name">ResolvX</span></a>
+    <p>Structured support. Thoughtful operations.</p>
+    <div class="footer-links"><a href="features.html">Feature library</a><a href="wiki.html">Wiki & FAQ</a><a href="https://github.com/Annant2122011/Resolvx" target="_blank" rel="noreferrer">GitHub</a></div>
+    <span class="copyright">© <span data-year>2026</span> ResolvX · Product documentation and concept showcase</span>
+  </footer>
+
+  <div class="search-overlay" data-search-overlay hidden>
+    <button class="search-backdrop" type="button" data-close-search aria-label="Close search overlay"></button>
+    <section class="search-dialog" role="dialog" aria-modal="true" aria-label="Search the ResolvX website">
+      <form class="global-search-form" role="search" data-global-search-form><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.7"/><path d="m16 16 4.2 4.2"/></svg><input type="search" data-global-search placeholder="Search features, guides, and questions…" autocomplete="off" aria-label="Search ResolvX"><kbd>ESC</kbd></form>
+      <p class="search-hint">Search across the feature library and wiki. Select a result to jump straight to it.</p>
+      <div class="global-search-results" data-global-results><a href="wiki.html#first-steps"><span class="search-result-icon">↗</span><span><strong>Getting started</strong><small>Setup requirements and safe first steps</small></span><kbd>↵</kbd></a><a href="features.html"><span class="search-result-icon">▦</span><span><strong>Feature library</strong><small>Detailed feature inventory and usage paths</small></span><kbd>↵</kbd></a><a href="wiki.html#faq"><span class="search-result-icon">?</span><span><strong>Frequently asked questions</strong><small>Availability, commands, recovery, and more</small></span><kbd>↵</kbd></a></div>
+      <div class="search-dialog-footer"><span><kbd>↑</kbd> <kbd>↓</kbd> navigate with your usual browser controls</span><span>ESC to close</span></div>
+    </section>
+  </div>
 </body>
 </html>
