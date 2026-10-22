@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <title>ResolvX</title>
+  <rect width="128" height="128" rx="20" fill="#080a12"/>
+  <defs>
+    <clipPath id="icon-clip">
+      <rect width="128" height="128" rx="20"/>
+    </clipPath>
+  </defs>
+  <image
+    href="https://i.ibb.co/q3qpf1rZ/XQa-IFERa-A-67-MKxhti-O-S-8wzv-ABc-R.png"
+    x="-12" y="-12" width="152" height="152"
+    preserveAspectRatio="xMidYMid slice"
+    clip-path="url(#icon-clip)"/>
+</svg>
