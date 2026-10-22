@@ -2545,3 +2545,97 @@ a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visibl
     letter-spacing: 0;
   }
 }
+
+
+/* Reading comfort and brand mark scale polish */
+.brand-image {
+  width: 49px;
+  height: 49px;
+  flex: 0 0 49px;
+  object-fit: cover;
+  object-position: center;
+  padding: 0;
+  border-radius: 9px;
+}
+.footer-brand-image {
+  width: 38px;
+  height: 38px;
+  flex-basis: 38px;
+}
+
+/* Keep secondary labels compact, but make real reading content comfortable. */
+.intro-text p,
+.section-heading > p,
+.faq-intro > p,
+.wiki-hero-copy > p,
+.page-hero > p,
+.feature-guide-intro > p,
+.wiki-article > p,
+.wiki-subsection > p,
+.wiki-article li,
+.wiki-subsection li,
+.feature-guide p,
+.feature-guide li,
+.step-list li,
+.numbered-guide p,
+.checklist li,
+.roadmap-inner > p,
+.detail-copy > p,
+.faq-item p {
+  font-size: 14.5px;
+  line-height: 1.85;
+}
+.capability-card p,
+.principle-card p {
+  font-size: 13px;
+  line-height: 1.8;
+}
+.catalog-card p,
+.features-page .faq-item p {
+  font-size: 12.5px;
+  line-height: 1.8;
+}
+.section-footnote p {
+  font-size: 12px;
+  line-height: 1.8;
+}
+.wiki-article code,
+.feature-guide code {
+  font-size: 12px;
+}
+
+@media (max-width: 700px) {
+  .brand-image {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+  }
+  .intro-text p,
+  .section-heading > p,
+  .faq-intro > p,
+  .wiki-hero-copy > p,
+  .page-hero > p,
+  .feature-guide-intro > p,
+  .wiki-article > p,
+  .wiki-subsection > p,
+  .wiki-article li,
+  .wiki-subsection li,
+  .feature-guide p,
+  .feature-guide li,
+  .step-list li,
+  .numbered-guide p,
+  .checklist li,
+  .roadmap-inner > p,
+  .detail-copy > p,
+  .faq-item p {
+    font-size: 14px;
+    line-height: 1.8;
+  }
+  .capability-card p,
+  .principle-card p,
+  .catalog-card p,
+  .section-footnote p {
+    font-size: 13px;
+    line-height: 1.8;
+  }
+}
