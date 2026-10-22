@@ -30,9 +30,11 @@ function checkRelativeReference(fromFile, rawUrl, kind) {
   const [beforeHash, rawFragment] = url.split('#', 2);
   const fragment = rawFragment ? decodeURIComponent(rawFragment) : '';
   const beforeQuery = (beforeHash || '').split('?')[0];
-  const targetRelative = !beforeQuery || beforeQuery === '.' || beforeQuery === './'
-    ? (fromFile.endsWith('.html') ? fromFile : 'index.html')
-    : path.posix.normalize(path.posix.join(path.posix.dirname(fromFile), beforeQuery));
+  const targetRelative = !beforeQuery
+    ? fromFile
+    : (beforeQuery === '.' || beforeQuery === './')
+      ? 'index.html'
+      : path.posix.normalize(path.posix.join(path.posix.dirname(fromFile), beforeQuery));
   const targetPath = path.resolve(root, targetRelative);
   if (!targetPath.startsWith(root + path.sep) && targetPath !== root) {
     report(`${fromFile}: ${kind} escapes the site root: ${url}`);
@@ -109,13 +111,19 @@ for (const file of htmlFiles) {
 }
 
 const allIds = pageIds.get('wiki.html') || new Set();
-const wikiArticles = [...pageContents.get('wiki.html').matchAll(/<article\b[^>]*\bdata-wiki-article\b/g)].length;
-const tocLinks = [...pageContents.get('wiki.html').matchAll(/<a\b[^>]*\bclass=["'][^"']*\bwiki-toc-link\b[^"']*["'][^>]*\bhref=["']#([^"']+)/g)];
+const wikiArticles = [...pageContents.get('wiki.html').matchAll(/<article\\b[^>]*\\bdata-wiki-article\\b/g)].length;
+const tocLinks = [];
+for (const match of pageContents.get('wiki.html').matchAll(/<a\\b[^>]*>/gi)) {
+  const attrs = attributes(match[0]);
+  if ((attrs.class || '').split(/\\s+/).includes('wiki-toc-link') && (attrs.href || '').startsWith('#')) {
+    tocLinks.push(attrs.href.slice(1));
+  }
+}
 if (tocLinks.length !== wikiArticles) {
   report(`wiki.html: table of contents has ${tocLinks.length} links for ${wikiArticles} articles`);
 }
-for (const match of tocLinks) {
-  if (!allIds.has(match[1])) report(`wiki.html: table of contents points to missing article #${match[1]}`);
+for (const anchor of tocLinks) {
+  if (!allIds.has(anchor)) report(`wiki.html: table of contents points to missing article #${anchor}`);
 }
 
 const featureCards = [...pageContents.get('features.html').matchAll(/<a\b[^>]*\bdata-feature-card\b[^>]*>/g)];
