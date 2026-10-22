@@ -2639,3 +2639,21 @@ a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visibl
     line-height: 1.8;
   }
 }
+
+
+/* Ensure the larger mark wins over earlier breakpoint-specific sizing rules. */
+.header-brand .brand-image {
+  width: 49px;
+  height: 49px;
+  flex: 0 0 49px;
+  padding: 0;
+  object-fit: cover;
+  object-position: center;
+}
+@media (max-width: 700px) {
+  .header-brand .brand-image {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+  }
+}
