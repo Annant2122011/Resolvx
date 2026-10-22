@@ -11,8 +11,8 @@ The website is a product introduction and documentation experience. It does **no
 - \`wiki.html\` — long-form guides for setup, ticket workflows, forms, panels, permissions, recovery, scheduling, localization, troubleshooting, commands, roadmap boundaries, and FAQs.
 - \`styles.css\` — shared visual system, responsive layouts, accessibility and reduced-motion refinements.
 - \`site.js\` — responsive navigation, multilingual global search, wiki article/FAQ filtering, feature-catalogue filtering, command-copy helpers, reading progress, opt-in website translation, and the local lifecycle explainer.
-- \`favicon-local.svg\` — self-contained SVG favicon with the official logo embedded locally, and pages use a versioned URL to refresh cached copies.
-- \`https://i.ibb.co/mrg8Kh3y/Query-Fixr-3-D-brand-logo-2-K-20261022185526-Picsart-Ai-Image-Enhancer-clean.png\` — optimized local copy of the official supplied QueryFixr logo used in the page header, footer, and CTA artwork.
+- `favicon-local.svg` — fallback SVG wrapper pointing to the supplied QueryFixr icon; site pages load the icon image directly as the favicon.
+- The supplied QueryFixr wordmark is loaded from its image-host URL in the page header, footer, and CTA artwork.
 
 ## Interaction notes
 
