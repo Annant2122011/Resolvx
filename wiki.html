@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#080a12">
-  <meta name="description" content="The ResolvX wiki: setup guidance, detailed feature instructions, slash-command references, recovery boundaries, troubleshooting, and FAQs.">
+  <meta name="description" content="The ResolvX wiki: detailed setup and workflow guides, command references, localization, automation settings, recovery boundaries, troubleshooting, and FAQs.">
   <meta property="og:title" content="ResolvX Wiki & Help Center">
-  <meta property="og:description" content="A practical guide to what ResolvX does, how its workflows are intended to be used, and where the current limitations are.">
+  <meta property="og:description" content="A practical user guide to current ResolvX workflows, settings, commands, multilingual messaging, recovery boundaries, and operational limitations.">
   <meta property="og:type" content="website">
   <title>Wiki & Help Center — ResolvX</title>
   <link rel="icon" href="favicon-local.svg?v=3" type="image/svg+xml" sizes="any">
@@ -48,7 +48,7 @@
     <section class="docs-notice wrap" id="availability">
       <div class="notice-icon">i</div>
       <div><strong>Read this before following a guide.</strong><p>This website is a static documentation and concept showcase. It is not connected to a Discord server, does not execute commands, and does not expose live ticket data. Instructions are based on the current public project documentation; some features still require live test-guild acceptance before production use.</p></div>
-      <a href="features.html">Feature status guide <span>↗</span></a>
+      <a href="features.html">Feature catalogue <span>↗</span></a>
     </section>
 
     <div class="wiki-shell wrap">
@@ -58,22 +58,30 @@
           <a href="#overview" class="wiki-toc-link active"><span>01</span> Overview & status</a>
           <a href="#first-steps" class="wiki-toc-link"><span>02</span> Getting started</a>
           <a href="#ticket-lifecycle" class="wiki-toc-link"><span>03</span> Ticket lifecycle</a>
-          <a href="#departments" class="wiki-toc-link"><span>04</span> Departments & tags</a>
-          <a href="#forms" class="wiki-toc-link"><span>05</span> Forms & templates</a>
-          <a href="#panels" class="wiki-toc-link"><span>06</span> Ticket panels</a>
-          <a href="#team-tools" class="wiki-toc-link"><span>07</span> Staff tools</a>
-          <a href="#reports-voice" class="wiki-toc-link"><span>08</span> Reports & voice</a>
-          <a href="#recovery" class="wiki-toc-link"><span>09</span> Recovery & archive</a>
-          <a href="#settings" class="wiki-toc-link"><span>10</span> Settings & themes</a>
-          <a href="#retention" class="wiki-toc-link"><span>11</span> Retention</a>
-          <a href="#audit" class="wiki-toc-link"><span>12</span> Audit & diagnostics</a>
-          <a href="#storage-deployment" class="wiki-toc-link"><span>13</span> Storage & updates</a>
-          <a href="#language-automation" class="wiki-toc-link"><span>14</span> Languages & automation</a>
-          <a href="#commands" class="wiki-toc-link"><span>15</span> Command explorer</a>
-          <a href="#roadmap" class="wiki-toc-link"><span>16</span> Roadmap</a>
-          <a href="#faq" class="wiki-toc-link"><span>17</span> FAQ</a>
+          <a href="#ticket-safety" class="wiki-toc-link"><span>04</span> Ticket safety & duplicates</a>
+          <a href="#departments" class="wiki-toc-link"><span>05</span> Departments & tags</a>
+          <a href="#forms" class="wiki-toc-link"><span>06</span> Forms & templates</a>
+          <a href="#panels" class="wiki-toc-link"><span>07</span> Custom ticket panels</a>
+          <a href="#team-tools" class="wiki-toc-link"><span>08</span> Staff tools</a>
+          <a href="#reports-voice" class="wiki-toc-link"><span>09</span> Reports & voice</a>
+          <a href="#recovery" class="wiki-toc-link"><span>10</span> Archive & recovery</a>
+          <a href="#settings" class="wiki-toc-link"><span>11</span> Settings & themes</a>
+          <a href="#panel-activity" class="wiki-toc-link"><span>12</span> Panel activity</a>
+          <a href="#retention" class="wiki-toc-link"><span>13</span> Retention & deletion</a>
+          <a href="#audit" class="wiki-toc-link"><span>14</span> Audit & diagnostics</a>
+          <a href="#storage-deployment" class="wiki-toc-link"><span>15</span> Storage & reliability</a>
+          <a href="#language-automation" class="wiki-toc-link"><span>16</span> Languages</a>
+          <a href="#support-hours" class="wiki-toc-link"><span>17</span> Support hours</a>
+          <a href="#inactivity-automation" class="wiki-toc-link"><span>18</span> Inactivity automation</a>
+          <a href="#ticket-workspace" class="wiki-toc-link"><span>19</span> Channels & threads</a>
+          <a href="#premium-demo" class="wiki-toc-link"><span>20</span> Premium demo</a>
+          <a href="#permissions-safety" class="wiki-toc-link"><span>21</span> Permissions & safety</a>
+          <a href="#troubleshooting" class="wiki-toc-link"><span>22</span> Troubleshooting</a>
+          <a href="#commands" class="wiki-toc-link"><span>23</span> Command explorer</a>
+          <a href="#roadmap" class="wiki-toc-link"><span>24</span> Roadmap</a>
+          <a href="#faq" class="wiki-toc-link"><span>25</span> FAQ</a>
         </nav>
-        <div class="wiki-sidebar-card"><div class="sidebar-card-icon">⌘</div><strong>Prefer a feature-first view?</strong><p>Open the long-form feature library for scope, design intent, command entry points, and caveats.</p><a href="features.html">Browse all features <span>→</span></a></div>
+        <div class="wiki-sidebar-card"><div class="sidebar-card-icon">⌘</div><strong>Prefer a feature-first view?</strong><p>Open the compact catalogue to scan the bot’s current capability areas at a glance.</p><a href="features.html#feature-catalog">Browse all features <span>→</span></a></div>
       </aside>
 
       <div class="wiki-content" data-wiki-content>
@@ -238,6 +246,97 @@
           <div class="command-list"><button data-copy="/supportforge settings inactivity"><code>/supportforge settings inactivity</code><span>Copy</span></button></div>
           <h3>Panel-activity settings are separate</h3><p>The panel activity controls define a visual line budget, a message safety cap, and a minimum number of messages before moving ticket controls. They tune the ticket-control placement workflow. They are not the same as support opening hours or ticket inactivity auto-close, and they should be adjusted independently.</p>
           <div class="callout callout-info"><strong>Deployment status matters.</strong><p>The bot locale catalog and controls are being delivered through Stage H Part 2. Build and automated tests must pass, commands must be registered from the updated branch, and each chosen language or automation policy must be checked in a non-production Discord guild before production reliance.</p></div>
+        </article>
+
+        <article class="wiki-article" id="ticket-safety" data-wiki-article data-search-keywords="duplicate ticket active request cooldown spam already open idempotency close ordering authorization permission state transition">
+          <div class="article-eyebrow"><span class="article-number">04</span><span>STATE & FAILURE SAFETY</span><span class="article-read-time">5 MIN READ</span></div>
+          <h2>Ticket safety, duplicate prevention & close order</h2>
+          <p class="article-lede">A reliable support flow needs to handle double-clicks, retries, stale UI, and permissions without treating each click as permission to create another support request. These safeguards reduce duplicate work, but they do not remove the need to check the live ticket state when an interaction looks uncertain.</p>
+          <h3>When a ticket request seems stuck</h3>
+          <ol class="numbered-guide"><li><span>01</span><div><strong>Check the existing ticket before retrying</strong><p>Look for the active ticket channel and its current status. The bot documents duplicate-open prevention based on persisted status plus ticket-creation cooldown handling. Repeating the same click quickly can create confusing feedback or hit a cooldown even when the first request partly succeeded.</p></div></li><li><span>02</span><div><strong>Read the state, not only the channel name</strong><p>Names are labels for humans. ResolvX keeps an explicit state in ticket metadata and persists ticket records in PostgreSQL-backed storage. If a ticket appears in the wrong category or has an unexpected name, inspect its controls and history before moving resources manually.</p></div></li><li><span>03</span><div><strong>Use the matching lifecycle action</strong><p>Use Claim when staff accepts ownership, Unclaim to return responsibility to the shared team, Pending while a prerequisite is missing, Resume when work can continue, Reopen for follow-up after closure, and Archive when the record should leave the active queue.</p></div></li></ol>
+          <h3>What the states mean operationally</h3>
+          <div class="lifecycle-table" role="table" aria-label="Lifecycle states and handling"><div class="lifecycle-row lifecycle-head" role="row"><span role="columnheader">State</span><span role="columnheader">Interpretation</span><span role="columnheader">Operator check</span></div><div class="lifecycle-row" role="row"><span><b class="state-chip state-open">Open</b></span><span>Available for triage or current work.</span><span>Check owner, department, tag, and priority.</span></div><div class="lifecycle-row" role="row"><span><b class="state-chip state-claimed">Claimed</b></span><span>A staff member has taken responsibility.</span><span>Check that the owner is still correct.</span></div><div class="lifecycle-row" role="row"><span><b class="state-chip state-pending">Pending</b></span><span>Waiting on a response or prerequisite.</span><span>Tell the member what is missing.</span></div><div class="lifecycle-row" role="row"><span><b class="state-chip state-reopened">Reopened</b></span><span>A previously closed request needs follow-up.</span><span>Read the old history before continuing.</span></div><div class="lifecycle-row" role="row"><span><b class="state-chip state-closed">Closed</b></span><span>The active exchange is finished.</span><span>Check transcript and channel-lock results.</span></div><div class="lifecycle-row" role="row"><span><b class="state-chip state-archived">Archived</b></span><span>The ticket is retained outside the active queue.</span><span>Consult recovery/retention guidance before deletion.</span></div></div>
+          <h3>Why the close order matters</h3>
+          <p>The documented safe close sequence captures the transcript, confirms the upload succeeded, locks channel access, records the closed state, refreshes relevant controls, and only then applies final naming or placement changes. This order avoids making the conversation unavailable before its record is saved. Test the transcript destination and permissions in a non-production guild before treating it as a compliance archive.</p>
+          <div class="article-callout callout-warning"><span class="callout-symbol">!</span><div><strong>A timeout does not prove that nothing happened.</strong><p>If Discord returns an expired-interaction or timeout message, inspect the ticket and audit record before repeating a destructive action. If the record is missing or inconsistent, use the repair/recovery path rather than editing database JSON or recreating resources by guesswork.</p></div></div>
+        </article>
+
+        <article class="wiki-article" id="panel-activity" data-wiki-article data-search-keywords="panel activity move controls reposition bottom auto move line budget message cap minimum messages threshold ticket panel buttons">
+          <div class="article-eyebrow"><span class="article-number">12</span><span>WORKSPACE USABILITY</span><span class="article-read-time">4 MIN READ</span></div>
+          <h2>Panel activity & ticket-control placement</h2>
+          <p class="article-lede">Ticket-control placement manages where the bot's controls sit relative to a ticket conversation. It is separate from the public support panel members click to open tickets, and separate again from inactivity auto-close.</p>
+          <h3>What the thresholds control</h3>
+          <div class="two-surface-grid"><div><span class="surface-tag">VISUAL BUDGET</span><h3>Keep controls visible</h3><p>The visual-line budget is a layout threshold used to decide when the control message should move. It is not a message count, SLA timer, or support-hours setting.</p></div><div><span class="surface-tag">MESSAGE BUDGET</span><h3>Avoid control sprawl</h3><p>The message safety cap and minimum-message threshold help avoid movement on every single reply. Use conservative values first and watch a real ticket before tuning them further.</p></div></div>
+          <p>The command definition validates a visual budget between 6 and 40 lines, a message safety cap between 5 and 30 messages, and a minimum-message threshold between 3 and 20. The server can inspect the setting, toggle it, enable or disable it, and adjust those thresholds.</p>
+          <div class="command-list"><button data-copy="/supportforge settings panel"><code>/supportforge settings panel</code><span>Copy</span></button><button data-copy="/supportforge ticket move-panel"><code>/supportforge ticket move-panel</code><span>Copy</span></button></div>
+          <h3>Recommended tuning workflow</h3>
+          <ol class="numbered-guide"><li><span>01</span><div><strong>Start by inspecting current settings</strong><p>Use the Settings dashboard or slash command before changing any values.</p></div></li><li><span>02</span><div><strong>Change one threshold at a time</strong><p>Use a test ticket with realistic conversation volume. If controls move too frequently, tune the message cap or minimum count; if they are pushed out of view, review the visual budget.</p></div></li><li><span>03</span><div><strong>Keep it distinct from inactivity closure</strong><p>Control movement does not mean a ticket is idle. Inactivity automation has its own warning interval, grace period, and exemptions.</p></div></li></ol>
+          <div class="article-callout"><span class="callout-symbol">i</span><div><strong>“Panel” can mean two things</strong><p>The public support entry panel is member-facing. The ticket-control panel belongs to an existing ticket. Command context makes clear which one is being adjusted.</p></div></div>
+        </article>
+
+        <article class="wiki-article" id="support-hours" data-wiki-article data-search-keywords="support hours business hours schedule time zone IANA intervals weekly opening closed outside hours department panel override allow restrict">
+          <div class="article-eyebrow"><span class="article-number">17</span><span>SCHEDULING</span><span class="article-read-time">5 MIN READ</span></div>
+          <h2>Support hours & time-zone rules</h2>
+          <p class="article-lede">Support hours describe when ticket intake is allowed under a server's configured schedule. They are not an SLA timer, an agent shift roster, or a promise about response time. A schedule is only useful when its time zone and outside-hours policy match the team's actual operating hours.</p>
+          <h3>Configure a schedule safely</h3>
+          <ol class="numbered-guide"><li><span>01</span><div><strong>Choose an IANA time zone</strong><p>Use a full identifier such as <code>Asia/Kolkata</code>, <code>Europe/Amsterdam</code>, or <code>America/New_York</code>. Do not enter a fixed UTC offset when you mean a region that observes daylight-saving changes.</p></div></li><li><span>02</span><div><strong>Define each weekday</strong><p>The supported schedule format accepts intervals such as <code>09:00-12:00,13:00-17:00</code> for a split shift, or <code>closed</code> for a day without an opening window. Check the command picker for the exact field requirements of your deployed bot.</p></div></li><li><span>03</span><div><strong>Choose the scope</strong><p>The server default is the baseline. A department or ticket-panel override can be configured when that support path genuinely follows a different schedule. Include the matching scope ID only for an override.</p></div></li><li><span>04</span><div><strong>Set outside-hours behaviour</strong><p>The current controls distinguish allowing new tickets outside opening hours from restricting ticket creation. Decide whether people may leave a request at any time or must wait until the next configured opening.</p></div></li><li><span>05</span><div><strong>Test boundary times</strong><p>Test just before opening, exactly at opening, during a split-shift break, after closing, and across a daylight-saving boundary if relevant. Confirm both the displayed time and the intake decision.</p></div></li></ol>
+          <div class="command-list"><button data-copy="/supportforge settings support-hours"><code>/supportforge settings support-hours</code><span>Copy</span></button></div>
+          <div class="article-callout callout-warning"><span class="callout-symbol">!</span><div><strong>Support hours are not a full SLA engine.</strong><p>They govern configured intake windows and outside-hours behaviour. SLA policies, escalation clocks, queue targets, and business-hour reporting remain outside the current feature promise unless a future release explicitly implements them.</p></div></div>
+        </article>
+
+        <article class="wiki-article" id="inactivity-automation" data-wiki-article data-search-keywords="inactivity idle inactive auto close warning grace period exemption exempt role department threshold timer timeout ticket stale">
+          <div class="article-eyebrow"><span class="article-number">18</span><span>OPT-IN AUTOMATION</span><span class="article-read-time">5 MIN READ</span></div>
+          <h2>Inactivity warnings & automatic closure</h2>
+          <p class="article-lede">Inactivity automation is designed for stale conversations, not for managing staff shifts. When enabled, it can warn about a quiet ticket and allow a grace period for a reply before attempting automatic closure.</p>
+          <h3>Policy components</h3>
+          <div class="fact-grid"><div><strong>Idle interval</strong><span>How long the ticket is inactive before the warning stage.</span></div><div><strong>Grace period</strong><span>How long the owner has after the warning to resume the conversation.</span></div><div><strong>Exemptions</strong><span>Role and department exceptions that keep eligible tickets out of auto-close handling.</span></div></div>
+          <p>The slash command accepts an idle threshold from 1 to 720 hours and a grace period from 1 to 168 hours. It can be enabled, disabled, inspected, or reconfigured. Role exemptions matter when the ticket owner or assigned staff holds an exempt role; department exemptions apply to that department's tickets.</p>
+          <h3>Recommended rollout</h3>
+          <ol class="numbered-guide"><li><span>01</span><div><strong>Start disabled while policy is reviewed</strong><p>Choose thresholds that account for weekends, holidays, and the team's normal response time. Auto-close should not surprise members who have been told to expect a slow reply.</p></div></li><li><span>02</span><div><strong>Configure exemptions first</strong><p>Identify VIP, moderation, escalation, or long-running technical departments that should not be closed by the same idle policy. Verify role and department IDs before enabling.</p></div></li><li><span>03</span><div><strong>Test warning and grace stages</strong><p>Confirm a warning appears at the expected time, a member reply cancels pending closure as intended, and closed tickets still follow the configured transcript and retention path.</p></div></li><li><span>04</span><div><strong>Audit policy changes</strong><p>Changing the enabled state, thresholds, or exemptions advances the policy generation and clears applicable existing inactivity warnings. Recheck test tickets after a policy change.</p></div></li></ol>
+          <div class="command-list"><button data-copy="/supportforge settings inactivity"><code>/supportforge settings inactivity</code><span>Copy</span></button></div>
+          <div class="article-callout callout-warning"><span class="callout-symbol">!</span><div><strong>Keep destructive automation opt-in.</strong><p>Agree the warning text, grace interval, role exemptions, staff expectations, and archive/retention policy first, then verify the configuration in a test guild.</p></div></div>
+        </article>
+
+        <article class="wiki-article" id="ticket-workspace" data-wiki-article data-search-keywords="ticket workspace private text channels private threads channel parent permission overwrites manage threads staff member visibility capacity">
+          <div class="article-eyebrow"><span class="article-number">19</span><span>CHANNELS & THREADS</span><span class="article-read-time">4 MIN READ</span></div>
+          <h2>Private text channels vs private threads</h2>
+          <p class="article-lede">The workspace setting chooses which Discord resource type is used for new tickets. It changes the shape of new workspaces, not the identity or historical contents of tickets that already exist.</p>
+          <div class="two-surface-grid"><div><span class="surface-tag">PRIVATE TEXT CHANNEL</span><h3>Dedicated channel</h3><p>A separate text channel has its own channel permissions and category placement. This is often simpler to reason about, but creates more channels and depends on correct permission overwrites and category permissions.</p></div><div><span class="surface-tag">PRIVATE THREAD</span><h3>Thread workspace</h3><p>A private thread keeps the conversation under a parent text channel and relies on thread membership and server permissions, including the bot's ability to create/manage threads. Parent-channel permissions and staff access need deliberate testing.</p></div></div>
+          <h3>Switching the workspace mode</h3>
+          <ol class="numbered-guide"><li><span>01</span><div><strong>Check server and bot permissions</strong><p>For channels, check manage-channel and permission-overwrite behaviour. For private threads, verify thread creation, visibility, membership, archive/unarchive, and staff access.</p></div></li><li><span>02</span><div><strong>Set the mode for new tickets</strong><p>Use the Settings dashboard's Ticket Workspace control or the slash command to inspect or select private text channels/private threads.</p></div></li><li><span>03</span><div><strong>Create a real test ticket</strong><p>Test with a member, regular staff, an administrator, and a user who should not have access. Verify that no one can read a ticket they should not see.</p></div></li><li><span>04</span><div><strong>Keep old tickets in mind</strong><p>Changing the default does not convert existing tickets from a channel into a thread or vice versa. Handle any migration separately.</p></div></li></ol>
+          <div class="command-list"><button data-copy="/supportforge settings ticket-workspace"><code>/supportforge settings ticket-workspace</code><span>Copy</span></button></div>
+        </article>
+
+        <article class="wiki-article" id="premium-demo" data-wiki-article data-search-keywords="premium demo entitlement tier status toggle pro free billing subscription payment checkout monetize">
+          <div class="article-eyebrow"><span class="article-number">20</span><span>TEST ENTITLEMENTS</span><span class="article-read-time">3 MIN READ</span></div>
+          <h2>Premium demo controls</h2>
+          <p class="article-lede">The current premium controls are demo entitlement tools. They help test how entitlement state is represented, but they are not a connected payment system and should not be described as a purchase flow.</p>
+          <h3>What an administrator can do</h3>
+          <p>The bot provides a status command and a demo toggle for its supported tiers. Treat the resulting tier as test/configuration state only. There is no claim here that a payment has been collected, a subscription exists, a card is stored, or an entitlement has been verified with a billing provider.</p>
+          <div class="command-list"><button data-copy="/supportforge premium status"><code>/supportforge premium status</code><span>Copy</span></button><button data-copy="/supportforge premium toggle-demo"><code>/supportforge premium toggle-demo</code><span>Copy</span></button></div>
+          <div class="article-callout callout-warning"><span class="callout-symbol">!</span><div><strong>Demo state is not billing.</strong><p>Do not use this setting to represent paid customer entitlements or collect payments. Real subscriptions, billing webhooks, invoices, cancellation, and payment reconciliation are outside the current feature set.</p></div></div>
+        </article>
+
+        <article class="wiki-article" id="permissions-safety" data-wiki-article data-search-keywords="permissions authorization administrator manage server guild manage channels manage threads role staff access gates destructive action factory reset safe privacy security">
+          <div class="article-eyebrow"><span class="article-number">21</span><span>ACCESS & SAFETY</span><span class="article-read-time">5 MIN READ</span></div>
+          <h2>Permissions, authorization & destructive actions</h2>
+          <p class="article-lede">ResolvX uses several different kinds of access checks: who may configure a server, who may use a staff action, which roles may enter a custom panel, and which members can see a ticket resource. These checks are related but not interchangeable.</p>
+          <h3>Access boundaries to test</h3>
+          <ul class="check-list"><li>Server administration actions require Manage Server or Administrator where the command is gated for administrators.</li><li>The Settings dashboard checks that controls are used from the recognized ResolvX Settings channel; the Staff Manual has a documented exception for configured department staff.</li><li>Ticket actions validate the user and ticket context rather than assuming that knowing a command path is authorization.</li><li>Custom panel and button role restrictions are combined and checked again at click time; confirmation is bound to the initiating user and source published message.</li><li>Private-channel and private-thread workspace choices need their own live permission review.</li><li>Destructive controls such as factory reset and retention deletion use explicit confirmation or approval steps.</li></ul>
+          <h3>Before a production rollout</h3>
+          <p>Create an acceptance matrix with a normal member, department staff, an administrator, and a user who is deliberately not authorized. Test the same operation through every documented entry point available in the deployment. Verify both allowed and denied results, and review the audit record for sensitive settings changes.</p>
+          <div class="article-callout callout-warning"><span class="callout-symbol">!</span><div><strong>Never test destructive actions against production records.</strong><p>Use a dedicated guild and non-production database. Never paste Discord tokens, database URLs, or other secrets into public issues, screenshots, or diagnostic output.</p></div></div>
+        </article>
+
+        <article class="wiki-article" id="troubleshooting" data-wiki-article data-search-keywords="troubleshoot error stack trace bot startup command registration subcommands 25 settings reports unknown interaction unknown message permissions database connection timeout retry after ratelimit">
+          <div class="article-eyebrow"><span class="article-number">22</span><span>DIAGNOSIS & RECOVERY</span><span class="article-read-time">6 MIN READ</span></div>
+          <h2>Troubleshooting common bot errors</h2>
+          <p class="article-lede">A stack trace is useful when you isolate the first error and identify whether it happened during startup, command registration, a Discord interaction, persistence, or an external request. The entire console dump is rarely the best starting point.</p>
+          <div class="lifecycle-table" role="table" aria-label="Common ResolvX errors and safe checks"><div class="lifecycle-row lifecycle-head" role="row"><span role="columnheader">Symptom</span><span role="columnheader">Likely layer</span><span role="columnheader">Safe next check</span></div><div class="lifecycle-row" role="row"><span>Slash command build/deploy fails around settings</span><span>Command declaration limits</span><span>Update to the current command definition and re-run command deployment. Report taxonomy commands use the sibling <code>settings-reports</code> group so Settings stays within Discord's 25-subcommand cap.</span></div><div class="lifecycle-row" role="row"><span>Unknown Interaction / interaction expired</span><span>Discord acknowledgement timing</span><span>Check whether the interaction was deferred/replied in time. Inspect ticket state before repeating the action.</span></div><div class="lifecycle-row" role="row"><span>Unknown Message / stale panel control</span><span>Deleted or replaced Discord message</span><span>Refresh the appropriate Settings/public panel and confirm which published message is current. Do not treat a stale pointer as permission to delete unrelated messages.</span></div><div class="lifecycle-row" role="row"><span>Database connection timeout or unavailable</span><span>Neon/PostgreSQL connectivity</span><span>Check the configured DATABASE_URL/provider, runtime networking, connection limits, and CI logs. Do not replace production Neon with SQLite as a workaround.</span></div><div class="lifecycle-row" role="row"><span>Rate limit / retry-after response</span><span>Discord API throttling</span><span>Respect the indicated delay and let the retry/outbox path finish where supported. Repeated clicking can stack unnecessary requests.</span></div><div class="lifecycle-row" role="row"><span>Missing channel or recovery record</span><span>Discord-side deletion or incomplete setup</span><span>Use the Settings repair/recovery path, inspect audit history, and verify what archive data exists before manually rebuilding anything.</span></div></div>
+          <h3>Collect a useful diagnostic packet</h3>
+          <ol class="numbered-guide"><li><span>01</span><div><strong>Capture the first error and its stack</strong><p>Include the action, whether it happened on startup or after an interaction, the first error message, top relevant source lines, and timestamp. Remove tokens and connection strings.</p></div></li><li><span>02</span><div><strong>Confirm code version and command registration</strong><p>Check the branch/commit and CI result. After a slash-command definition changes, deploy registered commands using the repository's script and verify the expected paths in Discord.</p></div></li><li><span>03</span><div><strong>Inspect state before rerunning</strong><p>Check the ticket record, channel topic, audit log, and transcript destination before retrying a failed close, restore, or deletion.</p></div></li><li><span>04</span><div><strong>Use the smallest safe reproduction</strong><p>Use a test guild and non-production database. Reproduce one action at a time with the same permissions and resource type, then compare logs and audit output.</p></div></li></ol>
+          <div class="command-list"><button data-copy="/supportforge settings repair"><code>/supportforge settings repair</code><span>Copy</span></button><button data-copy="/supportforge settings refresh"><code>/supportforge settings refresh</code><span>Copy</span></button><button data-copy="/supportforge audit summary"><code>/supportforge audit summary</code><span>Copy</span></button></div>
+          <div class="article-callout"><span class="callout-symbol">i</span><div><strong>Share the shortest useful excerpt.</strong><p>Do not paste a full environment dump or credentials. A focused error message, sanitized stack trace, branch/commit, and the precise failed action are usually enough to start.</p></div></div>
         </article>
 
         <article class="wiki-article" id="commands" data-wiki-article>
