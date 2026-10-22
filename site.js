@@ -351,7 +351,7 @@
         }
       }
       if (!overlay.hidden && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
-        const results = $('.global-search-result', globalResults || document);
+        const results = $$('.global-search-result', globalResults || document);
         if (results.length) {
           event.preventDefault();
           const currentIndex = results.indexOf(document.activeElement);
@@ -473,7 +473,7 @@
 
   // The feature page is a catalogue, so let visitors filter it without loading another service.
   const featureSearchInput = $('[data-feature-search]');
-  const featureCards = $('[data-feature-card]');
+  const featureCards = $$('[data-feature-card]');
   const featureResultCount = $('[data-feature-result-count]');
   const featureNoResults = $('[data-feature-no-results]');
   const applyFeatureSearch = (query) => {
