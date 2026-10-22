@@ -332,6 +332,24 @@
         closeSearch();
         return;
       }
+      if (!overlay.hidden && event.key === 'Tab') {
+        const dialog = $('.search-dialog', overlay);
+        const focusable = $('input:not([disabled]), button:not([disabled]), a[href], select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])', dialog)
+          .filter((element) => !element.hidden && element.getAttribute('aria-hidden') !== 'true');
+        if (!focusable.length) {
+          event.preventDefault();
+          return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
       if (!overlay.hidden && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
         const results = $('.global-search-result', globalResults || document);
         if (results.length) {
