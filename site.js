@@ -167,7 +167,7 @@
 
   const SEARCH_EXPANSIONS = {
     'system-at-a-glance': 'about overview product purpose discord ticketing customer support help desk helpdesk workflow administration architecture current capabilities',
-    'overview': 'about what is resolvx product identity discord bot support ticketing case management helpdesk static website command prefix capabilities limits',
+    'overview': 'about what is QueryFixr product identity discord bot support ticketing case management helpdesk static website command prefix capabilities limits',
     'first-steps': 'setup install requirements environment variables token database permissions invite deploy test guild first ticket node npm neon postgres configuration production',
     'ticket-lifecycle': 'create open claim claimed unclaim unclaimed assign ownership pending waiting hold resume reopen close archive archived state status request case duplicate prevention transcript upload lock permissions close order',
     'ticket-safety': 'duplicate open prevention already active cooldown spam request idempotency safe transitions authorized action permission gate transaction close sequence lock transcript retry duplicate ticket prevention',
@@ -365,7 +365,7 @@
     'What does QueryFixr do?': 'purpose overview discord support ticket helpdesk request management',
     'Can I invite the bot from this website?': 'invite install add bot discord oauth authorization link missing setup',
     'Does the website run bot commands or show live tickets?': 'website static github pages vercel dashboard login api live data connection',
-    'Why do command examples say /qf instead of /resolvx?': 'slash command root rename brand registered name deployed command',
+    'Why is the slash-command root /qf?': 'slash command root rename brand registered name deployed command',
     'What does a member do to open a ticket?': 'create new support request ticket panel button department form intake',
     'Can I customize multiple public support panels?': 'multi-panel builder draft publish entry button roles emoji style order',
     'Are form templates the same as active forms?': 'template activate deactivate schema version form builder',
@@ -623,7 +623,7 @@
       if (locale === 'en-US') {
         activeSiteLocale = locale;
         statusNode.textContent = translateUiCopy(locale, 'original');
-        try { localStorage.setItem('resolvx-site-locale', locale); } catch (_) {}
+        try { localStorage.setItem('queryfixr-site-locale', locale); } catch (_) {}
         return;
       }
       const segments = collectTranslatableSegments();
@@ -653,7 +653,7 @@
       document.documentElement.lang = locale;
       document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
       if (wikiInput) applyWikiSearch(wikiInput.value);
-      try { localStorage.setItem('resolvx-site-locale', locale); } catch (_) {}
+      try { localStorage.setItem('queryfixr-site-locale', locale); } catch (_) {}
       statusNode.textContent = translateUiCopy(locale, 'done');
     } catch (error) {
       restoreOriginalPageText();
@@ -675,11 +675,11 @@
     const label = document.createElement('label');
     label.textContent = translateUiCopy('en-US', 'label');
     const select = document.createElement('select');
-    select.id = 'resolvx-site-language';
+    select.id = 'queryfixr-site-language';
     select.setAttribute('aria-label', 'Choose website language');
     select.title = 'Translate public website copy through an external service. The site does not connect to Discord or ticket data.';
     const initial = (() => {
-      try { return localStorage.getItem('resolvx-site-locale') || navigator.language || 'en-US'; } catch (_) { return navigator.language || 'en-US'; }
+      try { return localStorage.getItem('queryfixr-site-locale') || navigator.language || 'en-US'; } catch (_) { return navigator.language || 'en-US'; }
     })();
     SITE_LANGUAGES.forEach((language) => {
       const option = document.createElement('option');
@@ -705,7 +705,7 @@
       button.textContent = translateUiCopy(code, 'button');
     });
     button.addEventListener('click', () => { void translateSitePage(select.value, status, button); });
-    const saved = (() => { try { return localStorage.getItem('resolvx-site-locale'); } catch (_) { return null; } })();
+    const saved = (() => { try { return localStorage.getItem('queryfixr-site-locale'); } catch (_) { return null; } })();
     if (saved && normalizeSiteLocale(saved) !== 'en-US') void translateSitePage(saved, status, button);
   }
   installSiteLanguageControl();
