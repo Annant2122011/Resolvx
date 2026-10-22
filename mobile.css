@@ -108,6 +108,7 @@
     right: 10px;
     width: auto;
     max-width: none;
+    max-height: min(72vh, 560px);
     max-height: min(72dvh, 560px);
     overflow-x: hidden;
     overflow-y: auto;
@@ -152,6 +153,20 @@
 
   .nav-links .quick-search kbd {
     margin-left: auto;
+  }
+
+  .search-overlay {
+    padding: max(16px, 4vh) 10px 12px;
+    align-items: start;
+  }
+
+  .search-dialog {
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100vh - 28px);
+    max-height: calc(100dvh - 28px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .site-language-switcher {
