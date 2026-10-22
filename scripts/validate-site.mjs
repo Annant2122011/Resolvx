@@ -144,10 +144,10 @@ for (const file of visibleFiles) {
 }
 
 const js = readFileSync(path.join(root, 'site.js'), 'utf8');
-if (!/const featureCards = \\\$\\\\$\\\\(['"]\\\\[data-feature-card\\\\]['"]\\\\)/.test(js)) {
+if (!js.includes("const featureCards = $$('[data-feature-card]');")) {
   report('site.js: feature filtering must select all feature cards with the collection helper');
 }
-if (!/const results = \\\$\\\\$\\\\(['"]\\\\.global-search-result['"]/.test(js)) {
+if (!js.includes("const results = $$('.global-search-result', globalResults || document);")) {
   report('site.js: global-search arrow navigation must select all results with the collection helper');
 }
 if (!js.includes("if (!overlay.hidden && event.key === 'Tab')")) {
