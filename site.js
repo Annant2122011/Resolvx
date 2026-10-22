@@ -435,6 +435,38 @@
     wikiInput.focus();
   }));
 
+  // The feature page is a catalogue, so let visitors filter it without loading another service.
+  const featureSearchInput = $('[data-feature-search]');
+  const featureCards = $('[data-feature-card]');
+  const featureResultCount = $('[data-feature-result-count]');
+  const featureNoResults = $('[data-feature-no-results]');
+  const applyFeatureSearch = (query) => {
+    const normalized = String(query || '').trim();
+    let visible = 0;
+    featureCards.forEach((card) => {
+      const corpus = (card.textContent || '') + ' ' + (card.dataset.searchKeywords || '');
+      const matches = !normalized || matchesSearchCorpus(corpus, normalized);
+      card.hidden = !matches;
+      if (matches) visible += 1;
+    });
+    if (featureResultCount) {
+      featureResultCount.textContent = normalized
+        ? (visible + ' of ' + featureCards.length + ' capabilities')
+        : (featureCards.length + ' capabilities');
+    }
+    if (featureNoResults) featureNoResults.hidden = !normalized || visible > 0;
+  };
+  if (featureSearchInput) {
+    applyFeatureSearch('');
+    featureSearchInput.addEventListener('input', () => applyFeatureSearch(featureSearchInput.value));
+  }
+  $('[data-clear-feature-search]').forEach((button) => button.addEventListener('click', () => {
+    if (!featureSearchInput) return;
+    featureSearchInput.value = '';
+    applyFeatureSearch('');
+    featureSearchInput.focus();
+  }));
+
   // Full-page translation is opt-in. Only this static documentation page is sent to the configured translation provider.
   const SITE_LANGUAGES = [
     { code: 'en-US', api: 'en', label: 'English', native: 'English' },
