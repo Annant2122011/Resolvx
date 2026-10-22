@@ -144,6 +144,16 @@ for (const file of visibleFiles) {
 }
 
 const js = readFileSync(path.join(root, 'site.js'), 'utf8');
+if (!/const featureCards = \\\$\\\\$\\\\(['"]\\\\[data-feature-card\\\\]['"]\\\\)/.test(js)) {
+  report('site.js: feature filtering must select all feature cards with the collection helper');
+}
+if (!/const results = \\\$\\\\$\\\\(['"]\\\\.global-search-result['"]/.test(js)) {
+  report('site.js: global-search arrow navigation must select all results with the collection helper');
+}
+if (!js.includes("if (!overlay.hidden && event.key === 'Tab')")) {
+  report('site.js: global search must keep keyboard focus inside its modal dialog');
+}
+
 const knownArticleAnchors = [...js.matchAll(/url:\s*['"]wiki\.html#([^'"]+)['"]/g)].map((match) => match[1]);
 for (const anchor of new Set(knownArticleAnchors)) {
   if (!allIds.has(anchor)) report(`site.js: global search points to missing wiki article #${anchor}`);
