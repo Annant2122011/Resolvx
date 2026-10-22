@@ -23,24 +23,11 @@ The website is a product introduction and documentation experience. It does **no
 - The pages deliberately distinguish current capability areas, features that still need live test-guild acceptance, and roadmap-only work. The feature page is the inventory; the wiki explains behavior and limits.
 - The website language selector requests machine translation of public page copy from an external service. It is separate from the bot's server-level message locale and does not connect to Discord or send ticket data.
 
-## Deploy to GitHub Pages with \`resolvx.int.yt\`
+## Hosting and custom domain
 
-1. Create a repository named **QueryFixr** under \`Annant2122011\`. For the simplest setup, make it public.
-2. Upload/push the contents of this project to the repository's \`main\` branch. Keep the \`.github/workflows/pages.yml\` file and \`CNAME\` file at the paths shown.
-3. In **Settings → Pages**, select **GitHub Actions** as the build and deployment source if it is not selected already.
-4. In **Settings → Pages → Custom domain**, enter \`resolvx.int.yt\` and save it. This setting must be made in GitHub; the \`CNAME\` file alone does not configure a custom domain when using a custom Actions workflow.
-5. Wait for the **Deploy QueryFixr website to GitHub Pages** workflow to complete, then check \`https://resolvx.int.yt\`. If GitHub rejects the domain because ownership verification is unresolved, the existing account-level verification issue must be fixed first or GitHub must clarify an alternative.
+The static site is deployed through GitHub Pages. Its custom hostname is configured outside page content in the repository's `CNAME` file, GitHub Pages settings, DNS provider, and any connected Vercel project.
 
-## DNS
-
-The existing site configuration is prepared for \`resolvx.int.yt\`. The supplied DNS configuration expects that host to resolve to GitHub Pages using these A records:
-
-- \`185.199.108.153\`
-- \`185.199.109.153\`
-- \`185.199.110.153\`
-- \`185.199.111.153\`
-
-The GitHub Pages domain-verification TXT challenge is managed separately in the DNS provider. Do not remove the existing challenge record while troubleshooting verification. Domain configuration is intentionally separate from the website redesign.
+To move to a new QueryFixr-branded hostname, first reserve the replacement hostname and configure its DNS and ownership verification. Then update the GitHub Pages custom-domain setting and `CNAME` file together, and update any Vercel domain aliases. Do not point production at an unverified or guessed hostname; it can make the live site unreachable.
 
 ## Notes
 
