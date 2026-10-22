@@ -7,10 +7,10 @@ The website is a product introduction and documentation experience. It does **no
 ## Pages
 
 - \`index.html\` — premium product overview, capability highlights, a local interactive ticket-lifecycle explainer, and cross-site search.
-- \`features.html\` — feature catalogue, detailed usage guides, command references, implementation caveats, and roadmap distinctions.
-- \`wiki.html\` — searchable how-to documentation, setup guidance, lifecycle instructions, recovery limits, a command explorer, and FAQs.
+- \`features.html\` — searchable catalogue of current capability areas, implementation caveats, status labels, and links to detailed wiki guides.
+- \`wiki.html\` — long-form guides for setup, ticket workflows, forms, panels, permissions, recovery, scheduling, localization, troubleshooting, commands, roadmap boundaries, and FAQs.
 - \`styles.css\` — shared visual system, responsive layouts, accessibility and reduced-motion refinements.
-- \`site.js\` — responsive navigation, global search, wiki filtering, command-copy helpers, reading progress, and the local lifecycle explainer.
+- \`site.js\` — responsive navigation, multilingual global search, wiki article/FAQ filtering, feature-catalogue filtering, command-copy helpers, reading progress, opt-in website translation, and the local lifecycle explainer.
 - \`favicon-local.svg\` — self-contained SVG favicon with the official logo embedded locally, plus \`favicon-local.svg\` as the PNG fallback.
 - \`assets/resolvx-logo.png\` — optimized local copy of the official supplied ResolvX logo used in the page header, footer, and CTA artwork.
 
@@ -20,7 +20,8 @@ The website is a product introduction and documentation experience. It does **no
 - Command copy controls copy a documented slash-command path only. They do not execute the command or supply required options.
 - The ticket lifecycle demo changes illustrative text in the browser only. It does not create or edit Discord tickets.
 - The dashboard art and sample requests are clearly presented as a static concept, not live usage data.
-- The pages deliberately distinguish capabilities documented in the repository from those needing live test-guild acceptance and items still on the roadmap.
+- The pages deliberately distinguish current capability areas, features that still need live test-guild acceptance, and roadmap-only work. The feature page is the inventory; the wiki explains behavior and limits.
+- The website language selector requests machine translation of public page copy from an external service. It is separate from the bot's server-level message locale and does not connect to Discord or send ticket data.
 
 ## Deploy to GitHub Pages with \`resolvx.int.yt\`
 
