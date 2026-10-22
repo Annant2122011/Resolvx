@@ -1905,3 +1905,613 @@ body.search-open { overflow:hidden; }
     display: none;
   }
 }
+
+
+/* Responsive quality pass: no clipped copy, cramped hero captions, or horizontal page drift. */
+:root {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+html {
+  scroll-padding-top: 88px;
+}
+body {
+  overflow-x: clip;
+}
+img, video, canvas, svg {
+  max-width: 100%;
+}
+.site-header, .header-brand, .nav-links, .hero, .hero-copy, .hero-art,
+.capability-grid > *, .principle-grid > *, .feature-catalog-grid > *,
+.wiki-shell > *, .wiki-article, .guide-columns > *, .site-footer > * {
+  min-width: 0;
+}
+h1, h2, h3, h4, p, li, summary, small, .brand-tagline, .hero-banner-caption,
+.wiki-article, .feature-guide, .catalog-card, .capability-card, .principle-card {
+  overflow-wrap: anywhere;
+}
+pre, code, kbd, .command-list code, .inline-command-cards code {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+pre {
+  white-space: pre-wrap;
+}
+button, input, select, textarea {
+  max-width: 100%;
+}
+.site-header {
+  gap: clamp(12px, 2vw, 26px);
+}
+.header-brand {
+  flex: 0 1 auto;
+}
+.brand-tagline {
+  white-space: normal;
+  max-width: 275px;
+  line-height: 1.45;
+}
+.hero {
+  grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr);
+  column-gap: clamp(22px, 3.2vw, 42px);
+}
+.hero-copy, .hero-art {
+  min-width: 0;
+}
+.hero h1 {
+  font-size: clamp(43px, 5vw, 70px);
+  letter-spacing: clamp(-3.8px, -.052em, -1.7px);
+  overflow-wrap: normal;
+  text-wrap: balance;
+}
+.hero-lede {
+  font-size: 15px;
+  line-height: 1.8;
+}
+.hero-banner-art {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0;
+  width: 100%;
+  max-width: 600px;
+  min-width: 0;
+  margin-inline: auto;
+  overflow: visible;
+}
+.hero-banner-image {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  max-height: none;
+}
+.hero-banner-caption {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 13px auto 0;
+  padding: 0 8px;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  line-height: 1.6;
+  letter-spacing: .07em;
+  text-align: center;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+.hero-banner-caption .status-dot {
+  flex: 0 0 6px;
+}
+.hero-art::before {
+  pointer-events: none;
+}
+.hero-tags, .hero-actions, .page-hero-meta, .footer-links {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.button, .nav-cta, .quick-search {
+  min-height: 44px;
+}
+.trust-banner, .docs-notice, .section-footnote {
+  min-width: 0;
+}
+.trust-banner > *, .docs-notice > *, .section-footnote > * {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.workflow-demo, .workflow-state-panel, .search-dialog, .global-search-results {
+  min-width: 0;
+  max-width: 100%;
+}
+.workflow-steps {
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+}
+.feature-catalog-grid, .capability-grid, .principle-grid,
+.panel-feature-grid, .mini-card-grid, .fact-grid, .state-grid {
+  grid-template-columns: repeat( auto-fit, minmax(min(100%, 220px), 1fr));
+}
+.wiki-shell {
+  grid-template-columns: minmax(0, 250px) minmax(0, 1fr);
+}
+.wiki-article img, .feature-guide img {
+  max-width: 100%;
+  height: auto;
+}
+.site-footer {
+  row-gap: 14px;
+}
+.site-footer .copyright {
+  overflow-wrap: anywhere;
+}
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+}
+
+@media (max-width: 1100px) and (min-width: 901px) {
+  .site-header {
+    gap: 14px;
+  }
+  .header-brand {
+    gap: 7px;
+  }
+  .brand-tagline {
+    max-width: 190px;
+    font-size: 9px;
+    letter-spacing: 0;
+  }
+  .nav-links {
+    flex-shrink: 0;
+    gap: 14px;
+  }
+  .quick-search {
+    gap: 6px;
+    padding-inline: 9px;
+  }
+  .quick-search kbd {
+    display: none;
+  }
+}
+@media (max-width: 900px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+    padding-top: 58px;
+  }
+  .hero-copy {
+    max-width: 760px;
+    padding-bottom: 0;
+  }
+  .hero-art.hero-banner-art {
+    width: min(100%, 660px);
+    min-height: 0;
+    margin: 8px auto 0;
+  }
+  .hero-banner-image {
+    max-height: none;
+  }
+  .wiki-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 700px) {
+  .wrap {
+    width: calc(100% - 36px);
+  }
+  .site-header {
+    width: calc(100% - 20px);
+    height: auto;
+    min-height: 72px;
+    gap: 8px;
+    padding: 10px 8px;
+  }
+  .header-brand {
+    flex: 1 1 auto;
+    max-width: calc(100% - 46px);
+    gap: 7px;
+  }
+  .header-brand .brand-image {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    padding: 1px;
+    border-radius: 10px;
+  }
+  .header-brand .brand-name {
+    flex: 0 0 auto;
+    font-size: 18px;
+    letter-spacing: -.045em;
+  }
+  .header-brand .brand-tagline {
+    display: inline-flex;
+    flex: 1 1 78px;
+    min-width: 0;
+    max-width: 145px;
+    margin-left: 0;
+    white-space: normal;
+    font-size: 8px;
+    line-height: 1.3;
+    letter-spacing: 0;
+    text-wrap: pretty;
+  }
+  .header-brand .brand-dash {
+    flex: 0 0 auto;
+    align-self: flex-start;
+    margin-right: 1px;
+  }
+  .menu-toggle {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+  }
+  .nav-links {
+    top: calc(100% - 1px);
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 100%;
+    padding: 10px;
+    gap: 4px;
+    z-index: 20;
+  }
+  .nav-link, .nav-cta, .quick-search {
+    width: 100%;
+    min-height: 44px;
+    font-size: 13px;
+  }
+  .hero {
+    width: calc(100% - 36px);
+    padding-top: 42px;
+    padding-bottom: 30px;
+    gap: 18px;
+  }
+  .eyebrow {
+    max-width: 100%;
+    white-space: normal;
+    font-size: 9px;
+    letter-spacing: .075em;
+  }
+  .hero h1 {
+    max-width: 100%;
+    margin: 20px 0 15px;
+    font-size: clamp(40px, 11.2vw, 58px);
+    line-height: 1.08;
+    letter-spacing: -.055em;
+  }
+  .hero-lede {
+    max-width: 100%;
+    font-size: 14px;
+    line-height: 1.75;
+  }
+  .hero-actions {
+    align-items: stretch;
+    gap: 9px;
+    margin-top: 22px;
+  }
+  .hero-actions .button {
+    flex: 1 1 190px;
+    justify-content: center;
+    min-height: 46px;
+    padding: 11px 13px;
+    font-size: 12px;
+  }
+  .hero-proof {
+    align-items: flex-start;
+    line-height: 1.65;
+  }
+  .hero-tags {
+    gap: 7px;
+  }
+  .hero-tags > * {
+    max-width: 100%;
+    font-size: 10px;
+  }
+  .hero-art.hero-banner-art {
+    width: 100%;
+    margin: 5px auto 0;
+    padding: 0;
+  }
+  .hero-banner-image {
+    width: 100%;
+    border-radius: 15px;
+  }
+  .hero-banner-caption {
+    margin-top: 11px;
+    padding-inline: 6px;
+    gap: 6px;
+    font-size: 9px;
+    line-height: 1.65;
+    letter-spacing: .035em;
+  }
+  .section {
+    padding-block: 58px;
+  }
+  .intro-grid {
+    padding-block: 46px;
+    gap: 20px;
+  }
+  .intro-grid h2, .section-heading h2, .faq-intro h2,
+  .faq-preview h2 {
+    font-size: clamp(28px, 8vw, 35px);
+    line-height: 1.2;
+    letter-spacing: -.045em;
+  }
+  .section-heading {
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .section-heading > p, .intro-text p {
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  .capability-grid, .principle-grid, .feature-catalog-grid,
+  .panel-feature-grid, .mini-card-grid, .fact-grid, .state-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .capability-card, .principle-card, .catalog-card {
+    padding: 18px;
+    min-height: 0;
+  }
+  .capability-card h3, .principle-card h3, .catalog-card h3 {
+    font-size: 15px;
+    line-height: 1.45;
+  }
+  .capability-card p, .principle-card p, .catalog-card p,
+  .feature-guide p, .wiki-article > p, .wiki-subsection > p {
+    font-size: 12.5px;
+    line-height: 1.8;
+  }
+  .workflow-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+  }
+  .workflow-demo-header {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .workflow-demo-header .mono {
+    font-size: 9px;
+  }
+  .workflow-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .workflow-step {
+    min-width: 0;
+    min-height: 44px;
+    font-size: 11px;
+  }
+  .workflow-state-panel > p {
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  .feature-library-hero h1, .wiki-hero h1, .page-hero h1 {
+    font-size: clamp(36px, 10vw, 51px);
+    line-height: 1.08;
+    letter-spacing: -.055em;
+    overflow-wrap: anywhere;
+  }
+  .page-hero {
+    padding-top: 55px;
+    padding-bottom: 40px;
+  }
+  .page-hero > p, .wiki-hero-copy > p {
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  .feature-catalog-grid {
+    gap: 10px;
+  }
+  .catalog-card h3 {
+    font-size: 14px;
+  }
+  .catalog-card p, .status-label {
+    font-size: 11px;
+  }
+  .feature-guide {
+    grid-template-columns: 26px minmax(0, 1fr);
+    gap: 12px;
+  }
+  .guide-heading h2, .feature-guide h2, .wiki-article h2 {
+    font-size: clamp(25px, 7.7vw, 31px);
+    line-height: 1.2;
+    letter-spacing: -.045em;
+  }
+  .guide-columns, .guide-columns > * {
+    grid-template-columns: minmax(0, 1fr);
+    min-width: 0;
+  }
+  .guide-lede, .feature-guide .callout, .wiki-article .article-lede {
+    font-size: 12.5px;
+    line-height: 1.8;
+  }
+  .state-grid > div, .panel-feature-grid > div, .mini-card-grid > a {
+    min-width: 0;
+  }
+  .wiki-hero {
+    grid-template-columns: minmax(0, 1fr);
+    padding-top: 48px;
+    gap: 20px;
+  }
+  .wiki-search-card {
+    width: 100%;
+    max-width: 100%;
+  }
+  .wiki-shell {
+    grid-template-columns: minmax(0, 1fr);
+    padding-bottom: 45px;
+  }
+  .wiki-sidebar {
+    max-width: 100%;
+    overflow: visible;
+  }
+  .wiki-toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+  .wiki-toc-link {
+    max-width: 100%;
+    min-height: 35px;
+    font-size: 10px;
+  }
+  .wiki-article {
+    padding: 24px 0 32px;
+  }
+  .wiki-article h3 {
+    font-size: 14px;
+  }
+  .wiki-article > p, .wiki-subsection > p, .wiki-article li,
+  .numbered-guide p, .checklist li {
+    font-size: 12.5px;
+    line-height: 1.8;
+  }
+  .lifecycle-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+    padding: 12px;
+    font-size: 11px;
+  }
+  .lifecycle-row > span:last-child {
+    grid-column: auto;
+    font-size: 10px;
+  }
+  .inline-command-cards, .command-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .inline-command-cards code, .command-list code {
+    font-size: 10px;
+  }
+  .numbered-guide > li {
+    grid-template-columns: 26px minmax(0, 1fr);
+    gap: 9px;
+  }
+  .docs-notice, .trust-banner {
+    width: calc(100% - 36px);
+    padding: 14px;
+  }
+  .docs-notice p, .trust-banner p {
+    font-size: 11.5px;
+    line-height: 1.7;
+  }
+  .faq-preview {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+  }
+  .faq-preview-list > a {
+    grid-template-columns: 25px minmax(0, 1fr) 16px;
+    gap: 9px;
+  }
+  .faq-preview-list strong {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .faq-preview-list small {
+    font-size: 10px;
+    line-height: 1.6;
+  }
+  .closing-cta {
+    width: calc(100% - 36px);
+    padding: 28px 22px;
+  }
+  .cta-content h2 {
+    font-size: clamp(28px, 8vw, 35px);
+    line-height: 1.2;
+  }
+  .cta-content p {
+    max-width: 100%;
+    font-size: 13px;
+  }
+  .site-footer {
+    width: calc(100% - 36px);
+    gap: 14px;
+    padding-block: 20px;
+  }
+  .site-footer > p {
+    flex: 1 1 140px;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+  .footer-links {
+    width: 100%;
+    gap: 12px 18px;
+    font-size: 11px;
+  }
+  .copyright {
+    font-size: 9px;
+    line-height: 1.6;
+  }
+  .search-overlay {
+    padding: max(28px, 7vh) 10px 12px;
+  }
+  .search-dialog {
+    width: 100%;
+    max-width: 100%;
+  }
+  .global-search-result {
+    grid-template-columns: 25px minmax(0, 1fr) 18px;
+    gap: 8px;
+  }
+  .global-search-result small {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+@media (max-width: 390px) {
+  .wrap, .hero, .docs-notice, .trust-banner, .closing-cta, .site-footer {
+    width: calc(100% - 28px);
+  }
+  .site-header {
+    width: calc(100% - 12px);
+    padding-inline: 6px;
+  }
+  .header-brand {
+    gap: 5px;
+  }
+  .header-brand .brand-image {
+    width: 31px;
+    height: 31px;
+    flex-basis: 31px;
+  }
+  .header-brand .brand-name {
+    font-size: 17px;
+  }
+  .header-brand .brand-tagline {
+    max-width: 96px;
+    flex-basis: 75px;
+    font-size: 7.5px;
+    line-height: 1.25;
+  }
+  .header-brand .brand-dash {
+    display: none;
+  }
+  .menu-toggle {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+  }
+  .hero h1 {
+    font-size: clamp(37px, 10.7vw, 44px);
+  }
+  .hero-banner-caption {
+    font-size: 8.5px;
+  }
+  .workflow-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-banner-art *, .site-header *, .site-footer * {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
