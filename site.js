@@ -157,7 +157,7 @@
     { title: 'Project roadmap and status labels', description: 'What is documented, what needs live verification, and what remains planned.', url: 'wiki.html#roadmap', keywords: 'roadmap planned status future workflow graph ai sla csat knowledge base' },
     { title: 'How ticket recovery works', description: 'Native deletion versus confirmed deletion, archive contents, and replay limits.', url: 'wiki.html#recovery', keywords: 'restore deleted ticket channel recovery mistake review replay archive' },
     { title: 'How to build a form', description: 'Create fields, add validation and conditions, template, activate, and test.', url: 'wiki.html#forms', keywords: 'create form fields validation conditional activate template' },
-    { title: 'How to publish a ticket panel', description: 'Configure buttons and role access, preview, then publish a panel snapshot.', url: 'wiki.html#panels', keywords: 'create panel configure button label emoji role preview publish' }
+    { title: 'How to publish a ticket panel', description: 'Configure buttons and role access, preview, then publish a panel snapshot.', url: 'wiki.html#panels', keywords: 'create panel configure button label emoji role preview publish' },
     { title: 'Language and automation settings', description: 'Choose supported bot-message locales and configure time zones, inactivity rules, and ticket workspace modes.', url: 'wiki.html#language-automation', keywords: 'language locale translation localization internationalization multilingual server-language support-hours timezone time-zone inactivity idle auto-close thread channel workspace' },
   ];
 
