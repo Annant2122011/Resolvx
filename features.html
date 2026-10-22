@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#080a12">
-  <meta name="description" content="A detailed, transparent inventory of ResolvX support features: ticket lifecycle, forms, panel builders, collaboration, audit, reporting, and recovery.">
+  <meta name="description" content="A searchable inventory of ResolvX capabilities currently represented in the bot project, with direct links to detailed wiki guides and clear implementation boundaries.">
   <meta property="og:title" content="ResolvX Feature Library">
-  <meta property="og:description" content="Understand what each ResolvX feature is for, how it is intended to work, and how administrators use it.">
+  <meta property="og:description" content="Scan current ResolvX feature areas, then open the wiki for detailed setup, workflow, and troubleshooting instructions.">
   <meta property="og:type" content="website">
   <title>Feature Library — ResolvX</title>
   <link rel="icon" href="favicon-local.svg?v=3" type="image/svg+xml" sizes="any">
@@ -32,10 +32,10 @@
   <main>
     <section class="page-hero wrap feature-library-hero">
       <div class="eyebrow"><span class="status-dot"></span> THE RESOLVX CAPABILITY MAP</div>
-      <h1>A support workflow,<br><span class="gradient-text">explained feature by feature.</span></h1>
-      <p>ResolvX is designed for communities that need more than a channel-opening button. This library explains the purpose, configuration path, day-to-day use, and current implementation caveats for each major capability.</p>
-      <div class="hero-actions hero-actions-centered"><a class="button button-primary" href="#feature-catalog">Browse the full library <span aria-hidden="true">↓</span></a><a class="button button-quiet" href="wiki.html">Open the detailed wiki <span aria-hidden="true">↗</span></a></div>
-      <div class="feature-status-legend"><span><i class="status-mark status-code"></i> Documented in the repository</span><span><i class="status-mark status-check"></i> Needs live acceptance testing</span><span><i class="status-mark status-roadmap"></i> Planned direction</span></div>
+      <h1>Current capabilities,<br><span class="gradient-text">catalogued feature by feature.</span></h1>
+      <p>This page is the searchable inventory, not the long-form manual. It lists capability areas represented in the current project and links each one to a detailed wiki guide. Setup and live acceptance may vary by server.</p>
+      <div class="hero-actions hero-actions-centered"><a class="button button-primary" href="#feature-catalog">Browse feature index <span aria-hidden="true">↓</span></a><a class="button button-quiet" href="wiki.html">Open the detailed wiki <span aria-hidden="true">↗</span></a></div>
+      <div class="feature-status-legend"><span><i class="status-mark status-code"></i> Current source/documentation scope</span><span><i class="status-mark status-check"></i> Setup or live validation may be required</span><span><i class="status-mark status-roadmap"></i> Roadmap items are excluded from this catalogue</span></div>
     </section>
 
     <section class="feature-overview wrap" id="feature-catalog">
@@ -43,7 +43,7 @@
       <div class="feature-filter" role="search">
         <label for="feature-search">FIND A FEATURE</label>
         <input id="feature-search" type="search" data-feature-search placeholder="Try “thread”, “report”, “restore”, or “language”…" autocomplete="off">
-        <span class="feature-filter-count" data-feature-result-count>27 capabilities</span>
+        <span class="feature-filter-count" data-feature-result-count>28 capabilities</span>
         <button type="button" data-clear-feature-search>Clear</button>
       </div>
       <div class="feature-catalog-grid" data-feature-grid>
@@ -74,6 +74,7 @@
         <a class="catalog-card" href="wiki.html#first-steps" data-feature-card data-search-keywords="setup install restore repair normal repair storage repair refresh reconcile category channel system missing ticket records"><span class="catalog-number">25</span><span class="catalog-category">OPERATIONS</span><h3>Setup, restore, repair & refresh</h3><p>Create core support infrastructure, repair managed resources, reconcile missing ticket records, and refresh panels.</p><span class="status-label status-label-review">Operator action</span></a>
         <a class="catalog-card" href="wiki.html#storage-deployment" data-feature-card data-search-keywords="CI GitHub Actions build test self update watchdog systemd deployment auto deploy release host restart update automation"><span class="catalog-number">26</span><span class="catalog-category">OPERATIONS</span><h3>CI & optional self-update watchdog</h3><p>Use GitHub Actions for automated checks and optionally configure a server-side deployment/update watchdog.</p><span class="status-label status-label-review">Operator configured</span></a>
         <a class="catalog-card" href="wiki.html#premium-demo" data-feature-card data-search-keywords="premium demo tier entitlement billing payment subscription checkout paid pro toggle test simulated fake"><span class="catalog-number">27</span><span class="catalog-category">ENTITLEMENTS</span><h3>Premium demo controls</h3><p>Inspect or toggle a demo entitlement state for testing; this is not a live payment or subscription system.</p><span class="status-label status-label-review">Demo only</span></a>
+        <a class="catalog-card" href="wiki.html#permissions-safety" data-feature-card data-search-keywords="permissions authorization role administrator manage server staff access security private channels threads destructive action reset confirmation privacy safety"><span class="catalog-number">28</span><span class="catalog-category">SECURITY</span><h3>Permission checks & protected actions</h3><p>Apply administrative gates, role and ticket-access checks, and confirmation for supported destructive operations.</p><span class="status-label status-label-review">Live validation required</span></a>
       </div>
       <div class="feature-no-results" data-feature-no-results hidden><strong>No matching features</strong><p>Try a related term such as “ticket”, “claim”, “database”, “schedule”, “report”, or “translation”.</p><button type="button" class="button button-quiet" data-clear-feature-search>Clear search</button></div>
       <div class="feature-scope-note"><span class="scope-note-mark">i</span><div><strong>Scope and verification note</strong><p>The catalogue describes capabilities represented in the current project source and documentation. It is not a guarantee that every permission or interaction has been validated in your production guild. Real payment billing, a public dashboard/OAuth, AI answers, a knowledge base/RAG, quick replies, a general workflow graph, a full SLA engine, CSAT surveys, public API and multi-channel support are not presented as current features. <a href="wiki.html#roadmap">See the roadmap and status definitions.</a></p></div></div>
