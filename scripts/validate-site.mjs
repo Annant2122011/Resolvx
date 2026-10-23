@@ -130,6 +130,26 @@ for (const file of htmlFiles) {
     const attrs = attributes(match[0]);
     if (!/\b(?:noopener|noreferrer)\b/i.test(attrs.rel || '')) report(`${file}: target="_blank" link should include rel="noopener noreferrer": ${match[0].slice(0, 100)}`);
   }
+  for (const match of source.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/gi)) {
+    const attrs = attributes(\`<button \${match[1]}>\`);
+    const readableText = match[2]
+      .replace(/<[^>]*\baria-hidden=["']true["'][^>]*>[\s\S]*?<\/[^>]+>/gi, ' ')
+      .replace(/<svg\b[\s\S]*?<\/svg>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&(?:nbsp|#160);/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!(attrs['aria-label'] || attrs['aria-labelledby'] || attrs.title || readableText)) {
+      report(\`\${file}: button has no accessible name: \${match[0].slice(0, 100)}\`);
+    }
+    if (attrs['aria-controls']) {
+      for (const controlledId of attrs['aria-controls'].split(/\s+/)) {
+        if (controlledId && !pageIds.get(file)?.has(controlledId)) {
+          report(\`\${file}: button aria-controls references missing id="\${controlledId}"\`);
+        }
+      }
+    }
+  }
   const stylesPos = source.indexOf('href="styles.css"');
   const mobilePos = source.indexOf('href="mobile.css"');
   if (stylesPos < 0 || mobilePos < 0 || mobilePos < stylesPos) {
@@ -202,6 +222,13 @@ if (!js.includes("const results = $$('.global-search-result', globalResults || d
 if (!js.includes("if (!overlay.hidden && event.key === 'Tab')")) {
   report('site.js: global search must keep keyboard focus inside its modal dialog');
 }
+if (
+  !js.includes("const mobileViewport = window.matchMedia('(max-width: 760px)');") ||
+  !js.includes("mobileViewport.addEventListener('change', syncNavigationForViewport)") ||
+  !js.includes("mobileViewport.addListener(syncNavigationForViewport)")
+) {
+  report('site.js: mobile navigation must reset safely across viewport changes, including older Safari');
+}
 
 const knownArticleAnchors = [...js.matchAll(/url:\s*['"]wiki\.html#([^'"]+)['"]/g)].map((match) => match[1]);
 for (const anchor of new Set(knownArticleAnchors)) {
@@ -212,6 +239,18 @@ if (knownArticleAnchors.length === 0) report('site.js: no wiki destinations foun
 for (const cssFile of ['styles.css', 'mobile.css']) {
   const source = readFileSync(path.join(root, cssFile), 'utf8');
   checkCssBraces(cssFile, source);
+  if (cssFile === 'mobile.css') {
+    const mobileContracts = [
+      [/\.nav-links\s*\{[^}]*display:\s*none/s, 'mobile navigation must start collapsed'],
+      [/\.nav-links\.open\s*\{[^}]*display:\s*flex/s, 'mobile navigation must have an explicit open state'],
+      [/\.nav-links \.nav-link,\s*\.nav-links \.nav-cta,\s*\.nav-links \.quick-search\s*\{[^}]*min-height:\s*46px/s, 'mobile navigation items must keep touch-sized targets'],
+      [/\.wiki-toc\s*\{[^}]*overflow-x:\s*auto/s, 'mobile wiki contents rail must scroll horizontally'],
+      [/\.global-search-form input,\s*\.wiki-search-input input,\s*#wiki-search,\s*\[data-global-search\]\s*\{[^}]*font-size:\s*16px/s, 'mobile search inputs must use at least 16px text to avoid iOS auto-zoom'],
+    ];
+    for (const [pattern, message] of mobileContracts) {
+      if (!pattern.test(source)) report(\`mobile.css: \${message}\`);
+    }
+  }
   for (const match of source.matchAll(/url\(\s*(['"]?)([^'")]+)\1\s*\)/gi)) {
     const target = match[2].trim();
     if (target && !target.startsWith('#')) checkRelativeReference(cssFile, target, 'CSS url()');
