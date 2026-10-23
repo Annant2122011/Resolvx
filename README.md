@@ -15,7 +15,7 @@ The website is a product introduction and documentation experience. It does **no
 - `mobile.css` — dedicated mobile layout overrides for navigation, responsive content, touch targets, mobile wiki navigation, and short-screen search.
 - \`site.js\` — responsive navigation, multilingual global search, wiki article/FAQ filtering, feature-catalogue filtering, command-copy helpers, reading progress, opt-in website translation, and the local lifecycle explainer.
 - The supplied transparent QueryFixr logo PNG is used directly for the browser favicon and Apple touch icon: `https://i.ibb.co/fdRDWXbH/3v-OKZCYL0-Rqkdu-OQ4t-PKA-Xt-Cc-OQu-N-Picsart-Ai-Image-Enhancer.png`. The icons and full-size brand artwork are externally hosted.
-- The supplied QueryFixr wordmark is loaded from its image-host URL in the page header, footer, and CTA artwork.
+- The supplied full-size QueryFixr wordmark appears in the header; the transparent QF mark is used for the favicon, Apple touch icon, footer, and CTA artwork.
 - If the external wordmark or hero artwork fails to load, the site displays a local text/gradient fallback instead of leaving broken-image icons.
 
 ## Interaction notes
@@ -36,3 +36,11 @@ To move to a new QueryFixr-branded hostname, first reserve the replacement hostn
 ## Notes
 
 The public invite is intentionally omitted until a verified bot invitation URL is supplied. The feature and wiki pages are documentation, not a connected admin dashboard. The bot repository's command examples may still use the \`/supportforge\` root even though the product brand is QueryFixr; always use the command names registered by the deployed bot.
+
+
+## Search, translation, and brand assets
+
+- Wiki search, the feature catalogue filter, global search, and website translation share the main site script. A startup error in any global initialization must be treated as a blocker for all page interactions.
+- Global search uses the button or `Alt+K`; Ctrl+K is intentionally not intercepted because browsers reserve it for their own search/address UI.
+- `favicon.svg` provides a transparent 512 × 512 square view of the supplied QF mark. A direct PNG favicon and Apple touch icon remain as fallbacks using the same artwork.
+- The website language picker is inserted into navigation and translates public page text through an external service. The translation service may be unavailable; code blocks and command names are excluded.
