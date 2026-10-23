@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   const $ = (selector, root = document) => root.querySelector(selector);
-  const $ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+  const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
 
   // Remote artwork must not leave broken-image icons in the header or hero.
   function installExternalImageFallbacks() {
