@@ -914,6 +914,9 @@
   const translateUiCopy = (code, key) => (SITE_LANGUAGE_UI[code] || SITE_LANGUAGE_UI['en-US'])[key] || SITE_LANGUAGE_UI['en-US'][key];
   function collectTranslatableSegments() {
     const segments = [];
+    if (defaultDocumentTitle && defaultDocumentTitle.trim().length > 1) {
+      segments.push({ text: defaultDocumentTitle, apply: (translated) => { document.title = translated; } });
+    }
     const walker = document.createTreeWalker(document.documentElement, NodeFilter.SHOW_TEXT);
     let node;
     while ((node = walker.nextNode())) {
