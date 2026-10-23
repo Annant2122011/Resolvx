@@ -960,7 +960,7 @@
   }
   async function requestTranslationBatch(endpoint, values, targetApi) {
     const controller = typeof AbortController === 'function' ? new AbortController() : null;
-    const timeoutMs = endpoint === SAME_ORIGIN_TRANSLATION_ENDPOINT ? 8000 : 4000;
+    const timeoutMs = endpoint === SAME_ORIGIN_TRANSLATION_ENDPOINT ? 24000 : 4000;
     const timeoutId = controller ? window.setTimeout(() => controller.abort(), timeoutMs) : null;
     try {
       const response = await fetch(endpoint, {
