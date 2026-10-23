@@ -91,7 +91,11 @@ async function requestEndpoint(endpoint, texts, target, parentSignal) {
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
     const body = { q: texts, source: 'en', target, format: 'text' };
-    if (process.env.LIBRETRANSLATE_API_KEY) body.api_key = process.env.LIBRETRANSLATE_API_KEY;
+    const configuredEndpoint = String(process.env.LIBRETRANSLATE_ENDPOINT || '').trim();
+    // Never disclose a configured service key to third-party fallback mirrors.
+    if (process.env.LIBRETRANSLATE_API_KEY && configuredEndpoint && endpoint === configuredEndpoint) {
+      body.api_key = process.env.LIBRETRANSLATE_API_KEY;
+    }
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
