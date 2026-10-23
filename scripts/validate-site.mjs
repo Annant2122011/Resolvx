@@ -179,7 +179,7 @@ for (const file of htmlFiles) {
 
 const suppliedLogoUrl = 'https://i.ibb.co/fdRDWXbH/3v-OKZCYL0-Rqkdu-OQ4t-PKA-Xt-Cc-OQu-N-Picsart-Ai-Image-Enhancer.png';
 for (const file of htmlFiles) {
-  const faviconTag = pageContents.get(file).match(/<link\\b(?=[^>]*\\brel="icon")[^>]*>/i)?.[0];
+  const faviconTag = pageContents.get(file).match(/<link\b(?=[^>]*\brel="icon")[^>]*>/i)?.[0];
   const favicon = faviconTag ? attributes(faviconTag) : {};
   if (favicon.href !== suppliedLogoUrl || (favicon.type || '').toLowerCase() !== 'image/png') {
     report(`${file}: favicon must use the supplied transparent QueryFixr PNG`);
