@@ -21,14 +21,25 @@ function attributes(tag) {
 }
 
 function isExternal(url) {
-  return /^(?:https?:|mailto:|tel:|data:|javascript:|blob:)/i.test(url) || url.startsWith('//');
+  return /^(?:https?:|mailto:|tel:|data:|blob:)/i.test(url) || url.startsWith('//');
 }
 
 function checkRelativeReference(fromFile, rawUrl, kind) {
   const url = rawUrl.trim();
-  if (!url || isExternal(url)) return;
+  if (!url) return;
+  if (/^javascript:/i.test(url)) {
+    report(`${fromFile}: unsafe javascript URL in ${kind}: ${url}`);
+    return;
+  }
+  if (isExternal(url)) return;
   const [beforeHash, rawFragment] = url.split('#', 2);
-  const fragment = rawFragment ? decodeURIComponent(rawFragment) : '';
+  let fragment = '';
+  try {
+    fragment = rawFragment ? decodeURIComponent(rawFragment) : '';
+  } catch {
+    report(`${fromFile}: malformed URI fragment in ${kind}: ${url}`);
+    return;
+  }
   const beforeQuery = (beforeHash || '').split('?')[0];
   const targetRelative = !beforeQuery
     ? fromFile
@@ -83,6 +94,9 @@ function checkCssBraces(file, source) {
 
 for (const file of htmlFiles) {
   const source = readFileSync(path.join(root, file), 'utf8');
+  const htmlTag = source.match(/<html\b[^>]*>/i)?.[0] || '';
+  if (!/\blang\s*=/i.test(htmlTag)) report(`${file}: root html element is missing a language declaration`);
+  if (!/<meta\b[^>]*name=["']viewport["']/i.test(source)) report(`${file}: responsive viewport meta tag is missing`);
   pageContents.set(file, source);
   const ids = new Set();
   for (const match of source.matchAll(/\bid=["']([^"']+)["']/g)) {
@@ -103,6 +117,19 @@ for (const file of htmlFiles) {
   for (const match of source.matchAll(/<img\b[^>]*>/gi)) {
     if (!Object.hasOwn(attributes(match[0]), 'alt')) report(`${file}: image is missing an alt attribute: ${match[0].slice(0, 100)}`);
   }
+  for (const match of source.matchAll(/<button\b[^>]*>/gi)) {
+    if (!/\s+type\s*=/i.test(match[0])) report(`${file}: button is missing an explicit type: ${match[0].slice(0, 100)}`);
+  }
+  const labelForIds = new Set([...source.matchAll(/<label\b[^>]*\bfor=["']([^"']+)["']/gi)].map((match) => match[1]));
+  for (const match of source.matchAll(/<(?:input|select|textarea)\b[^>]*>/gi)) {
+    const attrs = attributes(match[0]);
+    const named = attrs['aria-label'] || attrs['aria-labelledby'] || (attrs.id && labelForIds.has(attrs.id));
+    if (!named && attrs.type !== 'hidden') report(`${file}: form control has no associated label or accessible name: ${match[0].slice(0, 100)}`);
+  }
+  for (const match of source.matchAll(/<a\b[^>]*target=["']_blank["'][^>]*>/gi)) {
+    const attrs = attributes(match[0]);
+    if (!/\b(?:noopener|noreferrer)\b/i.test(attrs.rel || '')) report(`${file}: target="_blank" link should include rel="noopener noreferrer": ${match[0].slice(0, 100)}`);
+  }
   const stylesPos = source.indexOf('href="styles.css"');
   const mobilePos = source.indexOf('href="mobile.css"');
   if (stylesPos < 0 || mobilePos < 0 || mobilePos < stylesPos) {
@@ -111,14 +138,25 @@ for (const file of htmlFiles) {
 }
 
 const allIds = pageIds.get('wiki.html') || new Set();
-const wikiArticles = [...pageContents.get('wiki.html').matchAll(/<article\\b[^>]*\\bdata-wiki-article\\b/g)].length;
+const wikiArticles = [...pageContents.get('wiki.html').matchAll(/<article\b[^>]*\bdata-wiki-article\b/g)].length;
 const tocLinks = [];
-for (const match of pageContents.get('wiki.html').matchAll(/<a\\b[^>]*>/gi)) {
+for (const match of pageContents.get('wiki.html').matchAll(/<a\b[^>]*>/gi)) {
   const attrs = attributes(match[0]);
-  if ((attrs.class || '').split(/\\s+/).includes('wiki-toc-link') && (attrs.href || '').startsWith('#')) {
+  if ((attrs.class || '').split(/\s+/).includes('wiki-toc-link') && (attrs.href || '').startsWith('#')) {
     tocLinks.push(attrs.href.slice(1));
   }
 }
+if (wikiArticles === 0) report('wiki.html: no wiki articles were detected');
+const wikiSource = pageContents.get('wiki.html');
+const articleTags = [...wikiSource.matchAll(/<article\b[^>]*\bdata-wiki-article\b[^>]*>/gi)].map((match) => match[0]);
+const articleIds = articleTags.map((tag) => attributes(tag).id).filter(Boolean);
+if (articleIds.length !== wikiArticles) report(`wiki.html: ${wikiArticles} articles were detected but only ${articleIds.length} have IDs`);
+if (tocLinks.length === 0) report('wiki.html: no table-of-contents links were detected');
+const articleIdSet = new Set(articleIds);
+const tocIdSet = new Set(tocLinks);
+if (tocIdSet.size !== tocLinks.length) report('wiki.html: table of contents contains duplicate article targets');
+for (const anchor of articleIds) if (!tocIdSet.has(anchor)) report(`wiki.html: article #${anchor} is missing from the table of contents`);
+for (const anchor of tocLinks) if (!articleIdSet.has(anchor)) report(`wiki.html: table-of-contents target #${anchor} is not a wiki article`);
 if (tocLinks.length !== wikiArticles) {
   report(`wiki.html: table of contents has ${tocLinks.length} links for ${wikiArticles} articles`);
 }
@@ -144,6 +182,17 @@ for (const file of visibleFiles) {
 }
 
 const js = readFileSync(path.join(root, 'site.js'), 'utf8');
+const jsLines = js.split(/\r?\n/).map((line) => line.trimStart());
+for (const unsafePrefix of [
+  "$('[data-wiki-faq]', article).forEach",
+  "$('[data-clear-feature-search]').forEach",
+  "const focusable = $('input:not([disabled])",
+]) {
+  if (jsLines.some((line) => line.startsWith(unsafePrefix))) report(`site.js: invalid single-element collection operation: ${unsafePrefix}`);
+}
+if (!jsLines.some((line) => line.startsWith("const focusable = $$('input:not([disabled])"))) {
+  report('site.js: search-dialog focus trapping must collect all focusable elements');
+}
 if (!js.includes("const featureCards = $$('[data-feature-card]');")) {
   report('site.js: feature filtering must select all feature cards with the collection helper');
 }
@@ -161,7 +210,12 @@ for (const anchor of new Set(knownArticleAnchors)) {
 if (knownArticleAnchors.length === 0) report('site.js: no wiki destinations found in the global search index');
 
 for (const cssFile of ['styles.css', 'mobile.css']) {
-  checkCssBraces(cssFile, readFileSync(path.join(root, cssFile), 'utf8'));
+  const source = readFileSync(path.join(root, cssFile), 'utf8');
+  checkCssBraces(cssFile, source);
+  for (const match of source.matchAll(/url\(\s*(['"]?)([^'")]+)\1\s*\)/gi)) {
+    const target = match[2].trim();
+    if (target && !target.startsWith('#')) checkRelativeReference(cssFile, target, 'CSS url()');
+  }
 }
 
 if (errors.length) {

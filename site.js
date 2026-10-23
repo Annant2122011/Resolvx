@@ -260,10 +260,11 @@
   const globalInput = $('[data-global-search]');
   const globalResults = $('[data-global-results]');
   let previousFocus = null;
-  let visibleSearchItems = [];
   const openSearch = () => {
     if (!overlay || !globalInput) return;
-    previousFocus = document.activeElement;
+    const activeElement = document.activeElement;
+    const mobileMenuWasOpen = Boolean(menuToggle && nav && menuToggle.getAttribute('aria-expanded') === 'true' && nav.contains(activeElement));
+    previousFocus = mobileMenuWasOpen ? menuToggle : activeElement;
     if (menuToggle && nav) {
       nav.classList.remove('open');
       menuToggle.setAttribute('aria-expanded', 'false');
@@ -283,8 +284,7 @@
   };
   const renderGlobalResults = (query) => {
     if (!globalResults) return;
-    const normalized = query.trim().toLowerCase();
-    visibleSearchItems = searchItems.filter((item) => matchesSearchCorpus(searchItemCorpus(item), query));
+    const visibleSearchItems = searchItems.filter((item) => matchesSearchCorpus(searchItemCorpus(item), query));
     globalResults.replaceChildren();
     if (!visibleSearchItems.length) {
       const empty = document.createElement('p');
@@ -334,7 +334,7 @@
       }
       if (!overlay.hidden && event.key === 'Tab') {
         const dialog = $('.search-dialog', overlay);
-        const focusable = $('input:not([disabled]), button:not([disabled]), a[href], select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])', dialog)
+        const focusable = $$('input:not([disabled]), button:not([disabled]), a[href], select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])', dialog)
           .filter((element) => !element.hidden && element.getAttribute('aria-hidden') !== 'true');
         if (!focusable.length) {
           event.preventDefault();
@@ -386,7 +386,7 @@
   const originalWikiFaqText = new WeakMap();
   wikiArticles.forEach((article) => {
     originalWikiArticleText.set(article, article.textContent || '');
-    $('[data-wiki-faq]', article).forEach((item) => originalWikiFaqText.set(item, item.textContent || ''));
+    $$('[data-wiki-faq]', article).forEach((item) => originalWikiFaqText.set(item, item.textContent || ''));
   });
   const FAQ_SEARCH_KEYWORDS = {
     'What does QueryFixr do?': 'purpose overview discord support ticket helpdesk request management',
@@ -496,7 +496,7 @@
     applyFeatureSearch('');
     featureSearchInput.addEventListener('input', () => applyFeatureSearch(featureSearchInput.value));
   }
-  $('[data-clear-feature-search]').forEach((button) => button.addEventListener('click', () => {
+  $$('[data-clear-feature-search]').forEach((button) => button.addEventListener('click', () => {
     if (!featureSearchInput) return;
     featureSearchInput.value = '';
     applyFeatureSearch('');
@@ -550,7 +550,6 @@
     'cs-CZ': { label: 'Jazyk', button: 'Přeložit', busy: 'Probíhá překlad stránky…', done: 'Stránka byla strojově přeložena. Formulace mohou být nepřesné; kód a příkazy zůstávají beze změny.', original: 'Byl obnoven původní anglický text.', failed: 'Překladová služba není dostupná. Byl obnoven anglický text.', },
     'sv-SE': { label: 'Språk', button: 'Översätt', busy: 'Översätter sidan…', done: 'Sidan har maskinöversatts. Formuleringar kan vara oprecisa; kod och kommandon är oförändrade.', original: 'Den ursprungliga engelska texten har återställts.', failed: 'Översättningstjänsten är inte tillgänglig. Den engelska texten har återställts.', },
   };
-  let activeSiteLocale = 'en-US';
   const originalTextNodes = new Map();
   const originalAttributeValues = new Map();
   const defaultDocumentTitle = document.title;
@@ -562,7 +561,6 @@
     'https://libretranslate.de/translate',
   ];
   const normalizeSiteLocale = (value) => SITE_LANGUAGES.find((language) => language.code.toLowerCase() === String(value || '').toLowerCase() || language.api === String(value || '').toLowerCase())?.code || 'en-US';
-  const siteLanguageName = (code) => SITE_LANGUAGES.find((language) => language.code === code)?.native || 'English';
   const translateUiCopy = (code, key) => (SITE_LANGUAGE_UI[code] || SITE_LANGUAGE_UI['en-US'])[key] || SITE_LANGUAGE_UI['en-US'][key];
   function collectTranslatableSegments() {
     const segments = [];
@@ -648,7 +646,6 @@
     try {
       restoreOriginalPageText();
       if (locale === 'en-US') {
-        activeSiteLocale = locale;
         statusNode.textContent = translateUiCopy(locale, 'original');
         try { localStorage.setItem('queryfixr-site-locale', locale); } catch (_) {}
         return;
@@ -676,7 +673,6 @@
       }
       await flush();
       segments.forEach((segment, index) => segment.apply(translated[index] || segment.text));
-      activeSiteLocale = locale;
       document.documentElement.lang = locale;
       document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
       if (wikiInput) applyWikiSearch(wikiInput.value);
@@ -684,7 +680,6 @@
       statusNode.textContent = translateUiCopy(locale, 'done');
     } catch (error) {
       restoreOriginalPageText();
-      activeSiteLocale = 'en-US';
       statusNode.textContent = translateUiCopy(locale, 'failed');
       console.warn('QueryFixr site translation failed:', error);
     } finally {
