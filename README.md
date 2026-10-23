@@ -16,6 +16,7 @@ The website is a product introduction and documentation experience. It does **no
 - \`site.js\` — responsive navigation, multilingual global search, wiki article/FAQ filtering, feature-catalogue filtering, command-copy helpers, reading progress, opt-in website translation, and the local lifecycle explainer.
 - `favicon-local.svg` — fallback SVG wrapper pointing to the supplied QueryFixr icon; site pages load the icon image directly as the favicon.
 - The supplied QueryFixr wordmark is loaded from its image-host URL in the page header, footer, and CTA artwork.
+- If the external wordmark or hero artwork fails to load, the site displays a local text/gradient fallback instead of leaving broken-image icons.
 
 ## Interaction notes
 
@@ -24,7 +25,7 @@ The website is a product introduction and documentation experience. It does **no
 - The ticket lifecycle demo changes illustrative text in the browser only. It does not create or edit Discord tickets.
 - The dashboard art and sample requests are clearly presented as a static concept, not live usage data.
 - The pages deliberately distinguish current capability areas, features that still need live test-guild acceptance, and roadmap-only work. The feature page is the inventory; the wiki explains behavior and limits.
-- The website language selector requests machine translation of public page copy from an external service. It is separate from the bot's server-level message locale and does not connect to Discord or send ticket data.
+- The website language selector requests machine translation of public page copy from an external service. Requests time out after 10 seconds per endpoint attempt and can fall back to a secondary endpoint. It is separate from the bot's server-level message locale and does not connect to Discord or send ticket data. Do not put API secrets in browser-side configuration; this static site cannot keep client-side keys private.
 
 ## Hosting and custom domain
 
@@ -34,4 +35,4 @@ To move to a new QueryFixr-branded hostname, first reserve the replacement hostn
 
 ## Notes
 
-The public invite is intentionally omitted until a verified bot invitation URL is supplied. The feature and wiki pages are documentation, not a connected admin dashboard. The bot repository's command examples may still use the \`/qf\` root even though the product brand is QueryFixr; always use the command names registered by the deployed bot.
+The public invite is intentionally omitted until a verified bot invitation URL is supplied. The feature and wiki pages are documentation, not a connected admin dashboard. The bot repository's command examples may still use the \`/supportforge\` root even though the product brand is QueryFixr; always use the command names registered by the deployed bot.
