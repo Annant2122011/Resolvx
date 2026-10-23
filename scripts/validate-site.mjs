@@ -177,7 +177,7 @@ for (const file of htmlFiles) {
   }
 }
 
-const suppliedLogoUrl = 'https://i.ibb.co/fdRDWXbH/3v-OKZCYL0-Rqkdu-OQ4t-PKA-Xt-Cc-OQu-N-Picsart-Ai-Image-Enhancer.png';
+const suppliedLogoUrl = 'https://i.ibb.co/p6VGzczV/HTcx0584-Os-Oe-YAj-O5qp61-x5-PHKm89.png';
 for (const file of htmlFiles) {
   const iconTags = [...pageContents.get(file).matchAll(/<link\b[^>]*\brel="icon"[^>]*>/gi)].map((match) => attributes(match[0]));
   const pngIcons = iconTags.filter((icon) => (icon.type || '').toLowerCase() === 'image/png');
@@ -202,7 +202,7 @@ for (const file of htmlFiles) {
   if (!source.includes('data-brand="queryfixr-qf-mark"') || !source.includes('class="brand-image brand-qf-logo"')) {
     report(`${file}: header must use the supplied transparent QF logo mark`);
   }
-  if (file === 'index.html' && !source.includes('class="hero-banner-image" src="https://i.ibb.co/mrg8Kh3y/Query-Fixr-3-D-brand-logo-2-K-20261022185526-Picsart-Ai-Image-Enhancer-clean.png"')) {
+  if (file === 'index.html' && !source.includes('class="hero-banner-image" src="https://i.ibb.co/4Z8NN3w0/Query-Fixr-3-D-brand-logo-2-K-20261022185526-Picsart-Ai-Image-Enhancer-clean-1.png"')) {
     report('index.html: homepage hero must use the updated full-size QueryFixr wordmark');
   }
 }

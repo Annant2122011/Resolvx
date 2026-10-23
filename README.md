@@ -15,7 +15,7 @@ The website is a product introduction and documentation experience. It does **no
 - `api/translate.js` and `netlify/functions/translate.js` — same-origin translation-proxy adapters for Vercel and Netlify. They validate request size/target languages, apply per-IP limits, fail over across upstreams, and keep optional API keys restricted to the explicitly configured provider.
 - `mobile.css` — dedicated mobile layout overrides for navigation, responsive content, touch targets, mobile wiki navigation, and short-screen search.
 - \`site.js\` — responsive navigation, multilingual global search, wiki article/FAQ filtering, feature-catalogue filtering, command-copy helpers, reading progress, opt-in website translation, and the local lifecycle explainer.
-- The supplied transparent QueryFixr logo PNG is used directly for the browser favicon and Apple touch icon: `https://i.ibb.co/fdRDWXbH/3v-OKZCYL0-Rqkdu-OQ4t-PKA-Xt-Cc-OQu-N-Picsart-Ai-Image-Enhancer.png`. The icons and full-size brand artwork are externally hosted.
+- The supplied transparent QueryFixr logo PNG is used directly for the browser favicon and Apple touch icon: `https://i.ibb.co/p6VGzczV/HTcx0584-Os-Oe-YAj-O5qp61-x5-PHKm89.png`. The icons and full-size brand artwork are externally hosted.
 - The transparent QF mark is used in all page headers, the favicon, Apple touch icon, footer, and CTA. The full-size QueryFixr wordmark is retained for the homepage hero artwork.
 - If the external wordmark or hero artwork fails to load, the site displays a local text/gradient fallback instead of leaving broken-image icons.
 
