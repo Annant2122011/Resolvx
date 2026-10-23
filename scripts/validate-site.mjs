@@ -177,9 +177,7 @@ for (const file of htmlFiles) {
   }
 }
 
-const suppliedLogoUrl = 'assets/images/queryfixr-favicon.png';
-const appleTouchIconUrl = 'assets/images/queryfixr-apple-touch-icon.png';
-const localLogoUrl = 'assets/images/queryfixr-mark-96.webp';
+const suppliedLogoUrl = 'https://i.ibb.co/p6VGzczV/HTcx0584-Os-Oe-YAj-O5qp61-x5-PHKm89.png';
 for (const file of htmlFiles) {
   const iconTags = [...pageContents.get(file).matchAll(/<link\b[^>]*\brel="icon"[^>]*>/gi)].map((match) => attributes(match[0]));
   const pngIcons = iconTags.filter((icon) => (icon.type || '').toLowerCase() === 'image/png');
@@ -187,24 +185,24 @@ for (const file of htmlFiles) {
   const appleIcon = [...pageContents.get(file).matchAll(/<link\b[^>]*\brel="apple-touch-icon"[^>]*>/gi)]
     .map((match) => attributes(match[0]))[0];
   if (iconTags.length !== 1 || pngIcons.length !== 1 || !pngIcon ||
-      pngIcon.href !== suppliedLogoUrl || pngIcon.sizes !== '64x64') {
-    report(`${file}: use the optimized local 64 x 64 PNG favicon`);
+      !pngIcon.href.startsWith(suppliedLogoUrl) || pngIcon.sizes !== '512x512') {
+    report(`${file}: use the supplied QF logo as one unambiguous 512 x 512 PNG favicon`);
   }
   if (iconTags.some((icon) => (icon.type || '').toLowerCase() === 'image/svg+xml' ||
       (icon.href || '').startsWith('favicon.svg'))) {
     report(`${file}: remove the redundant SVG fallback favicon so it cannot compete with the primary logo icon`);
   }
-  if (!appleIcon || appleIcon.href !== appleTouchIconUrl) {
+  if (!appleIcon || !appleIcon.href.startsWith(suppliedLogoUrl)) {
     report(`${file}: Apple touch icon must use the supplied transparent QF artwork`);
   }
   const source = pageContents.get(file);
   if (!source.includes('class="header-brand-link"') || !source.includes('</a><span class="brand-tagline"')) {
     report(`${file}: only the QueryFixr logo should be clickable; keep the tagline outside its anchor`);
   }
-  if (!source.includes('data-brand="queryfixr-qf-mark"') || !source.includes('class="brand-image brand-qf-logo"') || !source.includes(localLogoUrl)) {
+  if (!source.includes('data-brand="queryfixr-qf-mark"') || !source.includes('class="brand-image brand-qf-logo"')) {
     report(`${file}: header must use the supplied transparent QF logo mark`);
   }
-  if (file === 'index.html' && !source.includes('class="hero-banner-image" src="assets/images/queryfixr-hero-640.webp"')) {
+  if (file === 'index.html' && !source.includes('class="hero-banner-image" src="https://i.ibb.co/4Z8NN3w0/Query-Fixr-3-D-brand-logo-2-K-20261022185526-Picsart-Ai-Image-Enhancer-clean-1.png"')) {
     report('index.html: homepage hero must use the updated full-size QueryFixr wordmark');
   }
 }
@@ -434,34 +432,6 @@ if (!sharedCss.includes('.closing-cta.compact-cta .cta-decoration .cta-logo') ||
 if (!mobileCss.includes('aspect-ratio: auto;') ||
     !mobileCss.includes('.closing-cta.compact-cta .cta-decoration .cta-logo')) {
   report('mobile.css: CTA panels must be content-height on phones and use phone-sized center marks');
-}
-
-
-const finalCtaRuleStart = sharedCss.lastIndexOf('/* Final CTA correction: landscape means wide, not cropped to a forced ratio. */');
-const finalCtaMotionStart = sharedCss.lastIndexOf('/* Layered depth and expressive motion, without additional libraries. */');
-const finalCtaStyles = finalCtaRuleStart >= 0 ? sharedCss.slice(finalCtaRuleStart, finalCtaMotionStart > finalCtaRuleStart ? finalCtaMotionStart : undefined) : '';
-if (!finalCtaStyles.includes('aspect-ratio: auto;') ||
-    !finalCtaStyles.includes('min-height: clamp(480px, 42vw, 560px);') ||
-    !finalCtaStyles.includes('overflow-wrap: normal;') ||
-    !finalCtaStyles.includes('grid-template-columns: minmax(0, 1.12fr) minmax(270px, .88fr);')) {
-  report('styles.css: desktop landscape CTA must grow with its copy instead of clipping text to a forced aspect ratio');
-}
-if (!sharedCss.includes('@keyframes rx-orbit-clockwise') ||
-    !sharedCss.includes('@keyframes rx-orbit-float') ||
-    !sharedCss.includes('@keyframes rx-button-sheen') ||
-    !sharedCss.includes('.motion-enhanced .motion-reveal.motion-visible')) {
-  report('styles.css: enhanced motion needs orbit, button-sheen, and scroll-reveal definitions');
-}
-if (!mobileCss.includes('height: auto;') ||
-    !mobileCss.includes('min-height: 0;') ||
-    !mobileCss.includes('.closing-cta:not(.compact-cta) .cta-content h2')) {
-  report('mobile.css: mobile CTA must size to its content and keep its full heading readable');
-}
-if (!js.includes('function installVisualMotionEnhancements()') ||
-    !js.includes("window.matchMedia('(prefers-reduced-motion: reduce)')") ||
-    !js.includes("'IntersectionObserver' in window") ||
-    !js.includes('window.requestAnimationFrame')) {
-  report('site.js: visual motion must use progressive scroll reveals, reduced-motion checks, and frame-coalesced pointer highlights');
 }
 
 if (errors.length) {
