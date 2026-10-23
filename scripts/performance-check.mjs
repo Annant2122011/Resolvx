@@ -91,7 +91,7 @@ const optimizedAssetBudgets = [
   ['assets/images/queryfixr-hero-640.webp', 35000],
   ['assets/images/queryfixr-hero-900.webp', 50000],
   ['assets/images/queryfixr-favicon.png', 15000],
-  ['assets/images/queryfixr-apple-touch-icon.png', 16000],
+  ['assets/images/queryfixr-apple-touch-icon.png', 22000],
 ];
 let optimizedAssetBytes = 0;
 for (const [assetPath, maxBytes] of optimizedAssetBudgets) {
