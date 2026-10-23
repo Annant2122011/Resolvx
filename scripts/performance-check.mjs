@@ -19,6 +19,9 @@ for (const pagePath of pages) {
   if (!html.includes('class="mesh-background"')) {
     errors.push(pagePath + ': moving mesh background layer is missing.');
   }
+  if (html.includes('https://i.ibb.co/')) {
+    errors.push(pagePath + ': runtime markup must not load artwork from the external source host.');
+  }
 
   const imageTags = [...html.matchAll(/<img\b[^>]*>/gi)].map((match) => match[0]);
   for (const tag of imageTags) {
@@ -82,7 +85,32 @@ if (logoAnimation.includes('filter:')) {
   errors.push('styles.css: logo breathing animation must not animate filter/drop-shadow.');
 }
 
+const optimizedAssetBudgets = [
+  ['assets/images/queryfixr-mark-96.webp', 10000],
+  ['assets/images/queryfixr-mark-384.webp', 45000],
+  ['assets/images/queryfixr-hero-640.webp', 35000],
+  ['assets/images/queryfixr-hero-900.webp', 50000],
+  ['assets/images/queryfixr-favicon.png', 15000],
+  ['assets/images/queryfixr-apple-touch-icon.png', 22000],
+];
+let optimizedAssetBytes = 0;
+for (const [assetPath, maxBytes] of optimizedAssetBudgets) {
+  try {
+    const bytes = statSync(join(root, assetPath)).size;
+    optimizedAssetBytes += bytes;
+    if (bytes > maxBytes) errors.push(assetPath + ': ' + bytes + 'B exceeds the ' + maxBytes + 'B asset budget.');
+  } catch {
+    errors.push(assetPath + ': optimized image asset is missing; run npm run build before validation.');
+  }
+}
+if (optimizedAssetBytes > 160000) {
+  errors.push('Optimized image assets exceed the combined 160 KB transfer budget: ' + optimizedAssetBytes + 'B.');
+}
+
 const vercel = JSON.parse(read('vercel.json'));
+if (vercel.buildCommand !== 'npm run build' || vercel.outputDirectory !== 'dist') {
+  errors.push('vercel.json: production must build and serve the generated dist directory.');
+}
 for (const path of ['/styles.css', '/mobile.css', '/site.js']) {
   const route = vercel.headers?.find((entry) => entry.source === path);
   const value = route?.headers?.find((entry) => entry.key.toLowerCase() === 'cache-control')?.value || '';
@@ -100,6 +128,6 @@ if (errors.length) {
     path,
     bytes: statSync(join(root, path)).size,
   }));
-  console.log('Website performance checks passed: variable font, prioritized/async-decoded images, lazy translation-cache parsing, frame-batched scroll updates, lighter mobile compositing, and static-asset caching.');
-  console.log('Source asset sizes (before HTTP compression): ' + sizes.map((entry) => entry.path + '=' + entry.bytes + 'B').join(', '));
+  console.log('Website performance checks passed: moving mesh, responsive local WebP assets within budget, visible first-screen content, cached reading progress, reduced-motion support, and static-asset caching.');
+  console.log('Optimized image bytes: ' + optimizedAssetBytes + 'B. Source asset sizes (before HTTP compression): ' + sizes.map((entry) => entry.path + '=' + entry.bytes + 'B').join(', '));
 }

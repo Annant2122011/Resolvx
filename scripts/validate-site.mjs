@@ -177,7 +177,9 @@ for (const file of htmlFiles) {
   }
 }
 
-const suppliedLogoUrl = 'https://i.ibb.co/p6VGzczV/HTcx0584-Os-Oe-YAj-O5qp61-x5-PHKm89.png';
+const suppliedLogoUrl = 'assets/images/queryfixr-favicon.png';
+const appleTouchIconUrl = 'assets/images/queryfixr-apple-touch-icon.png';
+const localLogoUrl = 'assets/images/queryfixr-mark-96.webp';
 for (const file of htmlFiles) {
   const iconTags = [...pageContents.get(file).matchAll(/<link\b[^>]*\brel="icon"[^>]*>/gi)].map((match) => attributes(match[0]));
   const pngIcons = iconTags.filter((icon) => (icon.type || '').toLowerCase() === 'image/png');
@@ -185,24 +187,24 @@ for (const file of htmlFiles) {
   const appleIcon = [...pageContents.get(file).matchAll(/<link\b[^>]*\brel="apple-touch-icon"[^>]*>/gi)]
     .map((match) => attributes(match[0]))[0];
   if (iconTags.length !== 1 || pngIcons.length !== 1 || !pngIcon ||
-      !pngIcon.href.startsWith(suppliedLogoUrl) || pngIcon.sizes !== '512x512') {
-    report(`${file}: use the supplied QF logo as one unambiguous 512 x 512 PNG favicon`);
+      pngIcon.href !== suppliedLogoUrl || pngIcon.sizes !== '64x64') {
+    report(`${file}: use the optimized local 64 x 64 PNG favicon`);
   }
   if (iconTags.some((icon) => (icon.type || '').toLowerCase() === 'image/svg+xml' ||
       (icon.href || '').startsWith('favicon.svg'))) {
     report(`${file}: remove the redundant SVG fallback favicon so it cannot compete with the primary logo icon`);
   }
-  if (!appleIcon || !appleIcon.href.startsWith(suppliedLogoUrl)) {
+  if (!appleIcon || appleIcon.href !== appleTouchIconUrl) {
     report(`${file}: Apple touch icon must use the supplied transparent QF artwork`);
   }
   const source = pageContents.get(file);
   if (!source.includes('class="header-brand-link"') || !source.includes('</a><span class="brand-tagline"')) {
     report(`${file}: only the QueryFixr logo should be clickable; keep the tagline outside its anchor`);
   }
-  if (!source.includes('data-brand="queryfixr-qf-mark"') || !source.includes('class="brand-image brand-qf-logo"')) {
+  if (!source.includes('data-brand="queryfixr-qf-mark"') || !source.includes('class="brand-image brand-qf-logo"') || !source.includes(localLogoUrl)) {
     report(`${file}: header must use the supplied transparent QF logo mark`);
   }
-  if (file === 'index.html' && !source.includes('class="hero-banner-image" src="https://i.ibb.co/4Z8NN3w0/Query-Fixr-3-D-brand-logo-2-K-20261022185526-Picsart-Ai-Image-Enhancer-clean-1.png"')) {
+  if (file === 'index.html' && !source.includes('class="hero-banner-image" src="assets/images/queryfixr-hero-640.webp"')) {
     report('index.html: homepage hero must use the updated full-size QueryFixr wordmark');
   }
 }
