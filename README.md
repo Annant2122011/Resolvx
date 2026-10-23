@@ -20,7 +20,7 @@ The website is a product introduction and documentation experience. It does **no
 
 ## Interaction notes
 
-- The **global search** opens with the search button or \`Ctrl+K\` / \`⌘K\`. The wiki also supports in-page search with \`/\`.
+- The **global search** opens with the search button or \`Alt+K\`. The wiki also supports in-page search with \`/\`.
 - Command copy controls copy a documented slash-command path only. They do not execute the command or supply required options.
 - The ticket lifecycle demo changes illustrative text in the browser only. It does not create or edit Discord tickets.
 - The dashboard art and sample requests are clearly presented as a static concept, not live usage data.
