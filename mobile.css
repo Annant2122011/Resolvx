@@ -1383,7 +1383,6 @@
   .motion-enhanced .motion-reveal {
     translate: 0 14px;
     scale: .995;
-    filter: blur(2px);
     transition-duration: .48s;
   }
   .motion-enhanced .motion-reveal.motion-slide-x { translate: 14px 0; }
