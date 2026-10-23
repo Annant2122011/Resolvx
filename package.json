@@ -1,9 +1,0 @@
-{
-  "name": "queryfixr-website",
-  "version": "1.0.0",
-  "private": true,
-  "description": "Static QueryFixr product and documentation website",
-  "engines": { "node": ">=20.9 <23" },
-  "scripts": { "build": "node scripts/build-site.mjs" },
-  "dependencies": { "sharp": "0.35.5" }
-}
