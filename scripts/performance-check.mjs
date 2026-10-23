@@ -16,6 +16,10 @@ for (const pagePath of pages) {
     errors.push(pagePath + ': do not request every Manrope weight as a separate static family.');
   }
 
+  if (!html.includes('class="mesh-background"')) {
+    errors.push(pagePath + ': moving mesh background layer is missing.');
+  }
+
   const imageTags = [...html.matchAll(/<img\b[^>]*>/gi)].map((match) => match[0]);
   for (const tag of imageTags) {
     if (!/\bdecoding="async"/i.test(tag)) {
@@ -46,20 +50,36 @@ if (/const cached = JSON\.parse\(localStorage\.getItem\(TRANSLATION_CACHE_KEY/.t
   errors.push('site.js: translation-cache JSON parsing must not run at top level.');
 }
 if (!js.includes('let readingProgressFrame = 0;') ||
+    !js.includes('let maxReadingScroll = 0;') ||
+    !js.includes('scheduleReadingRangeMeasure') ||
     !js.includes('readingProgressFrame = window.requestAnimationFrame(') ||
     !js.includes("window.addEventListener('scroll', updateReadingProgress, { passive: true });")) {
-  errors.push('site.js: reading progress must batch scroll updates through requestAnimationFrame.');
+  errors.push('site.js: reading progress must batch scroll work and cache document-height measurements.');
+}
+
+const revealStart = js.indexOf('const revealTargets =');
+const revealEnd = js.indexOf('const pointerTargets =', revealStart);
+const revealSelectors = revealStart >= 0 && revealEnd > revealStart ? js.slice(revealStart, revealEnd) : '';
+if (['.hero-copy', '.hero-art.hero-banner-art', '.page-hero', '.feature-library-hero', '.wiki-hero', '.wiki-search-card'].some((selector) => revealSelectors.includes("'" + selector + "'"))) {
+  errors.push('site.js: above-the-fold hero content must not wait for scroll-reveal observation.');
 }
 
 const styles = read('styles.css');
 const mobile = read('mobile.css');
 if (/will-change:\s*opacity,\s*translate,\s*filter/.test(styles) ||
-    /\.motion-enhanced \.motion-reveal\s*\{[^}]*filter:\s*blur\(/s.test(styles)) {
-  errors.push('styles.css: scroll reveals must avoid persistent filter promotion and animated blur.');
+    /\.motion-enhanced \.motion-reveal\s*\{[^}]*filter:\s*blur\(/s.test(styles) ||
+    /\.motion-enhanced \.motion-reveal\s*\{[^}]*filter:\s*blur\(/s.test(mobile)) {
+  errors.push('styles.css/mobile.css: scroll reveals must avoid persistent filter promotion and animated blur.');
 }
-if (!mobile.includes('.ambient-one,\n  .ambient-two') ||
-    !mobile.includes('backdrop-filter: blur(10px)')) {
-  errors.push('mobile.css: mobile ambient layers and glass-header filters must use the lighter compositing rules.');
+if (!styles.includes('.mesh-background') || !styles.includes('@keyframes rx-mesh-drift') ||
+    !styles.includes('.mesh-background {\n    animation: none !important;')) {
+  errors.push('styles.css: mesh motion must be CSS-only and respect reduced-motion preferences.');
+}
+const logoAnimationStart = styles.lastIndexOf('@keyframes rx-logo-breathe');
+const logoAnimationEnd = styles.indexOf('@keyframes rx-button-sheen', logoAnimationStart);
+const logoAnimation = logoAnimationStart >= 0 && logoAnimationEnd > logoAnimationStart ? styles.slice(logoAnimationStart, logoAnimationEnd) : '';
+if (logoAnimation.includes('filter:')) {
+  errors.push('styles.css: logo breathing animation must not animate filter/drop-shadow.');
 }
 
 const vercel = JSON.parse(read('vercel.json'));
