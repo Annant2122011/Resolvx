@@ -710,7 +710,8 @@
   };
 
   const applyWikiSearch = (query) => {
-    const normalized = query.trim();
+    const normalized = String(query || '').trim();
+    const hasQuery = normalized.length > 0;
     let visibleArticles = 0;
     let visibleFaqs = 0;
     wikiArticles.forEach((article) => {
@@ -719,35 +720,31 @@
       if (faqItems.length) {
         let matchedItems = 0;
         faqItems.forEach((item) => {
-          const sourceText = originalWikiFaqText.get(item) || item.textContent || '';
+          const sourceText = (originalWikiFaqText.get(item) || '') + ' ' + (item.textContent || '');
           const summaryText = (item.querySelector('summary')?.textContent || '').replace(/\s+/g, ' ').trim();
-          const extraTerms = FAQ_SEARCH_KEYWORDS[summaryText] || '';
-          const match = !normalized || matchesSearchCorpus(sourceText + ' ' + summaryText + ' ' + extraTerms, query);
+          const keywordTitle = Object.keys(FAQ_SEARCH_KEYWORDS).find((title) => sourceText.includes(title));
+          const extraTerms = FAQ_SEARCH_KEYWORDS[keywordTitle || summaryText] || '';
+          const match = !hasQuery || searchScore(sourceText + ' ' + summaryText + ' ' + extraTerms, query) > 0;
           item.hidden = !match;
           if (match) matchedItems += 1;
         });
-        const articleSource = originalWikiArticleText.get(article) || article.textContent || '';
+        const articleSource = (originalWikiArticleText.get(article) || '') + ' ' + (article.textContent || '');
         const titleText = (article.querySelector('h2')?.textContent || '') + ' ' + (article.querySelector('.article-eyebrow')?.textContent || '');
         const articleKeywords = (article.dataset.searchKeywords || '') + ' ' + (SEARCH_EXPANSIONS[article.id] || '');
-        const articleTitleMatches = matchesSearchCorpus(titleText + ' ' + articleKeywords, query);
-        if (normalized && matchedItems === 0 && articleTitleMatches) {
-          faqItems.forEach((item) => { item.hidden = false; });
-          matchedItems = faqItems.length;
-        }
-        matches = matchedItems > 0 || !normalized || matchesSearchCorpus(articleKeywords + ' ' + titleText, query);
+        matches = !hasQuery || matchedItems > 0 || searchScore(articleSource + ' ' + titleText + ' ' + articleKeywords, query) > 0;
         visibleFaqs += matchedItems;
       } else {
-        const sourceText = originalWikiArticleText.get(article) || article.textContent || '';
+        const sourceText = (originalWikiArticleText.get(article) || '') + ' ' + (article.textContent || '');
         const articleKeywords = (article.dataset.searchKeywords || '') + ' ' + (SEARCH_EXPANSIONS[article.id] || '');
-        matches = !normalized || matchesSearchCorpus(sourceText + ' ' + articleKeywords, query);
+        matches = !hasQuery || searchScore(sourceText + ' ' + articleKeywords, query) > 0;
       }
       article.hidden = !matches;
       if (matches) visibleArticles += 1;
       const link = tocByArticle.get(article.id);
       if (link) link.hidden = !matches;
     });
-    if (wikiNoResults) wikiNoResults.hidden = !normalized || visibleArticles > 0;
-    if (wikiCount) wikiCount.textContent = !normalized ? 'All guides visible' : (visibleArticles + ' section' + (visibleArticles === 1 ? '' : 's') + ' · ' + visibleFaqs + ' FAQ answer' + (visibleFaqs === 1 ? '' : 's'));
+    if (wikiNoResults) wikiNoResults.hidden = !hasQuery || visibleArticles > 0;
+    if (wikiCount) wikiCount.textContent = !hasQuery ? searchRuntimeText('allGuides') : searchRuntimeWikiCount(visibleArticles, visibleFaqs);
   };
   if (wikiInput) {
     wikiInput.addEventListener('input', () => applyWikiSearch(wikiInput.value));
@@ -781,9 +778,7 @@
       if (matches) visible += 1;
     });
     if (featureResultCount) {
-      featureResultCount.textContent = normalized
-        ? (visible + ' of ' + featureCards.length + ' capabilities')
-        : (featureCards.length + ' capabilities');
+      featureResultCount.textContent = searchRuntimeFeatureCount(visible, featureCards.length, Boolean(normalized));
     }
     if (featureNoResults) featureNoResults.hidden = !normalized || visible > 0;
   };
