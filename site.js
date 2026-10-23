@@ -497,6 +497,49 @@
     document.body.classList.remove('search-open');
     if (previousFocus && typeof previousFocus.focus === 'function') previousFocus.focus();
   };
+  const SEARCH_RUNTIME_COPY = Object.fromEntries([
+    "en-US|Preparing cross-page search…|Search index unavailable. Check your connection and retry.|Retry search|No close matches. Try fewer words or synonyms.|Search the home page, features, wiki, and FAQs.|All guides visible|Home|Features|Wiki|FAQ|section|sections|FAQ answer|FAQ answers|of|capabilities",
+    "hi-IN|सभी पेजों की खोज तैयार हो रही है…|सर्च इंडेक्स उपलब्ध नहीं है। कनेक्शन जाँचें और फिर प्रयास करें।|फिर प्रयास करें|मिलते-जुलते परिणाम नहीं मिले। कम शब्द या समानार्थी शब्द आज़माएँ।|होम, फ़ीचर, विकि और FAQ की पूरी सामग्री खोजें।|सभी गाइड दिखाई दे रहे हैं|होम|फ़ीचर|विकी|FAQ|अनुभाग|अनुभाग|FAQ उत्तर|FAQ उत्तर|में से|क्षमताएँ",
+    "bn-IN|সব পৃষ্ঠার অনুসন্ধান প্রস্তুত হচ্ছে…|সার্চ ইনডেক্স পাওয়া যাচ্ছে না। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।|আবার চেষ্টা করুন|কাছাকাছি ফল নেই। কম শব্দ বা সমার্থক শব্দ ব্যবহার করুন।|হোম, ফিচার, উইকি ও FAQ-এর সব বিষয়বস্তু খুঁজুন।|সব গাইড দৃশ্যমান|হোম|ফিচার|উইকি|FAQ|বিভাগ|বিভাগ|FAQ উত্তর|FAQ উত্তর|এর মধ্যে|সক্ষমতা",
+    "es-ES|Preparando la búsqueda entre páginas…|Índice no disponible. Comprueba la conexión e inténtalo de nuevo.|Reintentar búsqueda|No hay coincidencias cercanas. Prueba menos palabras o sinónimos.|Busca en Inicio, funciones, wiki y preguntas frecuentes.|Todas las guías visibles|Inicio|Funciones|Wiki|FAQ|sección|secciones|respuesta FAQ|respuestas FAQ|de|funciones",
+    "fr-FR|Préparation de la recherche inter-pages…|Index indisponible. Vérifiez la connexion puis réessayez.|Réessayer|Aucun résultat proche. Essayez moins de mots ou des synonymes.|Recherchez dans l’accueil, les fonctions, le wiki et la FAQ.|Tous les guides visibles|Accueil|Fonctions|Wiki|FAQ|section|sections|réponse FAQ|réponses FAQ|sur|fonctions",
+    "de-DE|Suche über alle Seiten wird vorbereitet…|Suchindex nicht verfügbar. Verbindung prüfen und erneut versuchen.|Erneut suchen|Keine nahen Treffer. Verwenden Sie weniger Wörter oder Synonyme.|Startseite, Funktionen, Wiki und FAQ durchsuchen.|Alle Anleitungen sichtbar|Startseite|Funktionen|Wiki|FAQ|Abschnitt|Abschnitte|FAQ-Antwort|FAQ-Antworten|von|Funktionen",
+    "pt-BR|Preparando a busca entre páginas…|Índice indisponível. Verifique a conexão e tente novamente.|Tentar novamente|Nenhuma correspondência próxima. Tente menos palavras ou sinônimos.|Pesquise no Início, recursos, wiki e perguntas frequentes.|Todos os guias visíveis|Início|Recursos|Wiki|FAQ|seção|seções|resposta FAQ|respostas FAQ|de|recursos",
+    "ar|جارٍ إعداد البحث بين الصفحات…|الفهرس غير متاح. تحقق من الاتصال ثم حاول مجددًا.|إعادة البحث|لا توجد نتائج قريبة. جرّب كلمات أقل أو مرادفات.|ابحث في الرئيسية والميزات والويكي والأسئلة الشائعة.|كل الأدلة ظاهرة|الرئيسية|الميزات|الويكي|الأسئلة الشائعة|قسم|أقسام|إجابة شائعة|إجابات شائعة|من|ميزات",
+    "ja-JP|全ページ検索を準備しています…|検索インデックスを利用できません。接続を確認して再試行してください。|再試行|近い候補がありません。語数を減らすか類義語を試してください。|ホーム、機能、Wiki、FAQ全体を検索します。|すべてのガイドを表示|ホーム|機能|Wiki|FAQ|セクション|セクション|FAQ回答|FAQ回答|件中|機能",
+    "it-IT|Preparazione della ricerca tra le pagine…|Indice non disponibile. Controlla la connessione e riprova.|Riprova ricerca|Nessun risultato vicino. Prova meno parole o sinonimi.|Cerca in Home, funzionalità, wiki e FAQ.|Tutte le guide visibili|Home|Funzioni|Wiki|FAQ|sezione|sezioni|risposta FAQ|risposte FAQ|di|funzionalità",
+    "id-ID|Menyiapkan pencarian lintas halaman…|Indeks tidak tersedia. Periksa koneksi lalu coba lagi.|Coba lagi|Tidak ada hasil yang mendekati. Coba kata yang lebih sedikit atau sinonim.|Cari Beranda, fitur, wiki, dan FAQ.|Semua panduan terlihat|Beranda|Fitur|Wiki|FAQ|bagian|bagian|jawaban FAQ|jawaban FAQ|dari|fitur",
+    "ko-KR|전체 페이지 검색을 준비하는 중…|검색 색인을 사용할 수 없습니다. 연결을 확인하고 다시 시도하세요.|다시 검색|가까운 결과가 없습니다. 단어를 줄이거나 동의어를 사용해 보세요.|홈, 기능, 위키, FAQ 전체를 검색합니다.|모든 가이드 표시|홈|기능|위키|FAQ|섹션|섹션|FAQ 답변|FAQ 답변|중|기능",
+    "ru-RU|Подготовка поиска по всем страницам…|Индекс недоступен. Проверьте соединение и повторите попытку.|Повторить поиск|Близких совпадений нет. Попробуйте меньше слов или синонимы.|Поиск по главной странице, функциям, вики и FAQ.|Все руководства видны|Главная|Функции|Вики|FAQ|раздел|раздела|ответ FAQ|ответа FAQ|из|функции",
+    "zh-CN|正在准备跨页面搜索…|搜索索引不可用。请检查网络连接后重试。|重试搜索|没有接近的匹配项。请减少关键词或尝试同义词。|搜索主页、功能、Wiki 和常见问题的全部内容。|显示所有指南|主页|功能|Wiki|常见问题|个章节|个章节|条 FAQ 答案|条 FAQ 答案|共|项功能",
+    "tr-TR|Sayfalar arası arama hazırlanıyor…|Arama dizini kullanılamıyor. Bağlantıyı kontrol edip yeniden deneyin.|Yeniden ara|Yakın eşleşme yok. Daha az kelime veya eş anlamlı deneyin.|Ana sayfa, özellikler, wiki ve SSS içinde ara.|Tüm rehberler görünür|Ana sayfa|Özellikler|Wiki|SSS|bölüm|bölüm|SSS yanıtı|SSS yanıtı|içinden|özellik",
+    "nl-NL|Zoeken over alle pagina’s wordt voorbereid…|Zoekindex niet beschikbaar. Controleer de verbinding en probeer opnieuw.|Opnieuw zoeken|Geen nabije resultaten. Probeer minder woorden of synoniemen.|Zoek in Home, functies, wiki en FAQ.|Alle handleidingen zichtbaar|Home|Functies|Wiki|FAQ|sectie|secties|FAQ-antwoord|FAQ-antwoorden|van|functies",
+    "pl-PL|Przygotowywanie wyszukiwania na wszystkich stronach…|Indeks wyszukiwania jest niedostępny. Sprawdź połączenie i spróbuj ponownie.|Ponów wyszukiwanie|Brak podobnych wyników. Użyj mniej słów lub synonimów.|Przeszukaj stronę główną, funkcje, wiki i FAQ.|Wszystkie poradniki widoczne|Strona główna|Funkcje|Wiki|FAQ|sekcja|sekcje|odpowiedź FAQ|odpowiedzi FAQ|z|funkcje",
+    "uk-UA|Підготовка пошуку по всіх сторінках…|Індекс недоступний. Перевірте з’єднання та спробуйте знову.|Повторити пошук|Близьких збігів немає. Спробуйте менше слів або синоніми.|Пошук на головній сторінці, у функціях, вікі та FAQ.|Усі посібники видимі|Головна|Функції|Вікі|FAQ|розділ|розділи|відповідь FAQ|відповіді FAQ|з|функції",
+    "el-GR|Προετοιμασία αναζήτησης σε όλες τις σελίδες…|Το ευρετήριο δεν είναι διαθέσιμο. Ελέγξτε τη σύνδεση και δοκιμάστε ξανά.|Επανάληψη αναζήτησης|Δεν υπάρχουν κοντινά αποτελέσματα. Δοκιμάστε λιγότερες λέξεις ή συνώνυμα.|Αναζήτηση στην Αρχική, στις λειτουργίες, στο wiki και στις FAQ.|Όλοι οι οδηγοί ορατοί|Αρχική|Λειτουργίες|Wiki|FAQ|ενότητα|ενότητες|απάντηση FAQ|απαντήσεις FAQ|από|λειτουργίες",
+    "cs-CZ|Připravuje se vyhledávání napříč stránkami…|Index není dostupný. Zkontrolujte připojení a zkuste to znovu.|Zkusit znovu|Žádné blízké výsledky. Zkuste méně slov nebo synonyma.|Hledat na úvodní stránce, ve funkcích, wiki a FAQ.|Všechny návody jsou viditelné|Domů|Funkce|Wiki|FAQ|sekce|sekce|odpověď FAQ|odpovědi FAQ|z|funkce",
+    "sv-SE|Förbereder sökning över alla sidor…|Sökindexet är inte tillgängligt. Kontrollera anslutningen och försök igen.|Försök igen|Inga nära träffar. Prova färre ord eller synonymer.|Sök på startsidan, bland funktioner, i wikin och FAQ.|Alla guider visas|Startsida|Funktioner|Wiki|FAQ|avsnitt|avsnitt|FAQ-svar|FAQ-svar|av|funktioner",
+  ].map((row) => {
+    const [locale, preparing, indexError, retry, noMatches, prompt, allGuides, home, features, wiki, faq, sectionOne, sectionMany, answerOne, answerMany, of, capabilities] = row.split('|');
+    return [locale, { preparing, indexError, retry, noMatches, prompt, allGuides, home, features, wiki, faq, sectionOne, sectionMany, answerOne, answerMany, of, capabilities }];
+  }));
+  const searchRuntimeCopy = () => SEARCH_RUNTIME_COPY[activeSiteLocale] || SEARCH_RUNTIME_COPY['en-US'];
+  const searchRuntimeText = (key) => searchRuntimeCopy()[key] || SEARCH_RUNTIME_COPY['en-US'][key];
+  const searchRuntimeType = (type) => {
+    const copy = searchRuntimeCopy();
+    return type === 'Home' ? copy.home : type === 'Features' ? copy.features : type === 'Wiki' ? copy.wiki : type === 'FAQ' ? copy.faq : type;
+  };
+  const searchRuntimeWikiCount = (sections, answers) => {
+    const copy = searchRuntimeCopy();
+    return sections + ' ' + (sections === 1 ? copy.sectionOne : copy.sectionMany) + ' · ' +
+      answers + ' ' + (answers === 1 ? copy.answerOne : copy.answerMany);
+  };
+  const searchRuntimeFeatureCount = (visible, total, filtered) => {
+    const copy = searchRuntimeCopy();
+    return filtered ? visible + ' ' + copy.of + ' ' + total + ' ' + copy.capabilities
+      : total + ' ' + copy.capabilities;
+  };
+
   const renderGlobalResults = (query) => {
     if (!globalResults) return;
     globalResults.replaceChildren();
@@ -505,14 +548,14 @@
       message.className = 'global-search-empty';
       message.setAttribute('role', 'status');
       message.textContent = searchIndexState === 'error'
-        ? 'Search could not load the site index. Check your connection and retry.'
-        : 'Preparing search across the home page, features, wiki, and FAQs…';
+        ? searchRuntimeText('indexError')
+        : searchRuntimeText('preparing');
       globalResults.appendChild(message);
       if (searchIndexState === 'error') {
         const retry = document.createElement('button');
         retry.type = 'button';
         retry.className = 'global-search-retry';
-        retry.textContent = 'Retry search';
+        retry.textContent = searchRuntimeText('retry');
         retry.addEventListener('click', () => {
           searchIndexPromise = null;
           searchIndexState = 'idle';
@@ -537,8 +580,8 @@
       const empty = document.createElement('p');
       empty.className = 'global-search-empty';
       empty.textContent = String(query || '').trim()
-        ? 'No close matches. Try fewer words, a synonym, or a shorter spelling.'
-        : 'Search the full feature catalogue, every wiki guide, and FAQs.';
+        ? searchRuntimeText('noMatches')
+        : searchRuntimeText('prompt');
       globalResults.appendChild(empty);
       return;
     }
@@ -559,7 +602,7 @@
       description.textContent = item.description || item.keywords || item.type;
       const category = document.createElement('span');
       category.className = 'search-result-category';
-      category.textContent = item.type;
+      category.textContent = searchRuntimeType(item.type);
       body.append(title, description, category);
       const key = document.createElement('kbd');
       key.textContent = String(index + 1);
