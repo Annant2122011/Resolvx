@@ -76,8 +76,8 @@ if (!styles.includes('.mesh-background') || !styles.includes('@keyframes rx-mesh
   errors.push('styles.css: mesh motion must be CSS-only and respect reduced-motion preferences.');
 }
 const logoAnimationStart = styles.lastIndexOf('@keyframes rx-logo-breathe');
-const logoAnimationEnd = styles.indexOf('@keyframes rx-button-sheen', logoAnimationStart);
-const logoAnimation = logoAnimationStart >= 0 && logoAnimationEnd > logoAnimationStart ? styles.slice(logoAnimationStart, logoAnimationEnd) : '';
+const logoAnimationEnd = styles.indexOf('\n}', logoAnimationStart);
+const logoAnimation = logoAnimationStart >= 0 && logoAnimationEnd > logoAnimationStart ? styles.slice(logoAnimationStart, logoAnimationEnd + 2) : '';
 if (logoAnimation.includes('filter:')) {
   errors.push('styles.css: logo breathing animation must not animate filter/drop-shadow.');
 }
