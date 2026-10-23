@@ -70,6 +70,7 @@ async function runHandlerIntegrationChecks() {
   const netlify = require('../netlify/functions/translate.js');
   const previousFetch = global.fetch;
   const previousEndpoint = process.env.LIBRETRANSLATE_ENDPOINT;
+  const previousApiKey = process.env.LIBRETRANSLATE_API_KEY;
   try {
     const health = await invokeVercelHandler(handler, {
       method: 'GET',
@@ -96,16 +97,16 @@ async function runHandlerIntegrationChecks() {
     assert.equal(invalid.statusCode, 400, 'Invalid translation requests should be rejected before any upstream request.');
 
     process.env.LIBRETRANSLATE_ENDPOINT = 'https://translate.example.test/translate';
-    global.fetch = async (url) => ({
-      ok: true,
-      status: 200,
-      async json() {
-        const parsed = new URL(url);
-        const requestBody = parsed.search ? null : null;
-        void requestBody;
-        return { translatedText: ['Bonjour'] };
-      },
-    });
+    process.env.LIBRETRANSLATE_API_KEY = 'unit-test-secret-do-not-forward';
+    const upstreamRequests = [];
+    global.fetch = async (url, options) => {
+      upstreamRequests.push({ url: String(url), body: JSON.parse(options.body) });
+      return {
+        ok: true,
+        status: 200,
+        async json() { return { translatedText: ['Bonjour'] }; },
+      };
+    };
     const translated = await invokeVercelHandler(handler, {
       method: 'POST',
       headers: { host: 'queryfixr.example', origin: 'https://queryfixr.example', 'x-forwarded-for': '198.51.100.43' },
@@ -114,6 +115,16 @@ async function runHandlerIntegrationChecks() {
     });
     assert.equal(translated.statusCode, 200, 'A valid same-origin request should return translated text.');
     assert.deepEqual(translated.body.translatedText, ['Bonjour']);
+    assert.ok(
+      upstreamRequests.some((entry) => entry.url === process.env.LIBRETRANSLATE_ENDPOINT &&
+        entry.body.api_key === 'unit-test-secret-do-not-forward'),
+      'A configured provider should receive its own optional API key.',
+    );
+    assert.ok(
+      upstreamRequests.filter((entry) => entry.url !== process.env.LIBRETRANSLATE_ENDPOINT)
+        .every((entry) => !Object.hasOwn(entry.body, 'api_key')),
+      'Public fallback mirrors must never receive the configured service API key.',
+    );
 
     const netlifyHealth = await netlify.handler({
       httpMethod: 'GET',
@@ -127,6 +138,8 @@ async function runHandlerIntegrationChecks() {
     global.fetch = previousFetch;
     if (previousEndpoint === undefined) delete process.env.LIBRETRANSLATE_ENDPOINT;
     else process.env.LIBRETRANSLATE_ENDPOINT = previousEndpoint;
+    if (previousApiKey === undefined) delete process.env.LIBRETRANSLATE_API_KEY;
+    else process.env.LIBRETRANSLATE_API_KEY = previousApiKey;
   }
 }
 
