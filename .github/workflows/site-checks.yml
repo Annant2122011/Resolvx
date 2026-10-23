@@ -20,6 +20,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Install pinned image-processing dependency
+        run: npm install --no-package-lock --no-audit --no-fund
+      - name: Build optimized image variants and static output
+        run: npm run build
       - name: Check JavaScript syntax
         run: node --check site.js && node --check scripts/performance-check.mjs && node --check api/translate.js && node --check netlify/functions/translate.js && node --check scripts/validate-site.mjs && node --check scripts/test-search.mjs && node --check scripts/test-translation-proxy.cjs && node --check scripts/test-client-translation.mjs
       - name: Check links, anchors, IDs, branding, and CSS structure
