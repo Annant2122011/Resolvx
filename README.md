@@ -11,7 +11,7 @@ The website is a product introduction and documentation experience. It does **no
 - \`wiki.html\` — long-form guides for setup, ticket workflows, forms, panels, permissions, recovery, scheduling, localization, troubleshooting, commands, roadmap boundaries, and FAQs.
 - \`styles.css\` — shared visual system, responsive layouts, accessibility and reduced-motion refinements.
 - `.github/workflows/site-checks.yml` — runs the static site validator for pull requests and pushes to `main`.
-- `scripts/validate-site.mjs` — static checks for local links and anchors, duplicate IDs, wiki contents alignment, feature-card counts, branding, and CSS syntax structure.
+- `scripts/validate-site.mjs` — static checks for local links and anchors, duplicate IDs, wiki contents alignment, feature-card counts, accessible button names, mobile layout contracts, branding, and CSS structure.
 - `mobile.css` — dedicated mobile layout overrides for navigation, responsive content, touch targets, mobile wiki navigation, and short-screen search.
 - \`site.js\` — responsive navigation, multilingual global search, wiki article/FAQ filtering, feature-catalogue filtering, command-copy helpers, reading progress, opt-in website translation, and the local lifecycle explainer.
 - `favicon-local.svg` — fallback SVG wrapper pointing to the supplied QueryFixr icon; site pages load the icon image directly as the favicon.
