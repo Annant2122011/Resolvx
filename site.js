@@ -1,7 +1,8 @@
 (() => {
   'use strict';
   const $ = (selector, root = document) => root.querySelector(selector);
-  const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+  const $ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+  let activeSiteLocale = 'en-US';
 
   // Remote artwork must not leave broken-image icons in the header or hero.
   function installExternalImageFallbacks() {
@@ -805,12 +806,67 @@
   const originalAttributeValues = new Map();
   const defaultDocumentTitle = document.title;
   const defaultDocumentDir = document.documentElement.getAttribute('dir');
-  const SITE_TRANSLATION_ENDPOINTS = [
-    (typeof window.QUERYFIXR_TRANSLATION_ENDPOINT === 'string' && window.QUERYFIXR_TRANSLATION_ENDPOINT.trim())
+  const SITE_TRANSLATION_ENDPOINTS = (() => {
+    const configured = typeof window.QUERYFIXR_TRANSLATION_ENDPOINT === 'string'
       ? window.QUERYFIXR_TRANSLATION_ENDPOINT.trim()
-      : 'https://translate.argosopentech.com/translate',
-    'https://libretranslate.de/translate',
-  ];
+      : '';
+    const publicMirrors = [
+      'https://translate.fedilab.app/translate',
+      'https://translate.cutie.dating/translate',
+      'https://translate.argosopentech.com/translate',
+      'https://libretranslate.de/translate',
+      'https://trans.zillyhuhn.com/translate',
+      'https://translate.api.skitzen.com/translate',
+    ];
+    return [...new Set([configured, ...publicMirrors].filter(Boolean))];
+  })();
+  const TRANSLATION_CACHE_KEY = 'queryfixr-translation-cache-v3';
+  const TRANSLATION_CACHE_LIMIT = 2200;
+  const translationCache = new Map();
+  const translationEndpointHealth = new Map();
+  let preferredTranslationEndpoint = '';
+  try {
+    const cached = JSON.parse(localStorage.getItem(TRANSLATION_CACHE_KEY) || '[]');
+    if (Array.isArray(cached)) {
+      cached.slice(-TRANSLATION_CACHE_LIMIT).forEach((entry) => {
+        if (Array.isArray(entry) && entry.length === 2 && typeof entry[0] === 'string' && typeof entry[1] === 'string') {
+          translationCache.set(entry[0], entry[1]);
+        }
+      });
+    }
+    preferredTranslationEndpoint = localStorage.getItem('queryfixr-translation-endpoint-v1') || '';
+  } catch (_) { /* Storage being disabled must not disable translation. */ }
+  const translationCacheKey = (target, source) => JSON.stringify([target, source]);
+  function persistTranslationCache() {
+    try {
+      while (translationCache.size > TRANSLATION_CACHE_LIMIT) {
+        translationCache.delete(translationCache.keys().next().value);
+      }
+      localStorage.setItem(TRANSLATION_CACHE_KEY, JSON.stringify(Array.from(translationCache.entries())));
+    } catch (_) { /* Current requests continue even if cache storage is full. */ }
+  }
+  function orderedTranslationEndpoints() {
+    const now = Date.now();
+    const healthy = SITE_TRANSLATION_ENDPOINTS.filter((endpoint) => (translationEndpointHealth.get(endpoint)?.retryAfter || 0) <= now);
+    const candidates = healthy.length ? healthy : SITE_TRANSLATION_ENDPOINTS;
+    return candidates.slice().sort((a, b) => {
+      if (a === preferredTranslationEndpoint) return -1;
+      if (b === preferredTranslationEndpoint) return 1;
+      return (translationEndpointHealth.get(a)?.failures || 0) - (translationEndpointHealth.get(b)?.failures || 0);
+    });
+  }
+  function markTranslationEndpointSuccess(endpoint) {
+    translationEndpointHealth.set(endpoint, { failures: 0, retryAfter: 0 });
+    preferredTranslationEndpoint = endpoint;
+    try { localStorage.setItem('queryfixr-translation-endpoint-v1', endpoint); } catch (_) {}
+  }
+  function markTranslationEndpointFailure(endpoint, error) {
+    const previous = translationEndpointHealth.get(endpoint) || { failures: 0, retryAfter: 0 };
+    const failures = previous.failures + 1;
+    const status = Number(error?.status || 0);
+    const cooldown = status === 429 ? 60000 : (status >= 500 || status === 0 ? 20000 : 90000);
+    translationEndpointHealth.set(endpoint, { failures, retryAfter: Date.now() + cooldown });
+  }
   const normalizeSiteLocale = (value) => SITE_LANGUAGES.find((language) => language.code.toLowerCase() === String(value || '').toLowerCase() || language.api === String(value || '').toLowerCase())?.code || 'en-US';
   const translateUiCopy = (code, key) => (SITE_LANGUAGE_UI[code] || SITE_LANGUAGE_UI['en-US'])[key] || SITE_LANGUAGE_UI['en-US'][key];
   function collectTranslatableSegments() {
@@ -830,12 +886,12 @@
       if (!text.trim()) continue;
       segments.push({ text, apply: (translated) => { node.nodeValue = leading + translated + trailing; } });
     }
-    const attrSelector = 'input[placeholder],textarea[placeholder],[aria-label],[title],meta[name="description"],meta[property^="og:"]';
+    const attrSelector = 'input[placeholder],textarea[placeholder],[aria-label],[title],[alt],meta[name="description"],meta[property^="og:"]';
     $$(attrSelector).forEach((element) => {
-      if (element.closest('.site-language-switcher,[data-no-translate],code,pre,script,style')) return;
+      if (element.closest('.site-language-switcher,[data-no-translate],code,pre,script,style,svg')) return;
       if (!originalAttributeValues.has(element)) {
         const attrs = {};
-        ['placeholder', 'aria-label', 'title', 'content'].forEach((name) => {
+        ['placeholder', 'aria-label', 'title', 'alt', 'content'].forEach((name) => {
           if (element.hasAttribute(name)) attrs[name] = element.getAttribute(name);
         });
         originalAttributeValues.set(element, attrs);
@@ -859,88 +915,185 @@
     else document.documentElement.setAttribute('dir', defaultDocumentDir);
     document.documentElement.lang = 'en';
   }
+  async function requestTranslationBatch(endpoint, values, targetApi) {
+    const controller = typeof AbortController === 'function' ? new AbortController() : null;
+    const timeoutId = controller ? window.setTimeout(() => controller.abort(), 6000) : null;
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ q: values, source: 'en', target: targetApi, format: 'text' }),
+        mode: 'cors',
+        credentials: 'omit',
+        cache: 'no-store',
+        ...(controller ? { signal: controller.signal } : {}),
+      });
+      if (!response.ok) {
+        const error = new Error('Translation endpoint responded with HTTP ' + response.status);
+        error.status = response.status;
+        throw error;
+      }
+      const result = await response.json();
+      let translated = null;
+      if (Array.isArray(result?.translatedText)) translated = result.translatedText;
+      else if (Array.isArray(result)) translated = result.map((item) => typeof item === 'string' ? item : item?.translatedText);
+      else if (typeof result?.translatedText === 'string' && values.length === 1) translated = [result.translatedText];
+      if (!Array.isArray(translated) || translated.length !== values.length ||
+          translated.some((item) => typeof item !== 'string' || !item.trim())) {
+        throw new Error('Translation endpoint returned an incomplete or unexpected response');
+      }
+      markTranslationEndpointSuccess(endpoint);
+      return translated;
+    } catch (error) {
+      markTranslationEndpointFailure(endpoint, error);
+      throw error;
+    } finally {
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+    }
+  }
   async function translateBatch(values, targetApi) {
-    let finalError = null;
-    for (const endpoint of SITE_TRANSLATION_ENDPOINTS) {
-      const controller = typeof AbortController === 'function' ? new AbortController() : null;
-      const timeoutId = controller ? window.setTimeout(() => controller.abort(), 10000) : null;
+    const translations = new Array(values.length);
+    const missing = [];
+    const missingIndexes = [];
+    values.forEach((value, index) => {
+      const cached = translationCache.get(translationCacheKey(targetApi, value));
+      if (typeof cached === 'string' && cached.trim()) translations[index] = cached;
+      else {
+        missing.push(value);
+        missingIndexes.push(index);
+      }
+    });
+    if (!missing.length) return translations;
+    let lastError = null;
+    const endpoints = orderedTranslationEndpoints();
+    for (const endpoint of endpoints) {
       try {
-        const body = { q: values, source: 'en', target: targetApi, format: 'text' };
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify(body),
-          mode: 'cors',
-          credentials: 'omit',
-          ...(controller ? { signal: controller.signal } : {}),
+        const response = await requestTranslationBatch(endpoint, missing, targetApi);
+        response.forEach((value, index) => {
+          translations[missingIndexes[index]] = value;
+          translationCache.set(translationCacheKey(targetApi, missing[index]), value);
         });
-        if (!response.ok) throw new Error('Translation endpoint responded with HTTP ' + response.status);
-        const result = await response.json();
-        let translated = null;
-        if (Array.isArray(result.translatedText)) translated = result.translatedText;
-        else if (Array.isArray(result)) translated = result.map((item) => typeof item === 'string' ? item : item.translatedText);
-        else if (typeof result.translatedText === 'string' && values.length === 1) translated = [result.translatedText];
-        if (!Array.isArray(translated) || translated.length !== values.length || translated.some((item) => typeof item !== 'string')) {
-          throw new Error('Translation endpoint returned an unexpected response shape');
-        }
-        return translated;
+        persistTranslationCache();
+        return translations;
       } catch (error) {
-        finalError = error;
-      } finally {
-        if (timeoutId !== null) window.clearTimeout(timeoutId);
+        lastError = error;
       }
     }
-    throw finalError || new Error('No translation endpoint is available');
+    throw new Error('Translation did not complete after trying ' + endpoints.length + ' providers: ' +
+      (lastError?.message || 'no provider completed the request'));
   }
+  function getSearchIndexDisplaySegments() {
+    const segments = [];
+    for (const item of searchItems) {
+      if (!item.sourceTitle) item.sourceTitle = item.title;
+      if (typeof item.sourceDescription !== 'string') item.sourceDescription = item.description || '';
+      if (item.sourceTitle.trim()) segments.push({ text: item.sourceTitle, apply: (value) => { item.title = value; } });
+      if (item.sourceDescription.trim()) segments.push({ text: item.sourceDescription, apply: (value) => { item.description = value; } });
+    }
+    return segments;
+  }
+  function restoreSearchIndexDisplayText() {
+    searchItems.forEach((item) => {
+      if (item.sourceTitle) item.title = item.sourceTitle;
+      if (typeof item.sourceDescription === 'string') item.description = item.sourceDescription;
+    });
+  }
+  const TRANSLATION_FAILURE_COPY = {
+    'en-US': 'Translation could not complete after trying multiple servers. Your current page language was kept. Please retry.',
+    'hi-IN': 'कई सर्वरों पर प्रयास के बाद भी अनुवाद पूरा नहीं हुआ। पृष्ठ की मौजूदा भाषा बरकरार है। कृपया फिर से प्रयास करें।',
+    'bn-IN': 'একাধিক সার্ভারে চেষ্টা করেও অনুবাদ সম্পূর্ণ হয়নি। পৃষ্ঠার বর্তমান ভাষা অপরিবর্তিত আছে। আবার চেষ্টা করুন।',
+    'es-ES': 'La traducción no se completó tras probar varios servidores. Se conservó el idioma actual de la página. Inténtalo de nuevo.',
+    'fr-FR': 'La traduction n’a pas abouti après plusieurs serveurs. La langue actuelle de la page a été conservée. Réessayez.',
+    'de-DE': 'Die Übersetzung konnte trotz mehrerer Server nicht abgeschlossen werden. Die aktuelle Seitensprache bleibt erhalten. Bitte erneut versuchen.',
+    'pt-BR': 'A tradução não foi concluída após várias tentativas em servidores diferentes. O idioma atual da página foi mantido. Tente novamente.',
+    ar: 'تعذرت إكمال الترجمة بعد تجربة عدة خوادم. تم الإبقاء على لغة الصفحة الحالية. يرجى المحاولة مجددًا.',
+    'ja-JP': '複数のサーバーを試しましたが翻訳を完了できませんでした。現在のページ言語を維持しています。もう一度お試しください。',
+    'it-IT': 'La traduzione non è riuscita dopo vari tentativi su server diversi. La lingua attuale della pagina è stata mantenuta. Riprova.',
+    'id-ID': 'Terjemahan tidak selesai setelah mencoba beberapa server. Bahasa halaman saat ini tetap dipertahankan. Silakan coba lagi.',
+    'ko-KR': '여러 서버를 시도했지만 번역을 완료하지 못했습니다. 현재 페이지 언어는 유지됩니다. 다시 시도해 주세요.',
+    'ru-RU': 'Не удалось завершить перевод после проверки нескольких серверов. Текущий язык страницы сохранён. Попробуйте ещё раз.',
+    'zh-CN': '尝试多个服务器后仍无法完成翻译。已保留当前页面语言，请重试。',
+    'tr-TR': 'Birden fazla sunucu denendi ancak çeviri tamamlanamadı. Sayfanın mevcut dili korundu. Lütfen yeniden deneyin.',
+    'nl-NL': 'De vertaling kon na pogingen via meerdere servers niet worden voltooid. De huidige paginataal is behouden. Probeer het opnieuw.',
+    'pl-PL': 'Nie udało się ukończyć tłumaczenia po próbach na wielu serwerach. Zachowano obecny język strony. Spróbuj ponownie.',
+    'uk-UA': 'Не вдалося завершити переклад після спроб на кількох серверах. Поточну мову сторінки збережено. Спробуйте ще раз.',
+    'el-GR': 'Η μετάφραση δεν ολοκληρώθηκε μετά από δοκιμές σε πολλούς διακομιστές. Διατηρήθηκε η τρέχουσα γλώσσα της σελίδας. Δοκιμάστε ξανά.',
+    'cs-CZ': 'Překlad se nepodařilo dokončit ani po vyzkoušení několika serverů. Aktuální jazyk stránky zůstal zachován. Zkuste to znovu.',
+    'sv-SE': 'Översättningen kunde inte slutföras efter försök med flera servrar. Sidans nuvarande språk behölls. Försök igen.',
+  };
   async function translateSitePage(targetLocale, statusNode, applyButton) {
     const locale = normalizeSiteLocale(targetLocale);
-    const copy = translateUiCopy(locale, 'busy');
-    statusNode.textContent = copy;
+    statusNode.textContent = translateUiCopy(locale, 'busy');
     applyButton.disabled = true;
     const selected = SITE_LANGUAGES.find((language) => language.code === locale);
     try {
-      restoreOriginalPageText();
       if (locale === 'en-US') {
+        restoreOriginalPageText();
+        restoreSearchIndexDisplayText();
+        activeSiteLocale = 'en-US';
         statusNode.textContent = translateUiCopy(locale, 'original');
         try { localStorage.setItem('queryfixr-site-locale', locale); } catch (_) {}
         return;
       }
+      if (!selected) throw new Error('Unsupported website language: ' + locale);
+
+      // Keep the current display intact until every page segment is translated successfully.
       const segments = collectTranslatableSegments();
       const texts = segments.map((segment) => segment.text);
       const translated = new Array(texts.length);
+      const batches = [];
       let batch = [];
       let batchIndexes = [];
       let batchChars = 0;
-      const flush = async () => {
+      const flush = () => {
         if (!batch.length) return;
-        const response = await translateBatch(batch, selected.api);
-        response.forEach((value, index) => { translated[batchIndexes[index]] = value; });
+        batches.push({ values: batch, indexes: batchIndexes });
         batch = [];
         batchIndexes = [];
         batchChars = 0;
       };
       for (let i = 0; i < texts.length; i += 1) {
-        const text = texts[i];
-        if (batch.length >= 18 || (batch.length > 0 && batchChars + text.length > 5200)) await flush();
-        batch.push(text);
+        const value = texts[i];
+        if (batch.length >= 16 || (batch.length > 0 && batchChars + value.length > 3600)) flush();
+        batch.push(value);
         batchIndexes.push(i);
-        batchChars += text.length;
+        batchChars += value.length;
       }
-      await flush();
-      segments.forEach((segment, index) => segment.apply(translated[index] || segment.text));
-      document.documentElement.lang = locale;
-      document.documentElement.dir = locale.toLowerCase().startsWith('ar') ? 'rtl' : 'ltr';
+      flush();
+
+      for (let i = 0; i < batches.length; i += 1) {
+        const currentBatch = batches[i];
+        const response = await translateBatch(currentBatch.values, selected.api);
+        response.forEach((value, index) => { translated[currentBatch.indexes[index]] = value; });
+        statusNode.textContent = translateUiCopy(locale, 'busy') + ' ' + (i + 1) + '/' + batches.length;
+      }
+
+      const indexSegments = searchIndexState === 'ready' ? getSearchIndexDisplaySegments() : [];
+      if (indexSegments.length) {
+        const values = indexSegments.map((segment) => segment.text);
+        const indexTranslations = new Array(values.length);
+        for (let offset = 0; offset < values.length; offset += 16) {
+          const response = await translateBatch(values.slice(offset, offset + 16), selected.api);
+          response.forEach((value, j) => { indexTranslations[offset + j] = value; });
+        }
+        indexSegments.forEach((segment, index) => segment.apply(indexTranslations[index]));
+      }
+      segments.forEach((segment, index) => segment.apply(translated[index]));
+      document.documentElement.lang = selected.code;
+      document.documentElement.dir = selected.api === 'ar' ? 'rtl' : 'ltr';
+      activeSiteLocale = locale;
       if (wikiInput) applyWikiSearch(wikiInput.value);
+      if (featureSearchInput) applyFeatureSearch(featureSearchInput.value);
+      if (globalInput && searchIndexState === 'ready') renderGlobalResults(globalInput.value);
       try { localStorage.setItem('queryfixr-site-locale', locale); } catch (_) {}
       statusNode.textContent = translateUiCopy(locale, 'done');
     } catch (error) {
-      restoreOriginalPageText();
-      statusNode.textContent = translateUiCopy(locale, 'failed');
+      // The current page language is preserved; no partial page translation is applied.
+      statusNode.textContent = TRANSLATION_FAILURE_COPY[locale] || TRANSLATION_FAILURE_COPY['en-US'];
       console.warn('QueryFixr site translation failed:', error);
     } finally {
       applyButton.disabled = false;
-      const current = SITE_LANGUAGES.find((language) => language.code === locale);
-      if (current) applyButton.textContent = translateUiCopy(locale, 'button');
+      applyButton.textContent = translateUiCopy(locale, 'button');
     }
   }
   function installSiteLanguageControl() {
