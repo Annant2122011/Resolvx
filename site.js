@@ -30,9 +30,34 @@
       const target = event.target;
       if (target instanceof Element && !target.closest('.site-header')) closeMenu();
     });
+
+    // Reset the compact menu whenever the viewport crosses its CSS breakpoint.
+    // Otherwise a menu opened on a phone can reappear unexpectedly after rotation.
+    if (typeof window.matchMedia === 'function') {
+      const mobileViewport = window.matchMedia('(max-width: 760px)');
+      const syncNavigationForViewport = (event) => {
+        const focusWasInToggle = document.activeElement === menuToggle;
+        const focusWasInNav = nav.contains(document.activeElement);
+        closeMenu();
+        if (event.matches && focusWasInNav) {
+          // The nav is hidden on mobile when closed, so keep keyboard focus visible.
+          menuToggle.focus();
+        } else if (!event.matches && focusWasInToggle) {
+          // The toggle disappears on desktop; move focus into the now-visible nav.
+          const firstNavigableItem = $('a, button', nav);
+          if (firstNavigableItem) firstNavigableItem.focus();
+        }
+      };
+      if (typeof mobileViewport.addEventListener === 'function') {
+        mobileViewport.addEventListener('change', syncNavigationForViewport);
+      } else if (typeof mobileViewport.addListener === 'function') {
+        // Compatibility with older Safari versions.
+        mobileViewport.addListener(syncNavigationForViewport);
+      }
+    }
   }
 
-  $$('[data-year]').forEach((node) => { node.textContent = String(new Date().getFullYear()); });
+  $('[data-year]').forEach((node) => { node.textContent = String(new Date().getFullYear()); });
   $$('.faq-list').forEach((list) => {
     const items = $$('details.faq-item', list);
     items.forEach((item) => item.addEventListener('toggle', () => {
