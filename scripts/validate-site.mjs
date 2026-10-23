@@ -259,13 +259,19 @@ for (const file of visibleFiles) {
 const js = readFileSync(path.join(root, 'site.js'), 'utf8');
 const jsLines = js.split(/\r?\n/).map((line) => line.trimStart());
 for (const unsafePrefix of [
-  "$('.brand-full-logo, .hero-banner-image, .cta-logo').forEach",
   "$('[data-wiki-faq]', article).forEach",
   "$('[data-clear-feature-search]').forEach",
   "const focusable = $('input:not([disabled])",
 ]) {
   if (jsLines.some((line) => line.startsWith(unsafePrefix))) report(`site.js: invalid single-element collection operation: ${unsafePrefix}`);
 }
+const singleQueryCollectionCall = /(^|[^$])\\$\\([^)]*\\)\\s*\\.\\s*(?:forEach|map|filter|reduce|find|some|every)\\b/;
+for (const line of jsLines) {
+  if (singleQueryCollectionCall.test(line)) {
+    report(`site.js: a single-element query result is being used as a collection: ${line.trim()}`);
+  }
+}
+
 if (!jsLines.some((line) => line.startsWith("const focusable = $$('input:not([disabled])"))) {
   report('site.js: search-dialog focus trapping must collect all focusable elements');
 }
