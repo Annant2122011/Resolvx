@@ -688,7 +688,6 @@
         const controller = typeof AbortController === 'function' ? new AbortController() : null;
         const timeoutId = controller ? window.setTimeout(() => controller.abort(), 10000) : null;
         let response;
-        try {
           response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
