@@ -697,11 +697,17 @@
             credentials: 'omit',
             ...(controller ? { signal: controller.signal } : {}),
           });
+        }
+        if (!response.ok) {
+          if (timeoutId !== null) window.clearTimeout(timeoutId);
+          throw new Error('Translation endpoint responded with HTTP ' + response.status);
+        }
+        let result;
+        try {
+          result = await response.json();
         } finally {
           if (timeoutId !== null) window.clearTimeout(timeoutId);
         }
-        if (!response.ok) throw new Error('Translation endpoint responded with HTTP ' + response.status);
-        const result = await response.json();
         let translated = null;
         if (Array.isArray(result.translatedText)) translated = result.translatedText;
         else if (Array.isArray(result)) translated = result.map((item) => typeof item === 'string' ? item : item.translatedText);
