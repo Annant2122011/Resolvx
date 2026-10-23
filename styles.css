@@ -3723,3 +3723,25 @@ button:disabled { cursor: not-allowed; }
   font: 9px var(--mono);
   letter-spacing: .04em;
 }
+
+
+/* Override legacy, higher-specificity CTA rules: enlarge the logo mark, not the orbital paths. */
+.closing-cta:not(.compact-cta) .cta-decoration .deco-center,
+.closing-cta.compact-cta .cta-decoration .deco-center {
+  width: clamp(190px, 18vw, 220px);
+  height: clamp(190px, 18vw, 220px);
+}
+.closing-cta:not(.compact-cta) .cta-decoration .cta-logo,
+.closing-cta.compact-cta .cta-decoration .cta-logo {
+  width: clamp(190px, 18vw, 220px);
+  height: auto;
+  aspect-ratio: 1;
+  max-width: 100%;
+  object-fit: contain;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  mix-blend-mode: normal;
+}
