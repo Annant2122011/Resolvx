@@ -217,34 +217,9 @@
   }
 
   // Global index: feature page is a catalogue; detailed destinations live in the wiki.
-  const searchItems = [
-    { title: 'QueryFixr overview', description: 'Product purpose, current scope, and the boundary between the static site and Discord bot.', url: 'wiki.html#overview', keywords: 'about overview bot support discord help desk helpdesk product purpose static website' },
-    { title: 'Feature catalogue', description: 'Search the inventory of capabilities represented in the bot project.', url: 'features.html#feature-catalog', keywords: 'feature features capability capabilities list catalogue catalog inventory implemented current' },
-    { title: 'Getting started and permissions', description: 'Prepare the bot, database, permissions, and a safe first test ticket.', url: 'wiki.html#first-steps', keywords: 'start install setup onboarding requirements token permissions invite deploy test guild' },
-    { title: 'Ticket lifecycle and statuses', description: 'Create, claim, pend, resume, close, reopen, and archive a ticket.', url: 'wiki.html#ticket-lifecycle', keywords: 'ticket tickets request case open claimed pending waiting resume close reopen archive status state' },
-    { title: 'Duplicate prevention and ticket safety', description: 'Understand active-ticket prevention, cooldowns, state checks, and safe operations.', url: 'wiki.html#ticket-safety', keywords: 'duplicate cooldown spam already active repeated ticket create permission authorization safe transitions close order' },
-    { title: 'Departments, tags and use-case presets', description: 'Route requests to a department and maintain useful issue labels.', url: 'wiki.html#departments', keywords: 'department category tag labels routing preset technical support sales refund account abuse staff role' },
-    { title: 'Forms and reusable templates', description: 'Build versioned forms, validate answers, use conditional questions, and reuse templates.', url: 'wiki.html#forms', keywords: 'form schema field validation conditional template questionnaire intake branching activate deactivate' },
-    { title: 'Custom support panels', description: 'Draft, preview, style, secure, publish, update, and remove public ticket panels.', url: 'wiki.html#panels', keywords: 'panel custom buttons role restrict branding publish preview draft snapshot confirmation layout' },
-    { title: 'Ownership, priority and staff collaboration', description: 'Claim or reassign tickets, change priority, manage participants, and add internal notes.', url: 'wiki.html#team-tools', keywords: 'claim unclaim priority urgent critical assign reassign participants notes add remove user history staff' },
-    { title: 'Reports, categories and voice actions', description: 'Manage report intake and taxonomy; learn the setup limits of ticket voice actions.', url: 'wiki.html#reports-voice', keywords: 'report complaint abuse moderation category subcategory flag threshold voice audio call' },
-    { title: 'Transcripts, archive and recovery', description: 'Review what ticket records can be restored and what deleted Discord data cannot be recreated.', url: 'wiki.html#recovery', keywords: 'transcript html attachment reference archive restore recovery delete accidentally replay backup' },
-    { title: 'Settings dashboard, themes and layout', description: 'Configure server defaults, visual themes, navigation labels, and administrative controls.', url: 'wiki.html#settings', keywords: 'settings dashboard theme color palette customization layout reorder buttons title description footer' },
-    { title: 'Retention review and approved deletion', description: 'Review eligible closed or archived tickets before retention removal.', url: 'wiki.html#retention', keywords: 'retention archive cleanup purge delete eligible approve approval policy days privacy' },
-    { title: 'Audit, event history and developer view', description: 'Inspect ticket events, overall and daily summaries, and restricted developer audit controls.', url: 'wiki.html#audit', keywords: 'audit logging logs event summary daily developer access accumulation diagnostics' },
-    { title: 'Neon PostgreSQL, persistence and retries', description: 'Understand durable storage, outbox retries, rate limits, and operational failure handling.', url: 'wiki.html#storage-deployment', keywords: 'neon postgres postgresql database persistence durable outbox retry retry-after backoff rate-limit sqlite deployment' },
-    { title: 'Bot languages and website translation', description: 'Understand server-level bot localization and the separate opt-in website translator.', url: 'wiki.html#language-automation', keywords: 'language locale translate translation localization multilingual native website translator twenty-one languages' },
-    { title: 'Panel activity and control placement', description: 'Tune the supported rules that move ticket controls using message and visual-line thresholds.', url: 'wiki.html#panel-activity', keywords: 'auto move controls reposition bottom panel activity message cap visual line budget threshold' },
-    { title: 'Support hours and time zones', description: 'Set weekday schedules, IANA time zones, overrides, and outside-hours intake behavior.', url: 'wiki.html#support-hours', keywords: 'schedule timezone time-zone IANA opening hours business hours closed interval department panel outside-hours' },
-    { title: 'Inactivity warnings and auto-close', description: 'Configure idle thresholds, grace periods, and exemption roles or departments.', url: 'wiki.html#inactivity-automation', keywords: 'idle inactivity inactive timeout auto close autoclose warning grace deadline exemption roles department' },
-    { title: 'Ticket channels and private threads', description: 'Choose where new tickets live and compare permission and capacity implications.', url: 'wiki.html#ticket-workspace', keywords: 'workspace private channel text-channel private-thread thread threads permissions visibility capacity' },
-    { title: 'Premium demo mode', description: 'Use the demo entitlement toggle without mistaking it for subscription billing.', url: 'wiki.html#premium-demo', keywords: 'premium demo billing subscription payment entitlement pro tier paid simulated' },
-    { title: 'Setup troubleshooting and recovery checks', description: 'Triage command errors, interaction timeouts, missing permissions, database access, and stale panels.', url: 'wiki.html#troubleshooting', keywords: 'troubleshoot error stack trace exception unknown message interaction failed timeout permission database startup command registration subcommand' },
-    { title: 'Permissions and destructive-action safety', description: 'Understand admin gates, staff access, private ticket visibility, and confirmation requirements.', url: 'wiki.html#permissions-safety', keywords: 'permissions authorization administrator manage server staff role access ticket visibility privacy safe reset retention deletion confirmation' },
-    { title: 'Command explorer', description: 'Browse the slash-command families documented by the bot source.', url: 'wiki.html#commands', keywords: 'command commands slash reference syntax copy category panel form ticket settings audit premium settings-reports' },
-    { title: 'Roadmap and product boundaries', description: 'Separate implemented capabilities, live-acceptance requirements, and planned platform features.', url: 'wiki.html#roadmap', keywords: 'roadmap planned future unavailable workflow graph ai SLA CSAT knowledge base API dashboard OAuth' },
-    { title: 'Frequently asked questions', description: 'Answers about installation, translation, privacy, database choices, recovery, and troubleshooting.', url: 'wiki.html#faq', keywords: 'faq question answers help feature availability database restore error permissions translation' },
-  ];
+  const searchItems = [];
+  let searchIndexPromise = null;
+  let searchIndexState = 'idle';
 
   const SEARCH_EXPANSIONS = {
     'system-at-a-glance': 'about overview product purpose discord ticketing customer support help desk helpdesk workflow administration architecture current capabilities',
@@ -332,6 +307,7 @@
   const globalInput = $('[data-global-search]');
   const globalResults = $('[data-global-results]');
   let previousFocus = null;
+  let previousSearchIndexStatus = '';
   const openSearch = () => {
     if (!overlay || !globalInput) return;
     const activeElement = document.activeElement;
@@ -347,6 +323,7 @@
     globalInput.value = '';
     renderGlobalResults('');
     window.requestAnimationFrame(() => globalInput.focus());
+    void ensureSearchIndex().then(() => renderGlobalResults(globalInput.value)).catch(() => renderGlobalResults(globalInput.value));
   };
   const closeSearch = () => {
     if (!overlay) return;
@@ -356,31 +333,70 @@
   };
   const renderGlobalResults = (query) => {
     if (!globalResults) return;
-    const visibleSearchItems = searchItems.filter((item) => matchesSearchCorpus(searchItemCorpus(item), query));
     globalResults.replaceChildren();
-    if (!visibleSearchItems.length) {
+    if (searchIndexState !== 'ready') {
+      const message = document.createElement('p');
+      message.className = 'global-search-empty';
+      message.setAttribute('role', 'status');
+      message.textContent = searchIndexState === 'error'
+        ? 'Search could not load the site index. Check your connection and retry.'
+        : 'Preparing search across the home page, features, wiki, and FAQs…';
+      globalResults.appendChild(message);
+      if (searchIndexState === 'error') {
+        const retry = document.createElement('button');
+        retry.type = 'button';
+        retry.className = 'global-search-retry';
+        retry.textContent = 'Retry search';
+        retry.addEventListener('click', () => {
+          searchIndexPromise = null;
+          searchIndexState = 'idle';
+          renderGlobalResults(query);
+          void ensureSearchIndex().then(() => renderGlobalResults(globalInput?.value || query)).catch(() => renderGlobalResults(globalInput?.value || query));
+        });
+        globalResults.appendChild(retry);
+      }
+      return;
+    }
+    const ranked = searchItems.map((item) => {
+      const corpus = searchItemCorpus(item);
+      let score = searchScore(corpus, query);
+      score += searchScore(item.title, query) * 1.65;
+      score += searchScore(item.description, query) * 0.35;
+      return { item, score };
+    }).filter(({ score }) => score > 0);
+    ranked.sort((a, b) => b.score - a.score || a.item.title.localeCompare(b.item.title));
+    if (!String(query || '').trim()) ranked.splice(9);
+    else ranked.splice(10);
+    if (!ranked.length) {
       const empty = document.createElement('p');
       empty.className = 'global-search-empty';
-      empty.textContent = 'No matching pages or guides. Try a broader search.';
+      empty.textContent = String(query || '').trim()
+        ? 'No close matches. Try fewer words, a synonym, or a shorter spelling.'
+        : 'Search the full feature catalogue, every wiki guide, and FAQs.';
       globalResults.appendChild(empty);
       return;
     }
-    visibleSearchItems.slice(0, 9).forEach((item, index) => {
+    ranked.forEach(({ item }, index) => {
       const anchor = document.createElement('a');
       anchor.href = item.url;
       anchor.className = 'global-search-result';
+      anchor.setAttribute('data-search-result', '');
+      anchor.setAttribute('aria-label', item.title + '. ' + item.type);
       const symbol = document.createElement('span');
       symbol.className = 'search-result-icon';
-      symbol.textContent = index === 0 ? '↗' : index === 1 ? '▦' : '⌁';
+      symbol.textContent = item.type === 'FAQ' ? '?' : item.type === 'Features' ? '▦' : item.type === 'Home' ? '⌂' : '↗';
       const body = document.createElement('span');
       body.className = 'search-result-copy';
       const title = document.createElement('strong');
       title.textContent = item.title;
       const description = document.createElement('small');
-      description.textContent = item.description;
-      body.append(title, description);
+      description.textContent = item.description || item.keywords || item.type;
+      const category = document.createElement('span');
+      category.className = 'search-result-category';
+      category.textContent = item.type;
+      body.append(title, description, category);
       const key = document.createElement('kbd');
-      key.textContent = '↵';
+      key.textContent = String(index + 1);
       anchor.append(symbol, body, key);
       anchor.addEventListener('click', closeSearch);
       globalResults.appendChild(anchor);
@@ -423,17 +439,17 @@
         }
       }
       if (!overlay.hidden && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
-        const results = $$('.global-search-result', globalResults || document);
+        const results = $$('[data-search-result]', globalResults || document);
         if (results.length) {
           event.preventDefault();
           const currentIndex = results.indexOf(document.activeElement);
-          let nextIndex;
-          if (document.activeElement === globalInput) nextIndex = event.key === 'ArrowDown' ? 0 : results.length - 1;
-          else if (currentIndex < 0) nextIndex = 0;
-          else nextIndex = (currentIndex + (event.key === 'ArrowDown' ? 1 : -1) + results.length) % results.length;
+          const direction = event.key === 'ArrowDown' ? 1 : -1;
+          const nextIndex = document.activeElement === globalInput
+            ? (direction > 0 ? 0 : results.length - 1)
+            : (currentIndex < 0 ? 0 : (currentIndex + direction + results.length) % results.length);
           results[nextIndex].focus();
-          return;
         }
+        return;
       }
       const target = event.target;
       const typing = target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
@@ -442,9 +458,6 @@
         event.stopPropagation();
         if (overlay.hidden) openSearch();
         else closeSearch();
-      } else if (event.key === '/' && !event.ctrlKey && !event.metaKey && !event.altKey && !typing && overlay.hidden) {
-        event.preventDefault();
-        openSearch();
       }
     }, true);
   }
@@ -464,15 +477,197 @@
   const FAQ_SEARCH_KEYWORDS = {
     'What does QueryFixr do?': 'purpose overview discord support ticket helpdesk request management',
     'Can I invite the bot from this website?': 'invite install add bot discord oauth authorization link missing setup',
-    'Does the website run bot commands or show live tickets?': 'website static github pages vercel dashboard login api live data connection',
-    'Why is the slash-command root /supportforge?': 'slash command root rename brand registered name deployed command',
-    'What does a member do to open a ticket?': 'create new support request ticket panel button department form intake',
-    'Can I customize multiple public support panels?': 'multi-panel builder draft publish entry button roles emoji style order',
-    'Are form templates the same as active forms?': 'template activate deactivate schema version form builder',
-    'Can QueryFixr restore a deleted ticket exactly as it was?': 'restore recover recovery undelete delete accidental channel original ids authors replay transcript limit',
-    'What happens to attachments during recovery?': 'attachment files size limit archived message media unavailable expired',
-    'Which database should production use?': 'neon postgresql postgres sqlite durable database persistence',
-    'Are slash commands and button controls both supported?': 'fallback parity command interaction component button select menu live guild testing',
+    'Does the website run bot comm  function normalizeSearchText(value) {
+    return String(value || '')
+      .normalize('NFKD')
+      .replace(/[\\u0300-\\u036f]/g, '')
+      .replace(/[’‘`]/g, "'")
+      .replace(/[–—‐‑]/g, ' ')
+      .toLowerCase()
+      .replace(/&/g, ' and ')
+      .replace(/[^\\p{L}\\p{N}]+/gu, ' ')
+      .trim();
+  }
+  function searchTerms(query) {
+    return normalizeSearchText(query).split(/\\s+/u)
+      .filter((term) => term.length > 1 && !SEARCH_STOP_WORDS.has(term));
+  }
+  function boundedEditDistanceOne(a, b) {
+    if (a === b) return true;
+    if (Math.abs(a.length - b.length) > 1 || Math.min(a.length, b.length) < 4) return false;
+    let i = 0, j = 0, edits = 0;
+    while (i < a.length && j < b.length) {
+      if (a[i] === b[j]) { i += 1; j += 1; continue; }
+      edits += 1;
+      if (edits > 1) return false;
+      if (a.length > b.length) i += 1;
+      else if (b.length > a.length) j += 1;
+      else { i += 1; j += 1; }
+    }
+    if (i < a.length || j < b.length) edits += 1;
+    return edits <= 1;
+  }
+  const synonymGroupFor = (term) => SEARCH_SYNONYM_GROUPS.find((values) =>
+    values.some((value) => normalizeSearchText(value) === term));
+  function bestTokenScore(token, corpusTokens) {
+    if (!token) return 0;
+    let best = 0;
+    for (const candidate of corpusTokens) {
+      if (candidate === token) best = Math.max(best, 7);
+      else if (candidate.startsWith(token) && token.length >= 2) best = Math.max(best, 4.2);
+      else if (token.startsWith(candidate) && candidate.length >= 4) best = Math.max(best, 2.2);
+      else if (token.length >= 5 && candidate.includes(token)) best = Math.max(best, 2.8);
+      else if (boundedEditDistanceOne(token, candidate)) best = Math.max(best, 1.7);
+      if (best >= 7) break;
+    }
+    if (best > 0) return best;
+    const group = synonymGroupFor(token);
+    if (!group) return 0;
+    for (const synonym of group) {
+      const normalized = normalizeSearchText(synonym);
+      if (!normalized) continue;
+      if (corpusTokens.includes(normalized)) best = Math.max(best, 3.1);
+      else if (normalized.length >= 3 && corpusTokens.some((candidate) => candidate.startsWith(normalized))) best = Math.max(best, 2.2);
+      else if (normalized.includes(' ') && normalizeSearchText(corpusTextForScore).includes(normalized)) best = Math.max(best, 2.4);
+    }
+    return best;
+  }
+  let corpusTextForScore = '';
+  function searchScore(corpusText, query) {
+    const rawQuery = String(query || '').trim();
+    if (!rawQuery) return 1;
+    const normalizedCorpus = normalizeSearchText(corpusText);
+    const terms = searchTerms(rawQuery);
+    if (!terms.length || !normalizedCorpus) return 0;
+    const tokens = normalizedCorpus.split(/\\s+/u).filter(Boolean);
+    let hitCount = 0;
+    let score = 0;
+    corpusTextForScore = normalizedCorpus;
+    for (const term of terms) {
+      const termScore = bestTokenScore(term, tokens);
+      if (termScore > 0) {
+        hitCount += 1;
+        score += termScore;
+      }
+    }
+    if (!hitCount) return 0;
+    const coverage = hitCount / terms.length;
+    const normalizedQuery = normalizeSearchText(rawQuery);
+    const phraseBonus = normalizedQuery.length > 2 && normalizedCorpus.includes(normalizedQuery) ? 12 : 0;
+    const coverageBonus = coverage * 6;
+    // Multi-word searches may tolerate a missed word, but strongly prefer fuller matches.
+    const completeness = terms.length > 1 ? coverage * coverage : 1;
+    return (score + coverageBonus + phraseBonus) * completeness;
+  }
+  function matchesSearchCorpus(corpusText, query) {
+    return searchScore(corpusText, query) > 0;
+  }
+  function searchItemCorpus(item) {
+    const hash = (new URL(item.url, document.baseURI).hash || '').slice(1);
+    return [item.title, item.description, item.keywords, item.text, SEARCH_EXPANSIONS[hash] || ''].join(' ');
+  }
+  function safeText(element, selector) {
+    return (element.querySelector(selector)?.textContent || '').replace(/\\s+/gu, ' ').trim();
+  }
+  function indexRecord({ element, doc, pageUrl, type, forcedUrl = null }) {
+    const title = safeText(element, 'h1,h2,h3,h4,summary') || element.getAttribute('aria-label') || '';
+    const text = (element.textContent || '').replace(/\\s+/gu, ' ').trim();
+    if (!title || text.length < 8) return null;
+    const firstParagraph = safeText(element, 'p');
+    const description = firstParagraph.slice(0, 280) || text.slice(0, 280);
+    const rawHref = forcedUrl || element.getAttribute('href') || (element.id ? pageUrl.pathname + '#' + element.id : pageUrl.href);
+    const url = new URL(rawHref, pageUrl).href;
+    return {
+      title,
+      description,
+      url,
+      keywords: element.getAttribute('data-search-keywords') || element.dataset?.searchKeywords || '',
+      text,
+      type,
+    };
+  }
+  async function buildSearchIndex() {
+    const pages = [
+      { path: 'index.html', type: 'Home' },
+      { path: 'features.html', type: 'Features' },
+      { path: 'wiki.html', type: 'Wiki' },
+    ];
+    const loaded = await Promise.all(pages.map(async (page) => {
+      const url = new URL(page.path, document.baseURI);
+      const response = await fetch(url.href, {
+        headers: { Accept: 'text/html' },
+        credentials: 'same-origin',
+        cache: 'force-cache',
+      });
+      if (!response.ok) throw new Error('Could not load ' + page.path + ' (HTTP ' + response.status + ')');
+      return { ...page, url, doc: new DOMParser().parseFromString(await response.text(), 'text/html') };
+    }));
+    const records = [];
+    const seen = new Set();
+    const add = (record) => {
+      if (!record) return;
+      const identity = record.type + '|' + record.url + '|' + normalizeSearchText(record.title);
+      if (seen.has(identity)) return;
+      seen.add(identity);
+      records.push(record);
+    };
+    for (const page of loaded) {
+      const { doc, url, type } = page;
+      if (type === 'Features') {
+        doc.querySelectorAll('[data-feature-card]').forEach((element) => add(indexRecord({ element, doc, pageUrl: url, type })));
+        const hero = doc.querySelector('.feature-library-hero, .page-hero, main > section h1')?.closest('section') || doc.querySelector('main');
+        if (hero) add(indexRecord({ element: hero, doc, pageUrl: url, type, forcedUrl: url.href }));
+      } else if (type === 'Wiki') {
+        doc.querySelectorAll('[data-wiki-article]').forEach((element) => {
+          add(indexRecord({ element, doc, pageUrl: url, type, forcedUrl: url.pathname + '#' + element.id }));
+        });
+        doc.querySelectorAll('[data-wiki-faq]').forEach((element) => {
+          const summary = safeText(element, 'summary');
+          if (!summary) return;
+          add({
+            title: summary,
+            description: safeText(element, 'p').slice(0, 280),
+            url: url.pathname + '#faq',
+            keywords: element.getAttribute('data-search-keywords') || '',
+            text: (element.textContent || '').replace(/\\s+/gu, ' ').trim(),
+            type: 'FAQ',
+          });
+        });
+      } else {
+        const main = doc.querySelector('main') || doc.body;
+        main.querySelectorAll('section[id]').forEach((element) => {
+          if (element.matches('.closing-cta')) return;
+          add(indexRecord({ element, doc, pageUrl: url, type }));
+        });
+        main.querySelectorAll('.hero-copy, [data-capability-card], .capability-card').forEach((element) => {
+          add(indexRecord({ element, doc, pageUrl: url, type }));
+        });
+      }
+    }
+    if (records.length < 40) throw new Error('Search index is incomplete: only ' + records.length + ' destinations were indexed');
+    return records.sort((a, b) => a.title.localeCompare(b.title));
+  }
+  async function ensureSearchIndex() {
+    if (searchIndexState === 'ready') return searchItems;
+    if (searchIndexPromise) return searchIndexPromise;
+    searchIndexState = 'loading';
+    searchIndexPromise = buildSearchIndex().then((records) => {
+      searchItems.splice(0, searchItems.length, ...records);
+      searchIndexState = 'ready';
+      return searchItems;
+    }).catch((error) => {
+      searchIndexState = 'error';
+      console.error('QueryFixr search index could not be prepared:', error);
+      throw error;
+    });
+    try {
+      return await searchIndexPromise;
+    } finally {
+      if (searchIndexState !== 'ready') searchIndexPromise = null;
+    }
+  }
+
+enu live guild testing',
     'Does Premium demo mode mean billing is connected?': 'premium payments subscription billing toggle entitlement demo fake simulated',
     'What should I check if a button or command does nothing?': 'troubleshoot error timeout permissions interaction expired database logs command registration',
     'Can I hide repair or destructive controls when customizing Settings?': 'settings layout builder protected repair refresh reset delete everything safety hide controls',
