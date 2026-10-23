@@ -265,7 +265,7 @@ for (const unsafePrefix of [
 ]) {
   if (jsLines.some((line) => line.startsWith(unsafePrefix))) report(`site.js: invalid single-element collection operation: ${unsafePrefix}`);
 }
-const singleQueryCollectionCall = /(^|[^$])\\$\\([^)]*\\)\\s*\\.\\s*(?:forEach|map|filter|reduce|find|some|every)\\b/;
+const singleQueryCollectionCall = /(^|[^$])\$\([^)]*\)\s*\.\s*(?:forEach|map|filter|reduce|find|some|every)\b/;
 for (const line of jsLines) {
   if (singleQueryCollectionCall.test(line)) {
     report(`site.js: a single-element query result is being used as a collection: ${line.trim()}`);
