@@ -21,6 +21,6 @@ jobs:
         with:
           node-version: 22
       - name: Check JavaScript syntax
-        run: node --check site.js && node --check api/translate.js && node --check scripts/validate-site.mjs && node --check scripts/test-search.mjs && node --check scripts/test-translation-proxy.cjs
+        run: node --check site.js && node --check api/translate.js && node --check netlify/functions/translate.js && node --check scripts/validate-site.mjs && node --check scripts/test-search.mjs && node --check scripts/test-translation-proxy.cjs
       - name: Check links, anchors, IDs, branding, and CSS structure
         run: node scripts/validate-site.mjs && node scripts/test-search.mjs && node scripts/test-translation-proxy.cjs
