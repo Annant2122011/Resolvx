@@ -3399,3 +3399,88 @@ a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visibl
     height: 73px;
   }
 }
+
+
+/* Resilient fallbacks for externally hosted brand artwork. */
+.brand-text-fallback {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  color: #f3f4ff;
+  font-family: var(--font, system-ui, sans-serif);
+  font-size: clamp(20px, 2.1vw, 25px);
+  font-weight: 850;
+  line-height: 1.12;
+  letter-spacing: -.055em;
+  overflow-wrap: anywhere;
+}
+.header-brand .brand-text-fallback {
+  width: 178px;
+  min-height: 48px;
+  flex: 0 1 178px;
+}
+.footer-brand .brand-text-fallback {
+  width: 150px;
+  min-height: 40px;
+  flex: 0 1 150px;
+  font-size: 20px;
+}
+.hero-banner-fallback {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  min-height: 220px;
+  aspect-ratio: 3 / 2;
+  padding: clamp(18px, 4vw, 44px);
+  border: 1px solid rgba(155, 147, 255, .28);
+  border-radius: 16px;
+  color: #f3f4ff;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(105, 94, 255, .26), transparent 38%),
+    radial-gradient(circle at 72% 72%, rgba(63, 221, 230, .1), transparent 35%),
+    linear-gradient(135deg, #101326, #080a12 68%);
+}
+.hero-banner-fallback-mark {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border: 1px solid rgba(144, 132, 255, .55);
+  border-radius: 20px;
+  color: #f7f6ff;
+  background: linear-gradient(135deg, rgba(130, 105, 255, .28), rgba(68, 220, 231, .12));
+  box-shadow: 0 0 38px rgba(116, 103, 255, .18);
+  font: 800 34px/1 var(--font, system-ui, sans-serif);
+}
+.hero-banner-fallback strong {
+  font: 850 clamp(23px, 3.8vw, 38px)/1.1 var(--font, system-ui, sans-serif);
+  letter-spacing: -.055em;
+}
+.hero-banner-fallback > span:last-child {
+  color: #aeb7cc;
+  font: 600 12px/1.7 var(--font, system-ui, sans-serif);
+}
+@media (max-width: 760px) {
+  .header-brand .brand-text-fallback {
+    width: clamp(112px, 36vw, 138px);
+    min-height: 38px;
+    flex-basis: auto;
+    font-size: clamp(18px, 6vw, 22px);
+  }
+  .footer-brand .brand-text-fallback {
+    width: 142px;
+    min-height: 38px;
+    flex-basis: auto;
+    font-size: 19px;
+  }
+  .hero-banner-fallback {
+    min-height: 200px;
+    border-radius: 15px;
+  }
+}
