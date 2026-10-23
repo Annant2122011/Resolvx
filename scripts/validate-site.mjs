@@ -182,7 +182,7 @@ for (const file of htmlFiles) {
   const iconTags = [...pageContents.get(file).matchAll(/<link\b[^>]*\brel="icon"[^>]*>/gi)].map((match) => attributes(match[0]));
   const pngIcons = iconTags.filter((icon) => (icon.type || '').toLowerCase() === 'image/png');
   const pngIcon = pngIcons[0];
-  const appleIcon = [...pageContents.get(file).matchAll(/<link\\b[^>]*\\brel="apple-touch-icon"[^>]*>/gi)]
+  const appleIcon = [...pageContents.get(file).matchAll(/<link\b[^>]*\brel="apple-touch-icon"[^>]*>/gi)]
     .map((match) => attributes(match[0]))[0];
   if (iconTags.length !== 1 || pngIcons.length !== 1 || !pngIcon ||
       !pngIcon.href.startsWith(suppliedLogoUrl) || pngIcon.sizes !== '512x512') {
@@ -309,7 +309,7 @@ if (!dropdownStylesheet.includes('.site-language-switcher select option') ||
     !dropdownStylesheet.includes('background-color: #151827;')) {
   report('styles.css: translation dropdown options need explicit high-contrast dark menu colors');
 }
-if (/<s\\b/i.test(pageContents.get('index.html')) || !pageContents.get('index.html').includes('<h1>QueryFixr<br>')) {
+if (/<s\b/i.test(pageContents.get('index.html')) || !pageContents.get('index.html').includes('<h1>QueryFixr<br>')) {
   report('index.html: homepage brand name must display without strikethrough');
 }
 
