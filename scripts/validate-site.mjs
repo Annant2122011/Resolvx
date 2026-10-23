@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const root = process.cwd();
 const htmlFiles = ['index.html', 'features.html', 'wiki.html'];
-const visibleFiles = [...htmlFiles, 'site.js', 'styles.css', 'mobile.css', 'README.md', 'favicon.svg', 'api/translate.js', 'scripts/test-search.mjs', 'scripts/test-translation-proxy.cjs'];
+const visibleFiles = [...htmlFiles, 'site.js', 'styles.css', 'mobile.css', 'README.md', 'favicon.svg', 'api/translate.js', 'netlify/functions/translate.js', 'scripts/test-search.mjs', 'scripts/test-translation-proxy.cjs'];
 const errors = [];
 const pageContents = new Map();
 const pageIds = new Map();
@@ -328,6 +328,14 @@ if (!js.includes('window.setTimeout(() => controller.abort(), timeoutMs)') ||
     !js.includes('const SAME_ORIGIN_TRANSLATION_ENDPOINT') ||
     !js.includes('const TRANSLATION_CACHE_LIMIT = 2200')) {
   report('site.js: translation must use bounded requests, a same-origin proxy, and a persistent bounded cache');
+}
+const netlifyTranslationProxySource = readFileSync(path.join(root, 'netlify/functions/translate.js'), 'utf8');
+if (!netlifyTranslationProxySource.includes("require('../../api/translate.js')") ||
+    !js.includes('NETLIFY_TRANSLATION_ENDPOINT')) {
+  report('Netlify deployment must expose the same-origin translation proxy and be listed as a client fallback.');
+}
+if (!js.includes('segments.push({ text: defaultDocumentTitle')) {
+  report('site.js: page translation must include the document title as translatable text.');
 }
 const translationProxySource = readFileSync(path.join(root, 'api/translate.js'), 'utf8');
 for (const contract of [
