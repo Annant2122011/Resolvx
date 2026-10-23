@@ -1070,19 +1070,26 @@
     const results = new Array(batches.length);
     let cursor = 0;
     let completed = 0;
+    let firstError = null;
     const workerCount = Math.min(3, batches.length);
 
     async function worker() {
-      while (true) {
+      while (firstError === null) {
         const index = cursor++;
         if (index >= batches.length) return;
-        results[index] = await translateBatchFn(batches[index].values, targetApi);
+        try {
+          results[index] = await translateBatchFn(batches[index].values, targetApi);
+        } catch (error) {
+          firstError = error;
+          return;
+        }
         completed += 1;
         onProgress(completed, batches.length);
       }
     }
 
     await Promise.all(Array.from({ length: workerCount }, () => worker()));
+    if (firstError) throw firstError;
     return results;
   }
 
@@ -1257,6 +1264,7 @@
       const code = normalizeSiteLocale(select.value);
       label.textContent = translateUiCopy(code, 'label');
       button.textContent = translateUiCopy(code, 'button');
+      status.textContent = '';
     });
     button.addEventListener('click', () => { void translateSitePage(select.value, status, button); });
     const saved = (() => { try { return localStorage.getItem('queryfixr-site-locale'); } catch (_) { return null; } })();
