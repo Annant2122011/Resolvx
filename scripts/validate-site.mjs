@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const root = process.cwd();
 const htmlFiles = ['index.html', 'features.html', 'wiki.html'];
-const visibleFiles = [...htmlFiles, 'site.js', 'styles.css', 'mobile.css', 'README.md', 'favicon.svg'];
+const visibleFiles = [...htmlFiles, 'site.js', 'styles.css', 'mobile.css', 'README.md', 'favicon.svg', 'api/translate.js', 'scripts/test-search.mjs', 'scripts/test-translation-proxy.cjs'];
 const errors = [];
 const pageContents = new Map();
 const pageIds = new Map();
@@ -324,8 +324,26 @@ if (!commandDocumentation.includes('/supportforge ticket claim')) {
 if (js.includes('QUERYFIXR_TRANSLATION_API_KEY')) {
   report('site.js: do not send browser-exposed translation API keys to public endpoints');
 }
-if (!js.includes('window.setTimeout(() => controller.abort(), timeoutMs)') || !js.includes('async function requestGoogleTranslationBatch') || !js.includes('const TRANSLATION_CACHE_LIMIT = 2200')) {
-  report('site.js: translation must use bounded requests, a second provider engine, and a persistent bounded cache');
+if (!js.includes('window.setTimeout(() => controller.abort(), timeoutMs)') ||
+    !js.includes('const SAME_ORIGIN_TRANSLATION_ENDPOINT') ||
+    !js.includes('const TRANSLATION_CACHE_LIMIT = 2200')) {
+  report('site.js: translation must use bounded requests, a same-origin proxy, and a persistent bounded cache');
+}
+const translationProxySource = readFileSync(path.join(root, 'api/translate.js'), 'utf8');
+for (const contract of [
+  ['async function requestTranslationWithFailover(', 'multi-provider request failover'],
+  ['async function requestGoogleEndpoint(', 'independent final provider fallback'],
+  ['function normalizeRequestBody(body)', 'strict request validation'],
+  ['function checkRateLimit(req)', 'translation rate limiting'],
+  ['Cross-origin translation requests are not allowed.', 'same-origin request protection'],
+  ['module.exports._test', 'unit-test access to pure validation helpers'],
+]) {
+  if (!translationProxySource.includes(contract[0])) report('api/translate.js: missing ' + contract[1]);
+}
+if (!translationProxySource.includes('MAX_TEXTS_PER_REQUEST = 16') ||
+    !translationProxySource.includes('MAX_TOTAL_CHARACTERS = 4000') ||
+    !translationProxySource.includes('REQUEST_TIMEOUT_MS')) {
+  report('api/translate.js: translation proxy must keep request-size limits and finite provider timeouts');
 }
 if (!js.includes('brand-text-fallback') || !js.includes('hero-banner-fallback')) {
   report('site.js: externally hosted brand and hero images need graceful visual fallbacks');
