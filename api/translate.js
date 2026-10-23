@@ -18,6 +18,11 @@ const MAX_TEXTS_PER_REQUEST = 16;
 const MAX_TOTAL_CHARACTERS = 4000;
 const MAX_TEXT_CHARACTERS = 2400;
 const REQUEST_TIMEOUT_MS = 4500;
+const GOOGLE_TIMEOUT_MS = 12_000;
+const PROVIDER_COOLDOWN_MS = 30_000;
+const GOOGLE_WEB_FALLBACK = '__google_web_fallback__';
+let preferredProvider = '';
+const providerCooldowns = new Map();
 const RATE_WINDOW_MS = 60_000;
 const RATE_LIMIT = 180;
 const RATE_STORE_KEY = Symbol.for('queryfixr.translation.rate-limits');
@@ -76,8 +81,13 @@ function translationEndpoints() {
   return [...new Set([configured, ...DEFAULT_TRANSLATION_ENDPOINTS].filter(Boolean))];
 }
 
-async function requestEndpoint(endpoint, texts, target) {
+async function requestEndpoint(endpoint, texts, target, parentSignal) {
   const controller = new AbortController();
+  const abortFromParent = () => controller.abort();
+  if (parentSignal) {
+    if (parentSignal.aborted) controller.abort();
+    else parentSignal.addEventListener('abort', abortFromParent, { once: true });
+  }
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
     const body = { q: texts, source: 'en', target, format: 'text' };
@@ -107,7 +117,114 @@ async function requestEndpoint(endpoint, texts, target) {
     return translated;
   } finally {
     clearTimeout(timer);
+    if (parentSignal) parentSignal.removeEventListener('abort', abortFromParent);
   }
+}
+
+async function requestGoogleEndpoint(texts, target) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), GOOGLE_TIMEOUT_MS);
+  const output = new Array(texts.length);
+  let cursor = 0;
+  let firstError = null;
+  async function worker() {
+    while (cursor < texts.length) {
+      const index = cursor++;
+      try {
+        const url = new URL('https://translate.googleapis.com/translate_a/single');
+        url.searchParams.set('client', 'gtx');
+        url.searchParams.set('sl', 'en');
+        url.searchParams.set('tl', target);
+        url.searchParams.append('dt', 't');
+        url.searchParams.set('q', texts[index]);
+        const response = await fetch(url.href, {
+          method: 'GET',
+          signal: controller.signal,
+          cache: 'no-store',
+          headers: { Accept: 'application/json' },
+        });
+        if (!response.ok) throw new Error('Google translation fallback returned HTTP ' + response.status + '.');
+        const payload = await response.json();
+        const chunks = Array.isArray(payload?.[0]) ? payload[0] : [];
+        const translation = chunks.map((chunk) => Array.isArray(chunk) && typeof chunk[0] === 'string' ? chunk[0] : '').join('');
+        if (!translation.trim()) throw new Error('Google translation fallback returned an empty result.');
+        output[index] = translation;
+      } catch (error) {
+        firstError = firstError || error;
+        controller.abort();
+        return;
+      }
+    }
+  }
+  try {
+    await Promise.all(Array.from({ length: Math.min(4, texts.length) }, () => worker()));
+    if (firstError) throw firstError;
+    if (output.some((value) => typeof value !== 'string' || !value.trim())) {
+      throw new Error('Google translation fallback returned an incomplete batch.');
+    }
+    preferredProvider = GOOGLE_WEB_FALLBACK;
+    return output;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function requestTranslationWithFailover(texts, target) {
+  const allProviders = translationEndpoints();
+  const google = GOOGLE_WEB_FALLBACK;
+  const libreProviders = allProviders.filter((endpoint) => endpoint !== google);
+  const now = Date.now();
+  let candidates = libreProviders.filter((endpoint) => (providerCooldowns.get(endpoint) || 0) <= now);
+  if (!candidates.length) candidates = libreProviders.slice();
+  const errors = [];
+
+  // Reuse a provider that completed successfully before trying more mirrors.
+  if (preferredProvider && preferredProvider !== google && candidates.includes(preferredProvider)) {
+    try {
+      return { translatedText: await requestEndpoint(preferredProvider, texts, target), provider: preferredProvider };
+    } catch (error) {
+      providerCooldowns.set(preferredProvider, Date.now() + PROVIDER_COOLDOWN_MS);
+      errors.push(error);
+      candidates = candidates.filter((endpoint) => endpoint !== preferredProvider);
+    }
+  } else if (preferredProvider === google) {
+    try {
+      return { translatedText: await requestGoogleEndpoint(texts, target), provider: google };
+    } catch (error) {
+      errors.push(error);
+    }
+  }
+
+  // Probe remaining mirrors concurrently so one dead host cannot delay the whole page.
+  if (candidates.length) {
+    const raceController = new AbortController();
+    const attempts = candidates.map(async (endpoint) => {
+      try {
+        const translatedText = await requestEndpoint(endpoint, texts, target, raceController.signal);
+        return { translatedText, provider: endpoint };
+      } catch (error) {
+        providerCooldowns.set(endpoint, Date.now() + PROVIDER_COOLDOWN_MS);
+        errors.push(error);
+        throw error;
+      }
+    });
+    try {
+      const success = await Promise.any(attempts);
+      preferredProvider = success.provider;
+      raceController.abort();
+      return success;
+    } catch (_) {
+      raceController.abort();
+    }
+  }
+
+  try {
+    return { translatedText: await requestGoogleEndpoint(texts, target), provider: google };
+  } catch (error) {
+    errors.push(error);
+  }
+  const lastError = errors[errors.length - 1];
+  throw new Error('All translation providers failed. ' + (lastError?.message || 'Retry after a short delay.'));
 }
 
 module.exports = async function translateHandler(req, res) {
@@ -150,19 +267,15 @@ module.exports = async function translateHandler(req, res) {
     return;
   }
 
-  let lastError = null;
-  for (const endpoint of translationEndpoints()) {
-    try {
-      const translatedText = await requestEndpoint(endpoint, input.texts, input.target);
-      res.status(200).json({ translatedText });
-      return;
-    } catch (error) {
-      lastError = error;
-    }
+  try {
+    const result = await requestTranslationWithFailover(input.texts, input.target);
+    res.status(200).json({ translatedText: result.translatedText });
+  } catch (error) {
+    res.status(503).json({
+      error: 'No translation provider completed this request.',
+      detail: error?.message || 'Translation providers are unavailable.',
+    });
   }
-
-  res.status(503).json({
-    error: 'No translation provider completed this request.',
-    detail: lastError?.message || 'Translation providers are unavailable.',
-  });
 };
+
+module.exports._test = { normalizeRequestBody, translationEndpoints, checkRateLimit };
