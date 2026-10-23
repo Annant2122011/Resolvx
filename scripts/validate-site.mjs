@@ -331,7 +331,7 @@ if (!js.includes('brand-text-fallback') || !js.includes('hero-banner-fallback'))
   report('site.js: externally hosted brand and hero images need graceful visual fallbacks');
 }
 
-const faqCount = [...wikiSource.matchAll(/\\bdata-wiki-faq\\b/g)].length;
+const faqCount = [...wikiSource.matchAll(/\bdata-wiki-faq\b/g)].length;
 const homeSearchSectionCount = [...pageContents.get('index.html').matchAll(/<section\\b[^>]*\\bid=/gi)].length;
 const searchDestinationEstimate = featureCards.length + wikiArticles + faqCount + homeSearchSectionCount;
 for (const requiredPath of ['index.html', 'features.html', 'wiki.html']) {
