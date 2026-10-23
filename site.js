@@ -42,7 +42,7 @@
       image.remove();
     };
 
-    $('.brand-full-logo, .brand-qf-logo, .hero-banner-image, .cta-logo').forEach((image) => {
+    $$('.brand-full-logo, .brand-qf-logo, .hero-banner-image, .cta-logo').forEach((image) => {
       image.addEventListener('error', () => handleImageFailure(image), { once: true });
       // A cached failure can occur before this deferred script installs listeners.
       if (image.complete && image.naturalWidth === 0) handleImageFailure(image);
@@ -104,7 +104,7 @@
     }
   }
 
-  $('[data-year]').forEach((node) => { node.textContent = String(new Date().getFullYear()); });
+  $$('[data-year]').forEach((node) => { node.textContent = String(new Date().getFullYear()); });
   $$('.faq-list').forEach((list) => {
     const items = $$('details.faq-item', list);
     items.forEach((item) => item.addEventListener('toggle', () => {
