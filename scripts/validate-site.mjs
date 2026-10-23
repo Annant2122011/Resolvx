@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const root = process.cwd();
 const htmlFiles = ['index.html', 'features.html', 'wiki.html'];
-const visibleFiles = [...htmlFiles, 'site.js', 'styles.css', 'mobile.css', 'README.md'];
+const visibleFiles = [...htmlFiles, 'site.js', 'styles.css', 'mobile.css', 'README.md', 'favicon.svg'];
 const errors = [];
 const pageContents = new Map();
 const pageIds = new Map();
@@ -178,11 +178,37 @@ for (const file of htmlFiles) {
 }
 
 const suppliedLogoUrl = 'https://i.ibb.co/fdRDWXbH/3v-OKZCYL0-Rqkdu-OQ4t-PKA-Xt-Cc-OQu-N-Picsart-Ai-Image-Enhancer.png';
+const faviconSource = readFileSync(path.join(root, 'favicon.svg'), 'utf8');
+if (!/<svg\b[^>]*viewBox="0 0 512 512"/i.test(faviconSource) || !/<image\b[^>]*width="512"[^>]*height="512"/i.test(faviconSource)) {
+  report('favicon.svg: supplied transparent QF artwork must fill a 512 x 512 square viewBox');
+}
+if (/<rect\b[^>]*fill=["'](?:#000|#000000|black|#[0-9a-f]{3,8})/i.test(faviconSource)) {
+  report('favicon.svg: the favicon must preserve a transparent background');
+}
+if (!faviconSource.includes(suppliedLogoUrl)) {
+  report('favicon.svg: expected the supplied transparent QF artwork');
+}
 for (const file of htmlFiles) {
-  const faviconTag = pageContents.get(file).match(/<link\b(?=[^>]*\brel="icon")[^>]*>/i)?.[0];
-  const favicon = faviconTag ? attributes(faviconTag) : {};
-  if (favicon.href !== suppliedLogoUrl || (favicon.type || '').toLowerCase() !== 'image/png') {
-    report(`${file}: favicon must use the supplied transparent QueryFixr PNG`);
+  const iconTags = [...pageContents.get(file).matchAll(/<link\b[^>]*\brel="icon"[^>]*>/gi)].map((match) => attributes(match[0]));
+  const pngIcon = iconTags.find((icon) => (icon.type || '').toLowerCase() === 'image/png');
+  const svgIcon = iconTags.find((icon) => (icon.type || '').toLowerCase() === 'image/svg+xml');
+  const appleIcon = [...pageContents.get(file).matchAll(/<link\b[^>]*\brel="apple-touch-icon"[^>]*>/gi)]
+    .map((match) => attributes(match[0]))[0];
+  if (!pngIcon || !pngIcon.href.startsWith(suppliedLogoUrl) || pngIcon.sizes !== '512x512') {
+    report(`${file}: PNG favicon must use the supplied QF image and advertise 512 x 512 dimensions`);
+  }
+  if (!svgIcon || !svgIcon.href.startsWith('favicon.svg')) {
+    report(`${file}: missing the local transparent square SVG favicon fallback`);
+  }
+  if (!appleIcon || !appleIcon.href.startsWith(suppliedLogoUrl)) {
+    report(`${file}: Apple touch icon must use the supplied transparent QF artwork`);
+  }
+  const source = pageContents.get(file);
+  if (!source.includes('class="header-brand-link"') || !source.includes('</a><span class="brand-tagline"')) {
+    report(`${file}: only the QueryFixr logo should be clickable; keep the tagline outside its anchor`);
+  }
+  if (!source.includes('data-brand="queryfixr-wordmark"')) {
+    report(`${file}: header must use the full-size QueryFixr wordmark asset`);
   }
 }
 
@@ -239,6 +265,13 @@ for (const unsafePrefix of [
 ]) {
   if (jsLines.some((line) => line.startsWith(unsafePrefix))) report(`site.js: invalid single-element collection operation: ${unsafePrefix}`);
 }
+const singleQueryCollectionCall = /(^|[^$])\$\([^)]*\)\s*\.\s*(?:forEach|map|filter|reduce|find|some|every)\b/;
+for (const line of jsLines) {
+  if (singleQueryCollectionCall.test(line)) {
+    report(`site.js: a single-element query result is being used as a collection: ${line.trim()}`);
+  }
+}
+
 if (!jsLines.some((line) => line.startsWith("const focusable = $$('input:not([disabled])"))) {
   report('site.js: search-dialog focus trapping must collect all focusable elements');
 }
@@ -251,6 +284,25 @@ if (!js.includes("const results = $$('.global-search-result', globalResults || d
 if (!js.includes("if (!overlay.hidden && event.key === 'Tab')")) {
   report('site.js: global search must keep keyboard focus inside its modal dialog');
 }
+if (!js.includes("$('.brand-full-logo, .brand-qf-logo, .hero-banner-image, .cta-logo').forEach((image) => {")) {
+  report('site.js: artwork fallback initialization must iterate over all matching images');
+}
+if (!js.includes("wikiInput.addEventListener('input', () => applyWikiSearch(wikiInput.value));")) {
+  report('site.js: wiki search input must rerun the search as the visitor types');
+}
+if (!js.includes("featureSearchInput.addEventListener('input', () => applyFeatureSearch(featureSearchInput.value));")) {
+  report('site.js: feature search input must rerun the catalogue filter as the visitor types');
+}
+if (!js.includes("globalInput.addEventListener('input', () => renderGlobalResults(globalInput.value));")) {
+  report('site.js: global search input must refresh results as the visitor types');
+}
+if (!js.includes("event.key.toLowerCase() === 'k' && event.altKey") || js.includes("event.key.toLowerCase() === 'k' && (event.ctrlKey || event.metaKey)")) {
+  report('site.js: global search must use the non-conflicting Alt+K shortcut, not Ctrl+K');
+}
+if (!js.includes("function installSiteLanguageControl()") || !js.includes("button.addEventListener('click', () => { void translateSitePage(select.value, status, button); });")) {
+  report('site.js: the website language selector must install a working translate button');
+}
+
 if (
   !js.includes("const mobileViewport = window.matchMedia('(max-width: 760px)');") ||
   !js.includes("mobileViewport.addEventListener('change', syncNavigationForViewport)") ||

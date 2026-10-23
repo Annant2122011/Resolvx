@@ -26,7 +26,7 @@
         const mark = document.createElement('span');
         mark.className = 'hero-banner-fallback-mark';
         mark.setAttribute('aria-hidden', 'true');
-        mark.textContent = 'Q';
+        mark.textContent = 'QF';
 
         const name = document.createElement('strong');
         name.textContent = 'QueryFixr';
@@ -42,7 +42,7 @@
       image.remove();
     };
 
-    $('.brand-full-logo, .hero-banner-image, .cta-logo').forEach((image) => {
+    $$('.brand-full-logo, .brand-qf-logo, .hero-banner-image, .cta-logo').forEach((image) => {
       image.addEventListener('error', () => handleImageFailure(image), { once: true });
       // A cached failure can occur before this deferred script installs listeners.
       if (image.complete && image.naturalWidth === 0) handleImageFailure(image);
@@ -104,7 +104,7 @@
     }
   }
 
-  $('[data-year]').forEach((node) => { node.textContent = String(new Date().getFullYear()); });
+  $$('[data-year]').forEach((node) => { node.textContent = String(new Date().getFullYear()); });
   $$('.faq-list').forEach((list) => {
     const items = $$('details.faq-item', list);
     items.forEach((item) => item.addEventListener('toggle', () => {
@@ -437,15 +437,16 @@
       }
       const target = event.target;
       const typing = target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
-      if (event.key.toLowerCase() === 'k' && (event.ctrlKey || event.metaKey)) {
+      if (event.key.toLowerCase() === 'k' && event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey && !typing) {
         event.preventDefault();
+        event.stopPropagation();
         if (overlay.hidden) openSearch();
         else closeSearch();
       } else if (event.key === '/' && !event.ctrlKey && !event.metaKey && !event.altKey && !typing && overlay.hidden) {
         event.preventDefault();
         openSearch();
       }
-    });
+    }, true);
   }
 
   const wikiInput = $('[data-wiki-search]');
@@ -683,29 +684,20 @@
   async function translateBatch(values, targetApi) {
     let finalError = null;
     for (const endpoint of SITE_TRANSLATION_ENDPOINTS) {
+      const controller = typeof AbortController === 'function' ? new AbortController() : null;
+      const timeoutId = controller ? window.setTimeout(() => controller.abort(), 10000) : null;
       try {
         const body = { q: values, source: 'en', target: targetApi, format: 'text' };
-        const controller = typeof AbortController === 'function' ? new AbortController() : null;
-        const timeoutId = controller ? window.setTimeout(() => controller.abort(), 10000) : null;
-        let response;
-          response = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify(body),
-            mode: 'cors',
-            credentials: 'omit',
-            ...(controller ? { signal: controller.signal } : {}),
-          });
-        if (!response.ok) {
-          if (timeoutId !== null) window.clearTimeout(timeoutId);
-          throw new Error('Translation endpoint responded with HTTP ' + response.status);
-        }
-        let result;
-        try {
-          result = await response.json();
-        } finally {
-          if (timeoutId !== null) window.clearTimeout(timeoutId);
-        }
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(body),
+          mode: 'cors',
+          credentials: 'omit',
+          ...(controller ? { signal: controller.signal } : {}),
+        });
+        if (!response.ok) throw new Error('Translation endpoint responded with HTTP ' + response.status);
+        const result = await response.json();
         let translated = null;
         if (Array.isArray(result.translatedText)) translated = result.translatedText;
         else if (Array.isArray(result)) translated = result.map((item) => typeof item === 'string' ? item : item.translatedText);
@@ -716,6 +708,8 @@
         return translated;
       } catch (error) {
         finalError = error;
+      } finally {
+        if (timeoutId !== null) window.clearTimeout(timeoutId);
       }
     }
     throw finalError || new Error('No translation endpoint is available');
@@ -757,7 +751,7 @@
       await flush();
       segments.forEach((segment, index) => segment.apply(translated[index] || segment.text));
       document.documentElement.lang = locale;
-      document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
+      document.documentElement.dir = locale.toLowerCase().startsWith('ar') ? 'rtl' : 'ltr';
       if (wikiInput) applyWikiSearch(wikiInput.value);
       try { localStorage.setItem('queryfixr-site-locale', locale); } catch (_) {}
       statusNode.textContent = translateUiCopy(locale, 'done');

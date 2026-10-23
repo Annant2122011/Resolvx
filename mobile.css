@@ -967,3 +967,137 @@
   .catalog-card:hover,
   .wiki-bottom-nav > a:hover { transform: none; }
 }
+
+
+/* Final phone/tablet layout corrections; overrides older iterative rules above. */
+@media (max-width: 760px) {
+  .site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: calc(100% - 20px);
+    min-height: 64px;
+    height: auto;
+    padding: 9px 10px;
+  }
+  .header-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    max-width: calc(100% - 50px);
+    flex: 1 1 auto;
+  }
+  .header-brand-link { flex: 0 1 auto; min-width: 0; }
+  .header-brand .brand-full-logo {
+    width: clamp(112px, 31vw, 158px);
+    height: auto;
+    aspect-ratio: 4 / 1;
+    max-height: 40px;
+    flex: 0 1 auto;
+    object-fit: contain;
+    object-position: left center;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .header-brand .brand-tagline {
+    display: inline-flex;
+    gap: 3px;
+    max-width: clamp(96px, 28vw, 145px);
+    min-width: 0;
+    margin: 0;
+    white-space: normal;
+    font-size: clamp(7.5px, 1.8vw, 9px);
+    line-height: 1.3;
+    letter-spacing: 0;
+    overflow-wrap: normal;
+  }
+  .header-brand .brand-dash { display: inline; }
+  .menu-toggle { flex: 0 0 42px; width: 42px; height: 42px; }
+  .nav-links {
+    left: 0;
+    right: 0;
+    top: calc(100% + 8px);
+    width: 100%;
+    max-width: calc(100vw - 20px);
+    max-height: calc(100dvh - 88px);
+    padding: 12px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    gap: 7px;
+    border: 1px solid rgba(190,198,255,.2);
+    border-radius: 16px;
+    box-shadow: 0 22px 60px rgba(0,0,0,.38);
+  }
+  .nav-links .nav-link,
+  .nav-links .nav-cta,
+  .nav-links .quick-search {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    box-sizing: border-box;
+  }
+  .nav-links .quick-search { gap: 9px; }
+  .nav-links .quick-search kbd { display: inline-flex; margin-left: auto; }
+  .site-language-switcher {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto auto;
+    width: 100%;
+    max-width: none;
+    gap: 7px 8px;
+    margin-top: 4px;
+    padding: 12px;
+    border: 1px solid rgba(190,198,255,.12);
+    border-radius: 12px;
+    background: rgba(255,255,255,.025);
+    box-sizing: border-box;
+  }
+  .site-language-switcher label { grid-column: 1 / -1; font-size: 10px; }
+  .site-language-switcher select,
+  .site-language-switcher button { min-height: 44px; font-size: 14px; }
+  .site-language-switcher select { width: 100%; }
+  .site-language-status { grid-column: 1 / -1; font-size: 11px; }
+  .quick-search, .nav-cta { justify-content: flex-start; }
+  .global-search-form { gap: 9px; }
+  .global-search-form input,
+  .wiki-search-input input,
+  #feature-search,
+  [data-feature-search],
+  [data-global-search] {
+    min-height: 48px;
+    font-size: 16px !important;
+    max-width: 100%;
+  }
+  .global-search-results { max-height: min(52dvh, 430px); overflow: auto; overscroll-behavior: contain; }
+  .search-dialog { width: calc(100vw - 24px); max-width: 680px; max-height: calc(100dvh - 28px); overflow-y: auto; padding: clamp(14px, 4vw, 22px); }
+  .hero, .hero-copy, .hero-art, .wiki-shell, .feature-catalog-grid { min-width: 0; }
+  .catalog-card, .wiki-article { overflow-wrap: anywhere; }
+  .footer-brand-image { width: 38px; height: 38px; flex-basis: 38px; }
+  .cta-decoration .cta-logo { width: clamp(100px, 30vw, 138px); height: auto; }
+}
+@media (max-width: 420px) {
+  .site-header { width: calc(100% - 16px); padding: 8px; }
+  .header-brand { gap: 5px; max-width: calc(100% - 48px); }
+  .header-brand .brand-full-logo { width: clamp(112px, 34vw, 132px); max-height: 34px; }
+  .header-brand .brand-tagline { display: none; }
+  .nav-links { max-width: calc(100vw - 16px); }
+  .global-search-form kbd { display: none; }
+  .site-footer { padding-inline: 16px; }
+}
+@media (min-width: 761px) and (max-width: 1020px) {
+  .site-header { width: calc(100% - 28px); gap: 10px; padding-inline: 10px; }
+  .header-brand .brand-full-logo { width: 150px; height: 38px; }
+  .header-brand .brand-tagline { display: none; }
+  .nav-links { gap: 10px; }
+  .site-language-switcher { max-width: 142px; }
+  .quick-search kbd { display: none; }
+}

@@ -3484,3 +3484,164 @@ a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visibl
     border-radius: 15px;
   }
 }
+
+
+/* QueryFixr 2026 lockup and cross-platform interaction polish. */
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(10px, 1.4vw, 20px);
+}
+.header-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+.header-brand-link {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 1 auto;
+  min-width: 0;
+  line-height: 0;
+  border-radius: 8px;
+}
+.header-brand-link:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 4px;
+}
+.header-brand .brand-full-logo {
+  display: block;
+  width: clamp(150px, 16vw, 202px);
+  height: 48px;
+  flex: 0 1 auto;
+  aspect-ratio: 4 / 1;
+  object-fit: contain;
+  object-position: left center;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  mix-blend-mode: normal;
+}
+.header-brand .brand-tagline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: none;
+  margin: 0;
+  white-space: nowrap;
+  color: #a8b0c6;
+  font-size: 10px;
+  line-height: 1.35;
+  letter-spacing: .01em;
+}
+.header-brand .brand-dash { display: inline; }
+.nav-links {
+  align-items: center;
+  min-width: 0;
+  gap: clamp(9px, 1.25vw, 18px);
+}
+.quick-search { white-space: nowrap; }
+.global-search-form input,
+.wiki-search-input input,
+#feature-search,
+[data-feature-search] {
+  min-width: 0;
+}
+.site-language-switcher {
+  display: grid;
+  grid-template-columns: minmax(86px, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 4px 6px;
+  min-width: 0;
+  max-width: 210px;
+  position: relative;
+  padding: 0;
+}
+.site-language-switcher label {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #aeb6cc;
+  font-size: 9px;
+  line-height: 1.2;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.site-language-switcher select,
+.site-language-switcher button {
+  min-width: 0;
+  min-height: 35px;
+  padding: 6px 8px;
+  border: 1px solid rgba(190,198,255,.18);
+  border-radius: 9px;
+  color: var(--text);
+  background: rgba(255,255,255,.045);
+  font: 11px var(--font);
+}
+.site-language-switcher select { width: 100%; }
+.site-language-switcher button {
+  white-space: nowrap;
+  border-color: rgba(116,231,231,.28);
+  background: rgba(116,231,231,.08);
+  cursor: pointer;
+}
+.site-language-switcher button:hover:not(:disabled) {
+  border-color: rgba(116,231,231,.6);
+  background: rgba(116,231,231,.14);
+}
+.site-language-switcher button:disabled { opacity: .65; cursor: progress; }
+.site-language-status {
+  grid-column: 1 / -1;
+  display: block;
+  max-width: min(320px, 88vw);
+  color: #a8b0c6;
+  font-size: 10px;
+  line-height: 1.4;
+}
+.site-language-status:empty { display: none; }
+.footer-brand-image,
+.cta-decoration .cta-logo {
+  object-fit: contain;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  mix-blend-mode: normal;
+}
+.footer-brand-image {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+}
+.cta-decoration .cta-logo {
+  width: clamp(112px, 12vw, 156px);
+  height: auto;
+  aspect-ratio: 1;
+}
+.global-search-results { overscroll-behavior: contain; }
+.global-search-result:focus-visible,
+.catalog-card:focus-visible,
+.wiki-toc-link:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+}
+button:disabled { cursor: not-allowed; }
+@media (max-width: 1120px) and (min-width: 761px) {
+  .site-header { gap: 10px; padding-inline: 12px; }
+  .header-brand .brand-full-logo { width: 160px; height: 40px; }
+  .header-brand .brand-tagline { display: none; }
+  .nav-links { gap: 10px; }
+  .site-language-switcher { max-width: 150px; grid-template-columns: minmax(72px, 1fr) auto; }
+  .site-language-switcher button { padding-inline: 7px; }
+  .quick-search { gap: 5px; padding-inline: 7px; }
+  .quick-search kbd { display: none; }
+}
+@media (min-width: 1121px) {
+  .header-brand { gap: 7px; }
+}
