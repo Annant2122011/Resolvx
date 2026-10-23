@@ -191,21 +191,43 @@
 
   const progressBar = $('[data-reading-progress]');
   let readingProgressFrame = 0;
+  let progressMeasureFrame = 0;
+  let maxReadingScroll = 0;
+  let readingProgressResizeObserver = null;
+
   const updateReadingProgress = () => {
     if (!progressBar || readingProgressFrame) return;
-    // Coalesce scroll/resize events so layout reads and the progress-bar write happen
-    // at most once per animation frame, rather than once per raw scroll event.
+    // Scroll work now reads only cached geometry and writes one compositor-friendly transform.
     readingProgressFrame = window.requestAnimationFrame(() => {
       readingProgressFrame = 0;
-      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
-      const ratio = scrollable > 0 ? Math.min(1, Math.max(0, window.scrollY / scrollable)) : 0;
+      const ratio = maxReadingScroll > 0
+        ? Math.min(1, Math.max(0, window.scrollY / maxReadingScroll))
+        : 0;
       progressBar.style.transform = 'scaleX(' + ratio + ')';
     });
   };
+
+  const scheduleReadingRangeMeasure = () => {
+    if (!progressBar || progressMeasureFrame) return;
+    progressMeasureFrame = window.requestAnimationFrame(() => {
+      progressMeasureFrame = 0;
+      maxReadingScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      updateReadingProgress();
+    });
+  };
+
   if (progressBar) {
     window.addEventListener('scroll', updateReadingProgress, { passive: true });
-    window.addEventListener('resize', updateReadingProgress, { passive: true });
-    updateReadingProgress();
+    window.addEventListener('resize', scheduleReadingRangeMeasure, { passive: true });
+    window.addEventListener('load', scheduleReadingRangeMeasure, { once: true });
+
+    if ('ResizeObserver' in window) {
+      readingProgressResizeObserver = new ResizeObserver(scheduleReadingRangeMeasure);
+      readingProgressResizeObserver.observe(document.documentElement);
+      if (document.body) readingProgressResizeObserver.observe(document.body);
+    }
+
+    scheduleReadingRangeMeasure();
   }
 
   const tocLinks = $$('.wiki-toc-link');
@@ -1293,8 +1315,6 @@
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
     const revealTargets = Array.from(document.querySelectorAll([
-      '.hero-copy',
-      '.hero-art.hero-banner-art',
       '.trust-banner',
       '.intro-grid > *',
       '.capability-card',
@@ -1305,11 +1325,7 @@
       '.faq-preview-list > a',
       '.closing-cta .cta-content',
       '.closing-cta .cta-decoration',
-      '.page-hero',
-      '.feature-library-hero',
       '.feature-filter',
-      '.wiki-hero',
-      '.wiki-search-card',
       '.wiki-sidebar'
     ].join(',')));
     const pointerTargets = document.querySelectorAll([

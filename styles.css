@@ -4444,3 +4444,65 @@ body::after {
   }
   .button:hover::after { animation: none !important; }
 }
+
+
+/* Performance layer: animated mesh depth without canvas work or blurred full-screen repainting. */
+.mesh-background {
+  position: fixed;
+  inset: -12% -8%;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .3;
+  transform: translate3d(-1.2%, .4%, 0);
+  transform-origin: center;
+  background-image:
+    radial-gradient(ellipse at 18% 16%, rgba(143, 112, 255, .17), transparent 36%),
+    radial-gradient(ellipse at 82% 27%, rgba(67, 209, 215, .12), transparent 32%),
+    radial-gradient(ellipse at 50% 86%, rgba(108, 121, 244, .1), transparent 39%),
+    linear-gradient(135deg, rgba(165, 175, 255, .085) 1px, transparent 1px),
+    linear-gradient(45deg, rgba(116, 231, 231, .055) 1px, transparent 1px),
+    radial-gradient(circle, rgba(187, 195, 255, .32) 1px, transparent 1.7px);
+  background-size: auto, auto, auto, 76px 76px, 76px 76px, 76px 76px;
+  background-position: center, center, center, 0 0, 38px 0, 0 0;
+  mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, .82) 44%, transparent 96%);
+  animation: rx-mesh-drift 48s cubic-bezier(.45, 0, .55, 1) infinite alternate;
+}
+
+@keyframes rx-mesh-drift {
+  from { transform: translate3d(-1.2%, .4%, 0) scale(1); }
+  to { transform: translate3d(1.2%, -.7%, 0) scale(1.025); }
+}
+
+/* Keep the original grid as texture; the mesh above now owns the motion. */
+body::before {
+  animation: none;
+  will-change: auto;
+}
+
+/* Radial gradients already have soft edges; a whole-viewport blur adds cost without useful detail. */
+body::after {
+  filter: none;
+  opacity: .34;
+}
+
+/* Drop-shadow remains static on the logo; only its inexpensive scale breathes. */
+@keyframes rx-logo-breathe {
+  0%, 100% { scale: 1; }
+  50% { scale: 1.035; }
+}
+
+@media (max-width: 760px) {
+  .mesh-background {
+    opacity: .18;
+    animation-duration: 68s;
+  }
+  body::after { opacity: .22; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mesh-background {
+    animation: none !important;
+    transform: none !important;
+  }
+  body::before { animation: none !important; }
+}
