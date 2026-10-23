@@ -190,15 +190,21 @@
   });
 
   const progressBar = $('[data-reading-progress]');
+  let readingProgressFrame = 0;
   const updateReadingProgress = () => {
-    if (!progressBar) return;
-    const scrollable = document.documentElement.scrollHeight - window.innerHeight;
-    const ratio = scrollable > 0 ? Math.min(1, Math.max(0, window.scrollY / scrollable)) : 0;
-    progressBar.style.transform = 'scaleX(' + ratio + ')';
+    if (!progressBar || readingProgressFrame) return;
+    // Coalesce scroll/resize events so layout reads and the progress-bar write happen
+    // at most once per animation frame, rather than once per raw scroll event.
+    readingProgressFrame = window.requestAnimationFrame(() => {
+      readingProgressFrame = 0;
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      const ratio = scrollable > 0 ? Math.min(1, Math.max(0, window.scrollY / scrollable)) : 0;
+      progressBar.style.transform = 'scaleX(' + ratio + ')';
+    });
   };
   if (progressBar) {
     window.addEventListener('scroll', updateReadingProgress, { passive: true });
-    window.addEventListener('resize', updateReadingProgress);
+    window.addEventListener('resize', updateReadingProgress, { passive: true });
     updateReadingProgress();
   }
 
@@ -869,17 +875,25 @@
   const translationCache = new Map();
   const translationEndpointHealth = new Map();
   let preferredTranslationEndpoint = '';
-  try {
-    const cached = JSON.parse(localStorage.getItem(TRANSLATION_CACHE_KEY) || '[]');
-    if (Array.isArray(cached)) {
-      cached.slice(-TRANSLATION_CACHE_LIMIT).forEach((entry) => {
-        if (Array.isArray(entry) && entry.length === 2 && typeof entry[0] === 'string' && typeof entry[1] === 'string') {
-          translationCache.set(entry[0], entry[1]);
-        }
-      });
-    }
-    preferredTranslationEndpoint = localStorage.getItem('queryfixr-translation-endpoint-v1') || '';
-  } catch (_) { /* Storage being disabled must not disable translation. */ }
+  let translationCacheLoaded = false;
+
+  // Parsing up to 2,200 saved translations is unnecessary on a normal English page
+  // view. Load the cache only when the visitor actually requests a translation.
+  function ensureTranslationCacheLoaded() {
+    if (translationCacheLoaded) return;
+    translationCacheLoaded = true;
+    try {
+      const cached = JSON.parse(localStorage.getItem(TRANSLATION_CACHE_KEY) || '[]');
+      if (Array.isArray(cached)) {
+        cached.slice(-TRANSLATION_CACHE_LIMIT).forEach((entry) => {
+          if (Array.isArray(entry) && entry.length === 2 && typeof entry[0] === 'string' && typeof entry[1] === 'string') {
+            translationCache.set(entry[0], entry[1]);
+          }
+        });
+      }
+      preferredTranslationEndpoint = localStorage.getItem('queryfixr-translation-endpoint-v1') || '';
+    } catch (_) { /* Storage being disabled must not disable translation. */ }
+  }
   const translationCacheKey = (target, source) => JSON.stringify([target, source]);
   function persistTranslationCache() {
     try {
@@ -1000,6 +1014,7 @@
     }
   }
   async function translateBatch(values, targetApi) {
+    ensureTranslationCacheLoaded();
     const translations = new Array(values.length);
     const missing = [];
     const missingIndexes = [];
