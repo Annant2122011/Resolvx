@@ -3,6 +3,53 @@
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
 
+  // Remote artwork must not leave broken-image icons in the header or hero.
+  function installExternalImageFallbacks() {
+    const handleImageFailure = (image) => {
+      if (image.dataset.fallbackApplied === 'true') return;
+      image.dataset.fallbackApplied = 'true';
+
+      if (image.classList.contains('brand-full-logo')) {
+        const fallback = document.createElement('span');
+        fallback.className = 'brand-text-fallback';
+        fallback.textContent = 'QueryFixr';
+        image.replaceWith(fallback);
+        return;
+      }
+
+      if (image.classList.contains('hero-banner-image')) {
+        const fallback = document.createElement('div');
+        fallback.className = 'hero-banner-fallback';
+        fallback.setAttribute('role', 'img');
+        fallback.setAttribute('aria-label', 'QueryFixr product banner artwork unavailable');
+
+        const mark = document.createElement('span');
+        mark.className = 'hero-banner-fallback-mark';
+        mark.setAttribute('aria-hidden', 'true');
+        mark.textContent = 'Q';
+
+        const name = document.createElement('strong');
+        name.textContent = 'QueryFixr';
+
+        const tagline = document.createElement('span');
+        tagline.textContent = 'Queries Solved. Support Evolved.';
+        fallback.append(mark, name, tagline);
+        image.replaceWith(fallback);
+        return;
+      }
+
+      // The CTA logo is decorative; the orbit itself remains meaningful without it.
+      image.remove();
+    };
+
+    $('.brand-full-logo, .hero-banner-image, .cta-logo').forEach((image) => {
+      image.addEventListener('error', () => handleImageFailure(image), { once: true });
+      // A cached failure can occur before this deferred script installs listeners.
+      if (image.complete && image.naturalWidth === 0) handleImageFailure(image);
+    });
+  }
+  installExternalImageFallbacks();
+
   const menuToggle = $('.menu-toggle');
   const nav = $('.nav-links');
   if (menuToggle && nav) {
@@ -20,10 +67,44 @@
     $$('a, button', nav).forEach((item) => item.addEventListener('click', (event) => {
       if (!event.currentTarget.matches('[data-open-search]') && event.currentTarget.matches('a')) closeMenu();
     }));
-    document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeMenu(); });
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || menuToggle.getAttribute('aria-expanded') !== 'true') return;
+      closeMenu();
+      menuToggle.focus();
+    });
+    document.addEventListener('pointerdown', (event) => {
+      if (menuToggle.getAttribute('aria-expanded') !== 'true') return;
+      const target = event.target;
+      if (target instanceof Element && !target.closest('.site-header')) closeMenu();
+    });
+
+    // Reset the compact menu whenever the viewport crosses its CSS breakpoint.
+    // Otherwise a menu opened on a phone can reappear unexpectedly after rotation.
+    if (typeof window.matchMedia === 'function') {
+      const mobileViewport = window.matchMedia('(max-width: 760px)');
+      const syncNavigationForViewport = (event) => {
+        const focusWasInToggle = document.activeElement === menuToggle;
+        const focusWasInNav = nav.contains(document.activeElement);
+        closeMenu();
+        if (event.matches && focusWasInNav) {
+          // The nav is hidden on mobile when closed, so keep keyboard focus visible.
+          menuToggle.focus();
+        } else if (!event.matches && focusWasInToggle) {
+          // The toggle disappears on desktop; move focus into the now-visible nav.
+          const firstNavigableItem = $('a, button', nav);
+          if (firstNavigableItem) firstNavigableItem.focus();
+        }
+      };
+      if (typeof mobileViewport.addEventListener === 'function') {
+        mobileViewport.addEventListener('change', syncNavigationForViewport);
+      } else if (typeof mobileViewport.addListener === 'function') {
+        // Compatibility with older Safari versions.
+        mobileViewport.addListener(syncNavigationForViewport);
+      }
+    }
   }
 
-  $$('[data-year]').forEach((node) => { node.textContent = String(new Date().getFullYear()); });
+  $('[data-year]').forEach((node) => { node.textContent = String(new Date().getFullYear()); });
   $$('.faq-list').forEach((list) => {
     const items = $$('details.faq-item', list);
     items.forEach((item) => item.addEventListener('toggle', () => {
@@ -135,95 +216,94 @@
     tocTargets.forEach((target) => tocObserver.observe(target));
   }
 
+  // Global index: feature page is a catalogue; detailed destinations live in the wiki.
   const searchItems = [
-    { title: 'Overview: what ResolvX does', description: 'Product purpose, architecture direction, and how the support journey fits together.', url: 'index.html#system-at-a-glance', keywords: 'about overview bot support discord product' },
-    { title: 'Ticket lifecycle', description: 'Create, claim, unclaim, pause, resume, close, reopen, and archive tickets.', url: 'features.html#ticket-lifecycle', keywords: 'tickets state status close reopen archive create claim pending' },
-    { title: 'Departments and tags', description: 'Route requests to teams and keep issue labels consistent.', url: 'features.html#departments', keywords: 'category categories routing tag tags department' },
-    { title: 'Forms and templates', description: 'Build versioned forms, add validation, and reuse templates.', url: 'features.html#forms', keywords: 'form forms schema validation field conditional template' },
-    { title: 'Ticket panels', description: 'Create, brand, preview, order, and publish public support panels.', url: 'features.html#panels', keywords: 'panel panels buttons publish preview branding role access layout' },
-    { title: 'Team tools and priority', description: 'Ownership, reassigning, staff notes, participants, and urgency.', url: 'features.html#team-tools', keywords: 'priority urgent critical claim assign owner staff notes add remove user' },
-    { title: 'Reports and ticket history', description: 'Review event history and configure report categories and rules.', url: 'features.html#history-reports', keywords: 'audit report reporting history category flag' },
-    { title: 'Ticket voice actions', description: 'Configuration notes and safe use of voice-related ticket tools.', url: 'features.html#voice', keywords: 'voice call audio join start end team' },
-    { title: 'Archive and recovery', description: 'What can be restored, deletion review, attachments, and recovery limits.', url: 'features.html#recovery', keywords: 'restore recovery deleted channel messages attachment backup transcript archive' },
-    { title: 'Settings dashboard and themes', description: 'Server-specific settings, theme choices, and the visual layout builder.', url: 'features.html#settings', keywords: 'settings theme appearance dashboard layout customization config' },
-    { title: 'Retention and approved deletion', description: 'Review retained records before an approved removal operation.', url: 'features.html#retention', keywords: 'retention privacy data cleanup delete approval' },
-    { title: 'Setup, repair, and deployment', description: 'Runtime requirements, test-guild setup, repair paths, and updates.', url: 'features.html#operations', keywords: 'setup install repair refresh restore host deploy update github actions' },
-    { title: 'Audit and developer view', description: 'Summary views, daily reports, access control, and destructive-action safety.', url: 'features.html#audit', keywords: 'audit developer diagnostics summary daily accumulation logs' },
-    { title: 'Neon PostgreSQL and reliability', description: 'Durable storage and retryable operations in the documented architecture.', url: 'features.html#reliability', keywords: 'neon postgres postgresql database sqlite outbox retry persistence' },
-    { title: 'Premium demo mode', description: 'Understand the demo entitlement toggle without mistaking it for billing.', url: 'features.html#premium', keywords: 'premium demo billing subscription payments entitlement' },
-    { title: 'Getting started safely', description: 'Runtime, database, setup, permissions, slash commands, and first test ticket.', url: 'wiki.html#first-steps', keywords: 'start install onboarding setup requirements permissions discord invite' },
-    { title: 'Full command explorer', description: 'Browse documented /supportforge command paths and copy a command.', url: 'wiki.html#commands', keywords: 'commands slash command copy reference supportforge' },
-    { title: 'Frequently asked questions', description: 'Answers on availability, product scope, forms, recovery, storage, and troubleshooting.', url: 'wiki.html#faq', keywords: 'faq questions help answer is it live troubleshoot support' },
-    { title: 'Project roadmap and status labels', description: 'What is documented, what needs live verification, and what remains planned.', url: 'wiki.html#roadmap', keywords: 'roadmap planned status future workflow graph ai sla csat knowledge base' },
-    { title: 'How ticket recovery works', description: 'Native deletion versus confirmed deletion, archive contents, and replay limits.', url: 'wiki.html#recovery', keywords: 'restore deleted ticket channel recovery mistake review replay archive' },
-    { title: 'How to build a form', description: 'Create fields, add validation and conditions, template, activate, and test.', url: 'wiki.html#forms', keywords: 'create form fields validation conditional activate template' },
-    { title: 'How to publish a ticket panel', description: 'Configure buttons and role access, preview, then publish a panel snapshot.', url: 'wiki.html#panels', keywords: 'create panel configure button label emoji role preview publish' },
-    { title: 'Language and automation settings', description: 'Choose supported bot-message locales and configure time zones, inactivity rules, and ticket workspace modes.', url: 'wiki.html#language-automation', keywords: 'language locale translation localization internationalization multilingual server-language support-hours timezone time-zone inactivity idle auto-close thread channel workspace' },
-    { title: 'Support hours and inactivity automation', description: 'Configure IANA time zones, opening intervals, outside-hours intake, idle warnings, grace periods, and exemptions.', url: 'features.html#support-hours', keywords: 'support hours opening schedule timezone time zone IANA closed outside hours restrict inactivity idle auto-close warning grace roles department exemptions SLA business hours' },
-    { title: 'Ticket workspace: private channels or threads', description: 'Choose the resource type used for newly created tickets and test its permission model.', url: 'features.html#ticket-workspace', keywords: 'ticket workspace private text channel channels threads private thread permissions create new ticket Discord' },
-    { title: 'Bot message localization: twenty-one languages', description: 'Set the server-level language for supported bot messages, with English fallback for unmigrated copy.', url: 'features.html#localization', keywords: 'translate translation language locale native language i18n localization Italian Indonesian Korean Russian Chinese Turkish Hindi Bengali Spanish French German Brazilian Portuguese Arabic Japanese Dutch Polish Ukrainian Greek Czech Swedish Nederlands Polski Українська Ελληνικά Čeština Svenska bot messages' },
+    { title: 'QueryFixr overview', description: 'Product purpose, current scope, and the boundary between the static site and Discord bot.', url: 'wiki.html#overview', keywords: 'about overview bot support discord help desk helpdesk product purpose static website' },
+    { title: 'Feature catalogue', description: 'Search the inventory of capabilities represented in the bot project.', url: 'features.html#feature-catalog', keywords: 'feature features capability capabilities list catalogue catalog inventory implemented current' },
+    { title: 'Getting started and permissions', description: 'Prepare the bot, database, permissions, and a safe first test ticket.', url: 'wiki.html#first-steps', keywords: 'start install setup onboarding requirements token permissions invite deploy test guild' },
+    { title: 'Ticket lifecycle and statuses', description: 'Create, claim, pend, resume, close, reopen, and archive a ticket.', url: 'wiki.html#ticket-lifecycle', keywords: 'ticket tickets request case open claimed pending waiting resume close reopen archive status state' },
+    { title: 'Duplicate prevention and ticket safety', description: 'Understand active-ticket prevention, cooldowns, state checks, and safe operations.', url: 'wiki.html#ticket-safety', keywords: 'duplicate cooldown spam already active repeated ticket create permission authorization safe transitions close order' },
+    { title: 'Departments, tags and use-case presets', description: 'Route requests to a department and maintain useful issue labels.', url: 'wiki.html#departments', keywords: 'department category tag labels routing preset technical support sales refund account abuse staff role' },
+    { title: 'Forms and reusable templates', description: 'Build versioned forms, validate answers, use conditional questions, and reuse templates.', url: 'wiki.html#forms', keywords: 'form schema field validation conditional template questionnaire intake branching activate deactivate' },
+    { title: 'Custom support panels', description: 'Draft, preview, style, secure, publish, update, and remove public ticket panels.', url: 'wiki.html#panels', keywords: 'panel custom buttons role restrict branding publish preview draft snapshot confirmation layout' },
+    { title: 'Ownership, priority and staff collaboration', description: 'Claim or reassign tickets, change priority, manage participants, and add internal notes.', url: 'wiki.html#team-tools', keywords: 'claim unclaim priority urgent critical assign reassign participants notes add remove user history staff' },
+    { title: 'Reports, categories and voice actions', description: 'Manage report intake and taxonomy; learn the setup limits of ticket voice actions.', url: 'wiki.html#reports-voice', keywords: 'report complaint abuse moderation category subcategory flag threshold voice audio call' },
+    { title: 'Transcripts, archive and recovery', description: 'Review what ticket records can be restored and what deleted Discord data cannot be recreated.', url: 'wiki.html#recovery', keywords: 'transcript html attachment reference archive restore recovery delete accidentally replay backup' },
+    { title: 'Settings dashboard, themes and layout', description: 'Configure server defaults, visual themes, navigation labels, and administrative controls.', url: 'wiki.html#settings', keywords: 'settings dashboard theme color palette customization layout reorder buttons title description footer' },
+    { title: 'Retention review and approved deletion', description: 'Review eligible closed or archived tickets before retention removal.', url: 'wiki.html#retention', keywords: 'retention archive cleanup purge delete eligible approve approval policy days privacy' },
+    { title: 'Audit, event history and developer view', description: 'Inspect ticket events, overall and daily summaries, and restricted developer audit controls.', url: 'wiki.html#audit', keywords: 'audit logging logs event summary daily developer access accumulation diagnostics' },
+    { title: 'Neon PostgreSQL, persistence and retries', description: 'Understand durable storage, outbox retries, rate limits, and operational failure handling.', url: 'wiki.html#storage-deployment', keywords: 'neon postgres postgresql database persistence durable outbox retry retry-after backoff rate-limit sqlite deployment' },
+    { title: 'Bot languages and website translation', description: 'Understand server-level bot localization and the separate opt-in website translator.', url: 'wiki.html#language-automation', keywords: 'language locale translate translation localization multilingual native website translator twenty-one languages' },
+    { title: 'Panel activity and control placement', description: 'Tune the supported rules that move ticket controls using message and visual-line thresholds.', url: 'wiki.html#panel-activity', keywords: 'auto move controls reposition bottom panel activity message cap visual line budget threshold' },
+    { title: 'Support hours and time zones', description: 'Set weekday schedules, IANA time zones, overrides, and outside-hours intake behavior.', url: 'wiki.html#support-hours', keywords: 'schedule timezone time-zone IANA opening hours business hours closed interval department panel outside-hours' },
+    { title: 'Inactivity warnings and auto-close', description: 'Configure idle thresholds, grace periods, and exemption roles or departments.', url: 'wiki.html#inactivity-automation', keywords: 'idle inactivity inactive timeout auto close autoclose warning grace deadline exemption roles department' },
+    { title: 'Ticket channels and private threads', description: 'Choose where new tickets live and compare permission and capacity implications.', url: 'wiki.html#ticket-workspace', keywords: 'workspace private channel text-channel private-thread thread threads permissions visibility capacity' },
+    { title: 'Premium demo mode', description: 'Use the demo entitlement toggle without mistaking it for subscription billing.', url: 'wiki.html#premium-demo', keywords: 'premium demo billing subscription payment entitlement pro tier paid simulated' },
+    { title: 'Setup troubleshooting and recovery checks', description: 'Triage command errors, interaction timeouts, missing permissions, database access, and stale panels.', url: 'wiki.html#troubleshooting', keywords: 'troubleshoot error stack trace exception unknown message interaction failed timeout permission database startup command registration subcommand' },
+    { title: 'Permissions and destructive-action safety', description: 'Understand admin gates, staff access, private ticket visibility, and confirmation requirements.', url: 'wiki.html#permissions-safety', keywords: 'permissions authorization administrator manage server staff role access ticket visibility privacy safe reset retention deletion confirmation' },
+    { title: 'Command explorer', description: 'Browse the slash-command families documented by the bot source.', url: 'wiki.html#commands', keywords: 'command commands slash reference syntax copy category panel form ticket settings audit premium settings-reports' },
+    { title: 'Roadmap and product boundaries', description: 'Separate implemented capabilities, live-acceptance requirements, and planned platform features.', url: 'wiki.html#roadmap', keywords: 'roadmap planned future unavailable workflow graph ai SLA CSAT knowledge base API dashboard OAuth' },
+    { title: 'Frequently asked questions', description: 'Answers about installation, translation, privacy, database choices, recovery, and troubleshooting.', url: 'wiki.html#faq', keywords: 'faq question answers help feature availability database restore error permissions translation' },
   ];
-
 
   const SEARCH_EXPANSIONS = {
     'system-at-a-glance': 'about overview product purpose discord ticketing customer support help desk helpdesk workflow administration architecture current capabilities',
-    'ticket-lifecycle': 'create open claim claimed unclaim unclaimed assign ownership pending waiting hold resume reopen close archive archived state status request case',
-    'departments': 'category categories team routing route route-to issue labels tags presets usecase use-case use cases sales technical support accounts refunds abuse',
-    'forms': 'form forms questionnaire application intake fields validation required conditional schema template reusable activate deactivate version answers submit',
-    'panels': 'panel panels entry point entrypoint public message launcher buttons button labels emoji branding role access roles order preview publish draft layout',
-    'team-tools': 'staff moderator agent priority severity critical urgent high normal low owner ownership claim unclaim reassign participant user internal note collaboration',
-    'history-reports': 'report reports reporting complaint abuse flag threshold category subcategory moderation history events audit review safety',
-    'voice': 'voice audio call sound voice chat join leave close voice session live conversation',
-    'recovery': 'restore recovery recover undelete deletion deleted accidentally mistake wrong delete transcript attachments archived messages replay channel replacement backup',
-    'settings': 'settings configuration config theme color appearance customize customization dashboard settings panel controls preference support hours language locale timezone inactivity ticket workspace private thread private text channel',
-    'retention': 'retention archive closed-days archive-days cleanup purge erase delete deletion approval confirm review privacy data lifetime keep duration',
-    'operations': 'setup install onboarding repair refresh restore deploy deployment github actions self-update watchdog restart host systemd environment variable configuration',
-    'audit': 'audit developer diagnostics logs log summary daily accumulation activity security permissions destructive action',
-    'reliability': 'neon postgresql postgres database persistence durable storage sqlite outbox retry backoff rate limit retry-after api error timeout transaction',
-    'premium': 'premium paid subscription payments billing entitlement demo toggle simulated not real billing',
-    'first-steps': 'setup install requirements environment variables token database permissions invite deploy test guild first ticket configuration getting started',
-    'commands': 'command slash commands syntax copy reference /supportforge settings-reports reporting taxonomy report-categories report-subcategory-add report-subcategory-edit report-subcategory-remove',
-    'faq': 'faq questions answers troubleshooting help guide common problem error issue invite website disconnected production acceptance',
-    'roadmap': 'planned future not available roadmap workflow graph knowledge base quick replies sla csat customer satisfaction api web dashboard oauth multi channel ai',
-    'overview': 'overview status documentation feature feature-list product current release',
-    'storage-deployment': 'neon postgresql postgres database persistence durable store outbox retry update deploy deployment hosting github actions systemd env',
-    'reports-voice': 'report categories subcategories thresholds user report flag voice audio conversation safety moderation',
-    'team-tools': 'notes participants add-user remove-user reassignment owner priorities',
-    'language-automation': 'locale language languages translation translate translated native language internationalization i18n italian indonesian korean russian chinese simplified turkish hindi bengali spanish french german portuguese arabic japanese dutch polish ukrainian greek czech swedish nederlands polski українська ελληνικά čeština svenska vertalen przetłumacz перекласти μετάφραση přeložit översätt support-hours timezone schedule opening hours closed behavior outside-hours inactivity idle grace auto-close exemptions roles departments workspace private-threads private text channels panel automation',
-    'support-hours': 'support hours opening schedule timezone time zone IANA intervals weekday split shift closed outside-hours allow restrict intake next opening business hours support availability not SLA',
-    'ticket-workspace': 'ticket workspace private text channel private thread channels threads new-ticket permissions member staff visibility archive create resource mode',
-    'localization': 'bot message language locale translation localization i18n twenty-one supported catalogs English Hindi Bengali Spanish French German Brazilian Portuguese Arabic Japanese Italian Indonesian Korean Russian Simplified Chinese Turkish Dutch Polish Ukrainian Greek Czech Swedish native locale setting server language translated strings fallback user-authored text',
-
-    'retention': 'eligibility deletion authorization review approvals policy data retention archive',
-    'ticket-lifecycle': 'open claimed pending reopened closed archived ticket channel conversation status',
+    'overview': 'about what is QueryFixr product identity discord bot support ticketing case management helpdesk static website command prefix capabilities limits',
+    'first-steps': 'setup install requirements environment variables token database permissions invite deploy test guild first ticket node npm neon postgres configuration production',
+    'ticket-lifecycle': 'create open claim claimed unclaim unclaimed assign ownership pending waiting hold resume reopen close archive archived state status request case duplicate prevention transcript upload lock permissions close order',
+    'ticket-safety': 'duplicate open prevention already active cooldown spam request idempotency safe transitions authorized action permission gate transaction close sequence lock transcript retry duplicate ticket prevention',
+    'departments': 'category categories team routing route-to issue labels tags presets usecase use-case sales technical support accounts refunds abuse staff role category create remove rename',
+    'forms': 'form forms questionnaire application intake fields validation required conditional schema template reusable activate deactivate version answers submit branching template save apply list update delete',
+    'panels': 'panel panels entry point entrypoint public message launcher buttons labels emoji branding role access roles order preview publish draft layout custom panel id snapshot republish target department form confirmation',
+    'team-tools': 'staff moderator agent priority severity critical urgent high normal low owner ownership claim unclaim reassign participant user internal note collaboration priority roles audit notes add-user remove-user history',
+    'reports-voice': 'report reports reporting complaint abuse flag threshold category subcategory moderation history events audit review safety voice private audio call join leave start end capacity report intake',
+    'recovery': 'restore recovery recover undelete deletion deleted accidentally mistake wrong delete transcript attachments archived messages replay channel replacement backup restoration review intent source id author metadata not exact copy',
+    'settings': 'settings configuration config theme color colour appearance customize customization dashboard controls preference support hours language locale timezone inactivity ticket workspace private thread private text channel layout button order labels emoji reset repair refresh protected controls',
+    'retention': 'retention archive closed-days archive-days cleanup purge erase delete deletion approval confirm review privacy data lifetime keep duration eligible ticket archived closed cancellation',
+    'operations': 'setup install onboarding repair refresh restore deploy deployment github actions self-update watchdog restart host systemd environment variable configuration diagnostics permissions',
+    'audit': 'audit developer diagnostics logs log summary daily accumulation activity security permissions destructive action retention developer-view event history daily date raw event',
+    'reliability': 'neon postgresql postgres database persistence durable storage sqlite outbox retry backoff rate limit retry-after api error timeout transaction source of truth migration environment variables',
+    'premium': 'premium paid subscription payments billing entitlement demo toggle simulated not real billing tier pro free',
+    'support-hours': 'support hours opening schedule timezone time zone IANA intervals weekday split shift closed outside-hours allow restrict intake next opening business hours not SLA department override panel override daylight saving',
+    'inactivity-automation': 'inactivity idle inactive timeout grace auto-close autoclose warning threshold deadline exemptions exempt role exempt department clear warning stale ticket',
+    'ticket-workspace': 'ticket workspace private text channel private thread channels threads new-ticket permissions member staff visibility archive create resource mode parent channel manage threads',
+    'localization': 'bot message language locale translation localization i18n twenty-one 21 supported catalogs English Hindi Bengali Spanish French German Brazilian Portuguese Arabic Japanese Italian Indonesian Korean Russian Simplified Chinese Turkish Dutch Polish Ukrainian Greek Czech Swedish native locale server language fallback user-authored text',
+    'language-automation': 'locale language languages translation translate translated native internationalization i18n Italian Indonesian Korean Russian Chinese simplified Turkish Hindi Bengali Spanish French German Portuguese Arabic Japanese Dutch Polish Ukrainian Greek Czech Swedish Nederlands Polski Українська Ελληνικά Čeština Svenska taal vertalen język tłumaczenie мова переклад γλώσσα μετάφραση jazyk překlad språk översättning website translator external endpoint machine translation public content right-to-left support-hours timezone inactivity private thread',
+    'panel-activity': 'panel activity auto move move controls reposition ticket panel message cap visual line budget minimum messages threshold bottom placement control ordering',
+    'premium-demo': 'premium demo entitlements tier status toggle simulated billing subscription payment no checkout free pro product mode',
+    'troubleshooting': 'troubleshooting troubleshoot diagnostic stack trace error exception command registration invalid command application command 25 subcommands interaction failed unknown interaction unknown message unknown channel missing permissions permission overwrites database connection timeout postgres neon retry-after rate limit stale panel command deploy slash command startup build',
+    'commands': 'command slash commands syntax copy reference /supportforge settings-reports reporting taxonomy report-categories report-subcategory-add report-subcategory-edit report-subcategory-remove panel-create template-save locale',
+    'faq': 'faq questions answers troubleshooting help guide common problem error issue invite website disconnected production acceptance privacy translation locales restore limitations database use-case settings-reports',
+    'roadmap': 'planned future not available roadmap workflow graph knowledge base quick replies sla csat customer satisfaction surveys api web dashboard oauth multi channel ai generative retrieval rag vector database real billing',
+    'storage-deployment': 'neon postgresql postgres database persistence durable store outbox retry deploy deployment hosting github actions systemd env connection pool timeout rate limits backoff event record storage provider',
   };
   const SEARCH_SYNONYM_GROUPS = [
-    ['ticket', 'tickets', 'request', 'requests', 'case', 'cases', 'tiket', 'bilet', 'заявка', 'заявки', '工单', 'チケット', 'टिकट', 'টিকিট', 'تذكرة', 'solicitud', 'solicitudes', 'demande', 'anfrage', 'ticketaanvraag', 'aanvraag', 'zgłoszenie', 'zgłoszenia', 'звернення', 'тікет', 'αίτημα', 'αίτηση', 'požadavek', 'ticket', 'ärende'],
-    ['form', 'forms', 'questionnaire', 'intake', 'template', 'formulario', 'formulário', 'formulaire', 'formular', 'modulo', 'formulir', '양식', 'форма', '表单', 'نموذج', 'フォーム', 'formulier', 'formularz', 'форма-заявки', 'φόρμα', 'formulář', 'formulär'],
-    ['panel', 'panels', 'button', 'buttons', 'launcher', 'entrypoint', 'menú', 'menue', 'pannello', 'paneli', '패널', 'панель', '面板', 'パネル'],
+    ['ticket', 'tickets', 'request', 'requests', 'case', 'cases', 'tiket', 'bilet', 'заявка', 'заявки', '工单', 'チケット', 'टिकट', 'টিকিট', 'تذكرة', 'solicitud', 'solicitudes', 'demande', 'anfrage', 'ticketaanvraag', 'aanvraag', 'zaak', 'zgłoszenie', 'zgłoszenia', 'sprawa', 'звернення', 'запит', 'тікет', 'αίτημα', 'αίτηση', 'požadavek', 'požadavky', 'ärende', 'ärenden'],
+    ['form', 'forms', 'questionnaire', 'intake', 'template', 'formulario', 'formulário', 'formulaire', 'formular', 'modulo', 'formulir', '양식', 'форма', '表单', 'نموذج', 'フォーム', 'formulier', 'formulier', 'formularz', 'форма-заявки', 'φόρμα', 'formulář', 'formulär'],
+    ['panel', 'panels', 'button', 'buttons', 'launcher', 'entrypoint', 'menú', 'menue', 'pannello', 'paneli', '패널', 'панель', '面板', 'パネル', 'paneel', 'knop', 'knoppen', 'przycisk', 'przyciski', 'кнопка', 'кнопки', 'πίνακας', 'κουμπί', 'tlačítko', 'tlačítka', 'knapp', 'knappar'],
     ['department', 'departments', 'category', 'categories', 'team', 'routing', 'route', 'equipo', 'departamento', 'département', 'abteilung', 'reparto', 'departemen', '부서', 'отдел', '部门', 'قسم', 'विभाग', 'বিভাগ', 'afdeling', 'dział', 'відділ', 'τμήμα', 'oddělení', 'avdelning'],
     ['tag', 'tags', 'label', 'labels', 'etiqueta', 'etiquetas', 'étiquette', 'marcador', 'tagar', '태그', 'метка', '标签', 'ラベル', 'टैग', 'ট্যাগ', 'label', 'etykieta', 'позначка', 'ετικέτα', 'štítek', 'etikett'],
     ['priority', 'urgent', 'critical', 'severity', 'urgency', 'prioridad', 'priorité', 'priorität', 'priorità', 'prioritas', '우선순위', 'приоритет', '优先级', '優先度', 'प्राथमिकता', 'অগ্রাধিকার', 'prioriteit', 'priorytet', 'пріоритет', 'προτεραιότητα', 'priorita', 'prioritet'],
-    ['claim', 'claimed', 'unclaim', 'unclaimed', 'assign', 'assigned', 'reassign', 'owner', 'ownership', 'handoff', 'release', 'responsibility', 'reasignar', 'zuweisen', 'назначить', '재할당', '담당자'],
-    ['pending', 'waiting', 'hold', 'resume', 'reopen', 'reopened', 'close', 'closed', 'archive', 'archived', 'status', 'lifecycle', 'workflow state', 'espera', 'attente', 'wartend', 'beklemede', '대기', 'ожидание', '等待'],
-    ['report', 'reports', 'reporting', 'complaint', 'abuse', 'flag', 'threshold', 'subcategory', 'denuncia', 'signalement', 'meldung', 'laporan', '신고', 'жалоба', '举报', '報告', 'रिपोर्ट', 'প্রতিবেদন', 'melding', 'zgłoszenie', 'скарга', 'αναφορά', 'hlášení', 'rapport'],
-    ['audit', 'audits', 'logs', 'log', 'history', 'events', 'diagnostics', 'developer', 'actividad', 'journal', 'protokoll', 'riwayat', '감사', 'журнал', '审计', '監査', 'ऑडिट', 'নিরীক্ষা'],
-    ['voice', 'audio', 'call', 'sound', 'voicechat', 'voice chat', 'llamada', 'vocal', 'sprachchat', 'suara', '음성', 'голос', '语音', '音声', 'आवाज़', 'ভয়েস'],
-    ['restore', 'recovery', 'recover', 'undelete', 'rebuild', 'replay', 'restore channel', 'accidental deletion', 'mistake', 'transcript', 'backup', 'recoverable', 'restaurar', 'récupération', 'wiederherstellen', 'pemulihan', '복구', 'восстановление', '恢复', '復元', 'पुनर्प्राप्ति', 'পুনরুদ্ধার'],
-    ['database', 'databases', 'postgres', 'postgresql', 'neon', 'persistence', 'storage', 'sqlite', 'outbox', 'durable', 'base de datos', 'datenbank', 'database', '데이터베이스', 'база', '数据库', 'データベース', 'डेटाबेस', 'ডেটাবেস'],
-    ['translate', 'translation', 'language', 'languages', 'locale', 'localization', 'internationalization', 'i18n', 'multilingual', 'idioma', 'langue', 'sprache', 'lingua', 'bahasa', '언어', 'язык', '语言', '言語', 'भाषा', 'ভাষা', 'لغة', 'dil', 'taal', 'vertalen', 'język', 'tłumaczenie', 'мова', 'переклад', 'γλώσσα', 'μετάφραση', 'jazyk', 'překlad', 'språk', 'översättning'],
-    ['support-hours', 'opening', 'hours', 'schedule', 'timezone', 'time-zone', 'business-hours', 'horario', 'heures', 'öffnungszeiten', 'jam', '운영 시간', 'часы работы', '营业时间', '営業時間', 'समय', 'সময়', 'openingstijden', 'openingstijd', 'godziny pracy', 'часи роботи', 'ώρες λειτουργίας', 'provozní doba', 'öppettider'],
-    ['inactivity', 'idle', 'inactive', 'timeout', 'grace', 'auto-close', 'autoclose', 'inactividad', 'inactivité', 'inaktivität', 'ketidakaktifan', '비활성', 'неактивность', '不活跃', '非アクティブ', 'निष्क्रियता', 'নিষ্ক্রিয়তা', 'inactiviteit', 'nieaktywność', 'неактивність', 'αδράνεια', 'neaktivita', 'inaktivitet'],
-    ['retention', 'retained', 'retaining', 'archive', 'cleanup', 'purge', 'delete', 'deletion', 'privacy', 'retención', 'conservation', 'aufbewahrung', 'retensi', '보존', 'хранение', '保留', '保持', 'प्रतिधारण', 'সংরক্ষণ', 'bewaren', 'retentie', 'przechowywanie', 'зберігання', 'διατήρηση', 'uchovávání', 'lagring'],
-    ['premium', 'billing', 'payment', 'payments', 'subscription', 'entitlement', 'demo', 'facturación', 'paiement', 'zahlung', 'pembayaran', '결제', 'оплата', '账单', '請求', 'भुगतान', 'পেমেন্ট'],
-    ['theme', 'themes', 'appearance', 'branding', 'style', 'color', 'colour', 'layout', 'personalization', 'appearance', 'tema', 'apparence', 'darstellung', 'tampilan', '테마', 'оформление', '主题', '外観', 'रूप-रंग', 'চেহারা'],
-    ['setup', 'install', 'installation', 'configure', 'configuration', 'deploy', 'deployment', 'refresh', 'repair', 'update', 'upgrade', 'self-update', 'installation', 'instalación', 'installation', 'installation', 'instalasi', '설치', 'установка', '部署', 'インストール', 'स्थापना', 'ইনস্টল', 'installeren', 'instalacja', 'встановлення', 'εγκατάσταση', 'instalace', 'installation'],
-    ['thread', 'threads', 'private-thread', 'channel', 'channels', 'workspace', 'text-channel', 'canal', 'faden', 'benang', '스레드', 'поток', '线程', 'スレッド', 'थ्रेड', 'থ্রেড', 'thread', 'wątek', 'гілка', 'νήμα', 'vlákno', 'tråd'],
+    ['claim', 'claimed', 'unclaim', 'unclaimed', 'assign', 'assigned', 'reassign', 'owner', 'ownership', 'handoff', 'release', 'responsibility', 'reasignar', 'zuweisen', 'назначить', '재할당', '담당자', 'toewijzen', 'toewijzing', 'przypisać', 'przypisanie', 'призначити', 'призначення', 'ανάθεση', 'přiřadit', 'přiřazení', 'tilldela', 'tilldelning'],
+    ['pending', 'waiting', 'hold', 'resume', 'reopen', 'reopened', 'close', 'closed', 'archive', 'archived', 'status', 'lifecycle', 'workflow state', 'espera', 'attente', 'wartend', 'beklemede', '대기', 'ожидание', '等待', 'wachten', 'hervatten', 'heropenen', 'sluiten', 'archief', 'oczekuje', 'wznowić', 'zamknij', 'archiwum', 'очікує', 'відновити', 'закрити', 'очікування', 'αναμονή', 'επαναφορά', 'κλείσιμο', 'čeká', 'obnovit', 'zavřít', 'čekající', 'väntande', 'återuppta', 'stäng', 'arkiv'],
+    ['report', 'reports', 'reporting', 'complaint', 'abuse', 'flag', 'threshold', 'subcategory', 'denuncia', 'signalement', 'meldung', 'laporan', '신고', 'жалоба', '举报', '報告', 'रिपोर्ट', 'প্রতিবেদন', 'melding', 'zgłoszenie', 'скарга', 'αναφορά', 'hlášení', 'rapport', 'zgłoszenia', 'скарги', 'καταγγελία', 'nahlášení', 'anmälan'],
+    ['audit', 'audits', 'logs', 'log', 'history', 'events', 'diagnostics', 'developer', 'actividad', 'journal', 'protokoll', 'riwayat', '감사', 'журнал', '审计', '監査', 'ऑडिट', 'নিরীক্ষা', 'logboek', 'geschiedenis', 'dziennik', 'historia', 'журнал аудиту', 'έλεγχος', 'historie', 'logg', 'historik'],
+    ['voice', 'audio', 'call', 'sound', 'voicechat', 'voice chat', 'llamada', 'vocal', 'sprachchat', 'suara', '음성', 'голос', '语音', '音声', 'आवाज़', 'ভয়েস', 'stem', 'spraak', 'głos', 'голосова', 'φωνή', 'hlas', 'röst'],
+    ['restore', 'recovery', 'recover', 'undelete', 'rebuild', 'replay', 'restore channel', 'accidental deletion', 'mistake', 'transcript', 'backup', 'recoverable', 'restaurar', 'récupération', 'wiederherstellen', 'pemulihan', '복구', 'восстановление', '恢复', '復元', 'पुनर्प्राप्ति', 'পুনরুদ্ধার', 'herstellen', 'herstel', 'przywróć', 'odzyskiwanie', 'відновити', 'відновлення', 'επαναφορά', 'obnovení', 'obnovit', 'återställning', 'återställa'],
+    ['database', 'databases', 'postgres', 'postgresql', 'neon', 'persistence', 'storage', 'sqlite', 'outbox', 'durable', 'base de datos', 'datenbank', 'database', '데이터베이스', 'база', '数据库', 'データベース', 'डेटाबेस', 'ডেটাবেস', 'databank', 'gegevensbank', 'baza danych', 'база даних', 'βάση δεδομένων', 'databáze', 'databas'],
+    ['translate', 'translation', 'language', 'languages', 'locale', 'localization', 'internationalization', 'i18n', 'multilingual', 'idioma', 'langue', 'sprache', 'lingua', 'bahasa', '언어', 'язык', '语言', '言語', 'भाषा', 'ভাষা', 'لغة', 'dil', 'taal', 'vertalen', 'vertaling', 'język', 'tłumaczenie', 'tłumaczyć', 'мова', 'переклад', 'перекладати', 'γλώσσα', 'μετάφραση', 'jazyk', 'překlad', 'překládat', 'språk', 'översättning', 'översätta'],
+    ['support-hours', 'opening', 'hours', 'schedule', 'timezone', 'time-zone', 'business-hours', 'horario', 'heures', 'öffnungszeiten', 'jam', '운영 시간', 'часы работы', '营业时间', '営業時間', 'समय', 'সময়', 'openingstijden', 'openingstijd', 'godziny pracy', 'часи роботи', 'ώρες λειτουργίας', 'provozní doba', 'öppettider', 'werktijden', 'werktijd', 'časový plán', 'pracovní doba', 'supporttider', 'öppettider'],
+    ['inactivity', 'idle', 'inactive', 'timeout', 'grace', 'auto-close', 'autoclose', 'inactividad', 'inactivité', 'inaktivität', 'ketidakaktifan', '비활성', 'неактивность', '不活跃', '非アクティブ', 'निष्क्रियता', 'নিষ্ক্রিয়তা', 'inactiviteit', 'nieaktywność', 'неактивність', 'αδράνεια', 'neaktivita', 'inaktivitet', 'stilstand', 'bezczynność', 'бездіяльність', 'αδράνεια', 'nečinnost', 'inaktivitet'],
+    ['retention', 'retained', 'retaining', 'archive', 'cleanup', 'purge', 'delete', 'deletion', 'privacy', 'retención', 'conservation', 'aufbewahrung', 'retensi', '보존', 'хранение', '保留', '保持', 'प्रतिधारण', 'সংরक्षण', 'bewaren', 'retentie', 'przechowywanie', 'zachowanie', 'зберігання', 'διατήρηση', 'uchovávání', 'lagring', 'bewaartermijn', 'bewaren', 'przechowywanie danych', 'зберігання даних', 'διατήρηση δεδομένων', 'uchovávání dat', 'datalagring'],
+    ['premium', 'billing', 'payment', 'payments', 'subscription', 'entitlement', 'demo', 'facturación', 'paiement', 'zahlung', 'pembayaran', '결제', 'оплата', '账单', '請求', 'भुगतान', 'পেমেন্ট', 'betaling', 'betalning', 'płatność', 'abonament', 'оплата', 'підписка', 'πληρωμή', 'předplatné'],
+    ['theme', 'themes', 'appearance', 'branding', 'style', 'color', 'colour', 'layout', 'personalization', 'appearance', 'tema', 'apparence', 'darstellung', 'tampilan', '테마', 'оформление', '主题', '外観', 'रूप-रंग', 'চেহারা', 'thema', 'uiterlijk', 'wygląd', 'тема', 'зовнішній вигляд', 'εμφάνιση', 'vzhled', 'utseende'],
+    ['setup', 'install', 'installation', 'configure', 'configuration', 'deploy', 'deployment', 'refresh', 'repair', 'update', 'upgrade', 'self-update', 'installation', 'instalación', 'installation', 'installation', 'instalasi', '설치', 'установка', '部署', 'インストール', 'स्थापना', 'ইনস্টল', 'installeren', 'installatie', 'instalacja', 'встановлення', 'εγκατάσταση', 'instalace', 'installation', 'installera', 'installation', 'konfiguracja', 'налаштування', 'ρύθμιση', 'nastavení'],
+    ['thread', 'threads', 'private-thread', 'channel', 'channels', 'workspace', 'text-channel', 'canal', 'faden', 'benang', '스레드', 'поток', '线程', 'スレッド', 'थ्रेड', 'থ্রেড', 'thread', 'wątek', 'гілка', 'νήμα', 'vlákno', 'tråd', 'draad', 'privéthread', 'kanaal', 'kanały', 'приватний потік', 'νήμα συζήτησης', 'vlákno', 'privátní vlákno', 'tråd', 'privat tråd'],
   ];
   const SEARCH_STOP_WORDS = new Set([
     'the','what','how','when','where','why','is','are','was','were','a','an','to','for','of','and','or','my','our','your',
     'can','does','do','it','in','on','with','from','me','please','show','find','view','read','tell','about','this','that',
-    'all','every','much','many','way','ways','work','works','working','use','using','make','get','want','need','best','page',
+    'all','every','much','many','way','ways','work','works','working','use','using','make','get','want','need','best','page','de','het','een','und','der','die','das','ein','eine','les','des','un','una','las','los','que','pour','con','dla','jest','i','w','na','do','ze','ta','į','и','та','для','це','що','και','το','στο','της','σε','je','na','do','och','att','som',
   ]);
   function normalizeSearchText(value) {
     return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
@@ -252,10 +332,11 @@
   const globalInput = $('[data-global-search]');
   const globalResults = $('[data-global-results]');
   let previousFocus = null;
-  let visibleSearchItems = [];
   const openSearch = () => {
     if (!overlay || !globalInput) return;
-    previousFocus = document.activeElement;
+    const activeElement = document.activeElement;
+    const mobileMenuWasOpen = Boolean(menuToggle && nav && menuToggle.getAttribute('aria-expanded') === 'true' && nav.contains(activeElement));
+    previousFocus = mobileMenuWasOpen ? menuToggle : activeElement;
     if (menuToggle && nav) {
       nav.classList.remove('open');
       menuToggle.setAttribute('aria-expanded', 'false');
@@ -275,8 +356,7 @@
   };
   const renderGlobalResults = (query) => {
     if (!globalResults) return;
-    const normalized = query.trim().toLowerCase();
-    visibleSearchItems = searchItems.filter((item) => matchesSearchCorpus(searchItemCorpus(item), query));
+    const visibleSearchItems = searchItems.filter((item) => matchesSearchCorpus(searchItemCorpus(item), query));
     globalResults.replaceChildren();
     if (!visibleSearchItems.length) {
       const empty = document.createElement('p');
@@ -324,8 +404,26 @@
         closeSearch();
         return;
       }
+      if (!overlay.hidden && event.key === 'Tab') {
+        const dialog = $('.search-dialog', overlay);
+        const focusable = $$('input:not([disabled]), button:not([disabled]), a[href], select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])', dialog)
+          .filter((element) => !element.hidden && element.getAttribute('aria-hidden') !== 'true');
+        if (!focusable.length) {
+          event.preventDefault();
+          return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
       if (!overlay.hidden && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
-        const results = $('.global-search-result', globalResults || document);
+        const results = $$('.global-search-result', globalResults || document);
         if (results.length) {
           event.preventDefault();
           const currentIndex = results.indexOf(document.activeElement);
@@ -360,24 +458,32 @@
   const originalWikiFaqText = new WeakMap();
   wikiArticles.forEach((article) => {
     originalWikiArticleText.set(article, article.textContent || '');
-    $('[data-wiki-faq]', article).forEach((item) => originalWikiFaqText.set(item, item.textContent || ''));
+    $$('[data-wiki-faq]', article).forEach((item) => originalWikiFaqText.set(item, item.textContent || ''));
   });
   const FAQ_SEARCH_KEYWORDS = {
-    'What does ResolvX do?': 'purpose overview discord support ticket helpdesk request management',
+    'What does QueryFixr do?': 'purpose overview discord support ticket helpdesk request management',
     'Can I invite the bot from this website?': 'invite install add bot discord oauth authorization link missing setup',
     'Does the website run bot commands or show live tickets?': 'website static github pages vercel dashboard login api live data connection',
-    'Why do command examples say /supportforge instead of /resolvx?': 'slash command root rename brand registered name deployed command',
+    'Why is the slash-command root /supportforge?': 'slash command root rename brand registered name deployed command',
     'What does a member do to open a ticket?': 'create new support request ticket panel button department form intake',
     'Can I customize multiple public support panels?': 'multi-panel builder draft publish entry button roles emoji style order',
     'Are form templates the same as active forms?': 'template activate deactivate schema version form builder',
-    'Can ResolvX restore a deleted ticket exactly as it was?': 'restore recover recovery undelete delete accidental channel original ids authors replay transcript limit',
+    'Can QueryFixr restore a deleted ticket exactly as it was?': 'restore recover recovery undelete delete accidental channel original ids authors replay transcript limit',
     'What happens to attachments during recovery?': 'attachment files size limit archived message media unavailable expired',
     'Which database should production use?': 'neon postgresql postgres sqlite durable database persistence',
     'Are slash commands and button controls both supported?': 'fallback parity command interaction component button select menu live guild testing',
     'Does Premium demo mode mean billing is connected?': 'premium payments subscription billing toggle entitlement demo fake simulated',
     'What should I check if a button or command does nothing?': 'troubleshoot error timeout permissions interaction expired database logs command registration',
     'Can I hide repair or destructive controls when customizing Settings?': 'settings layout builder protected repair refresh reset delete everything safety hide controls',
-    'Does ResolvX provide AI answers, a knowledge base, SLA timers, or customer satisfaction surveys now?': 'roadmap planned ai knowledge base kb sla service level agreement business hours csat survey translation channels',
+    'Does QueryFixr provide AI answers, a knowledge base, SLA timers, or customer satisfaction surveys now?': 'roadmap planned ai knowledge base kb sla service level agreement business hours csat survey translation channels',
+    "Does changing the website language change the bot's language?": 'website translator browser site copy external endpoint bot locale server language separate setting user-authored ticket text',
+    'Which languages does the bot message catalog include?': '21 twenty-one English Hindi Bengali Spanish French German Portuguese Brazil Arabic Japanese Italian Indonesian Korean Russian Chinese Turkish Dutch Polish Ukrainian Greek Czech Swedish',
+    'Will website translation translate code or ticket data?': 'public text code commands protected technical identifiers privacy no Discord data external translator machine translation',
+    'Are support hours an SLA or response-time guarantee?': 'support hours business hours intake schedule time zone outside-hours no SLA response-time target escalation',
+    'Does changing from channels to threads convert existing tickets?': 'workspace mode private channels private threads new tickets existing ticket stays same migration',
+    'Why is report-category management under settings-reports?': 'command group 25 subcommands report categories taxonomy report subcategory registration Discord settings-reports group',
+    'What should I share when asking for help with an error?': 'stack trace logs branch commit sanitized exception startup command deployment interaction permissions secrets token database url'
+
   };
 
   const applyWikiSearch = (query) => {
@@ -437,6 +543,38 @@
     wikiInput.focus();
   }));
 
+  // The feature page is a catalogue, so let visitors filter it without loading another service.
+  const featureSearchInput = $('[data-feature-search]');
+  const featureCards = $$('[data-feature-card]');
+  const featureResultCount = $('[data-feature-result-count]');
+  const featureNoResults = $('[data-feature-no-results]');
+  const applyFeatureSearch = (query) => {
+    const normalized = String(query || '').trim();
+    let visible = 0;
+    featureCards.forEach((card) => {
+      const corpus = (card.textContent || '') + ' ' + (card.dataset.searchKeywords || '');
+      const matches = !normalized || matchesSearchCorpus(corpus, normalized);
+      card.hidden = !matches;
+      if (matches) visible += 1;
+    });
+    if (featureResultCount) {
+      featureResultCount.textContent = normalized
+        ? (visible + ' of ' + featureCards.length + ' capabilities')
+        : (featureCards.length + ' capabilities');
+    }
+    if (featureNoResults) featureNoResults.hidden = !normalized || visible > 0;
+  };
+  if (featureSearchInput) {
+    applyFeatureSearch('');
+    featureSearchInput.addEventListener('input', () => applyFeatureSearch(featureSearchInput.value));
+  }
+  $$('[data-clear-feature-search]').forEach((button) => button.addEventListener('click', () => {
+    if (!featureSearchInput) return;
+    featureSearchInput.value = '';
+    applyFeatureSearch('');
+    featureSearchInput.focus();
+  }));
+
   // Full-page translation is opt-in. Only this static documentation page is sent to the configured translation provider.
   const SITE_LANGUAGES = [
     { code: 'en-US', api: 'en', label: 'English', native: 'English' },
@@ -462,7 +600,7 @@
     { code: 'sv-SE', api: 'sv', label: 'Swedish', native: 'Svenska' },
   ];
   const SITE_LANGUAGE_UI = {
-    'en-US': { label: 'Language', button: 'Translate', busy: 'Translating this page…', done: 'Page translated. This is machine translation; wording may be imperfect. Code and command names are preserved.', original: 'Original English restored.', failed: 'Translation service unavailable. English text was restored. Try again later or configure a LibreTranslate endpoint.', },
+    'en-US': { label: 'Language', button: 'Translate', busy: 'Translating this page…', done: 'Page translated. This is machine translation; wording may be imperfect. Code and command names are preserved.', original: 'Original English restored.', failed: 'Translation service unavailable or timed out. English text was restored. Try again later or configure a public LibreTranslate endpoint.', },
     'hi-IN': { label: 'भाषा', button: 'अनुवाद करें', busy: 'पृष्ठ का अनुवाद हो रहा है…', done: 'पृष्ठ का मशीन अनुवाद हो गया। कुछ शब्द गलत हो सकते हैं; कोड और कमांड नाम नहीं बदले गए हैं।', original: 'मूल अंग्रेज़ी वापस आ गई।', failed: 'अनुवाद सेवा उपलब्ध नहीं है। अंग्रेज़ी पाठ बहाल कर दिया गया है।', },
     'bn-IN': { label: 'ভাষা', button: 'অনুবাদ করুন', busy: 'পাতাটি অনুবাদ করা হচ্ছে…', done: 'পাতাটি মেশিনে অনুবাদ করা হয়েছে। কিছু শব্দে ভুল থাকতে পারে; কোড ও কমান্ডের নাম অপরিবর্তিত।', original: 'মূল ইংরেজি ফিরিয়ে আনা হয়েছে।', failed: 'অনুবাদ পরিষেবা পাওয়া যাচ্ছে না। ইংরেজি লেখা ফিরিয়ে আনা হয়েছে।', },
     'es-ES': { label: 'Idioma', button: 'Traducir', busy: 'Traduciendo esta página…', done: 'Página traducida automáticamente. Puede haber imprecisiones; se conservan el código y los comandos.', original: 'Se ha restaurado el inglés original.', failed: 'El servicio de traducción no está disponible. Se ha restaurado el inglés.', },
@@ -484,19 +622,17 @@
     'cs-CZ': { label: 'Jazyk', button: 'Přeložit', busy: 'Probíhá překlad stránky…', done: 'Stránka byla strojově přeložena. Formulace mohou být nepřesné; kód a příkazy zůstávají beze změny.', original: 'Byl obnoven původní anglický text.', failed: 'Překladová služba není dostupná. Byl obnoven anglický text.', },
     'sv-SE': { label: 'Språk', button: 'Översätt', busy: 'Översätter sidan…', done: 'Sidan har maskinöversatts. Formuleringar kan vara oprecisa; kod och kommandon är oförändrade.', original: 'Den ursprungliga engelska texten har återställts.', failed: 'Översättningstjänsten är inte tillgänglig. Den engelska texten har återställts.', },
   };
-  let activeSiteLocale = 'en-US';
   const originalTextNodes = new Map();
   const originalAttributeValues = new Map();
   const defaultDocumentTitle = document.title;
   const defaultDocumentDir = document.documentElement.getAttribute('dir');
   const SITE_TRANSLATION_ENDPOINTS = [
-    (typeof window.RESOLVX_TRANSLATION_ENDPOINT === 'string' && window.RESOLVX_TRANSLATION_ENDPOINT.trim())
-      ? window.RESOLVX_TRANSLATION_ENDPOINT.trim()
+    (typeof window.QUERYFIXR_TRANSLATION_ENDPOINT === 'string' && window.QUERYFIXR_TRANSLATION_ENDPOINT.trim())
+      ? window.QUERYFIXR_TRANSLATION_ENDPOINT.trim()
       : 'https://translate.argosopentech.com/translate',
     'https://libretranslate.de/translate',
   ];
   const normalizeSiteLocale = (value) => SITE_LANGUAGES.find((language) => language.code.toLowerCase() === String(value || '').toLowerCase() || language.api === String(value || '').toLowerCase())?.code || 'en-US';
-  const siteLanguageName = (code) => SITE_LANGUAGES.find((language) => language.code === code)?.native || 'English';
   const translateUiCopy = (code, key) => (SITE_LANGUAGE_UI[code] || SITE_LANGUAGE_UI['en-US'])[key] || SITE_LANGUAGE_UI['en-US'][key];
   function collectTranslatableSegments() {
     const segments = [];
@@ -549,16 +685,27 @@
     for (const endpoint of SITE_TRANSLATION_ENDPOINTS) {
       try {
         const body = { q: values, source: 'en', target: targetApi, format: 'text' };
-        if (typeof window.RESOLVX_TRANSLATION_API_KEY === 'string' && window.RESOLVX_TRANSLATION_API_KEY.trim()) body.api_key = window.RESOLVX_TRANSLATION_API_KEY.trim();
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify(body),
-          mode: 'cors',
-          credentials: 'omit',
-        });
-        if (!response.ok) throw new Error('Translation endpoint responded with HTTP ' + response.status);
-        const result = await response.json();
+        const controller = typeof AbortController === 'function' ? new AbortController() : null;
+        const timeoutId = controller ? window.setTimeout(() => controller.abort(), 10000) : null;
+        let response;
+          response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(body),
+            mode: 'cors',
+            credentials: 'omit',
+            ...(controller ? { signal: controller.signal } : {}),
+          });
+        if (!response.ok) {
+          if (timeoutId !== null) window.clearTimeout(timeoutId);
+          throw new Error('Translation endpoint responded with HTTP ' + response.status);
+        }
+        let result;
+        try {
+          result = await response.json();
+        } finally {
+          if (timeoutId !== null) window.clearTimeout(timeoutId);
+        }
         let translated = null;
         if (Array.isArray(result.translatedText)) translated = result.translatedText;
         else if (Array.isArray(result)) translated = result.map((item) => typeof item === 'string' ? item : item.translatedText);
@@ -582,9 +729,8 @@
     try {
       restoreOriginalPageText();
       if (locale === 'en-US') {
-        activeSiteLocale = locale;
         statusNode.textContent = translateUiCopy(locale, 'original');
-        try { localStorage.setItem('resolvx-site-locale', locale); } catch (_) {}
+        try { localStorage.setItem('queryfixr-site-locale', locale); } catch (_) {}
         return;
       }
       const segments = collectTranslatableSegments();
@@ -610,17 +756,15 @@
       }
       await flush();
       segments.forEach((segment, index) => segment.apply(translated[index] || segment.text));
-      activeSiteLocale = locale;
       document.documentElement.lang = locale;
       document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
       if (wikiInput) applyWikiSearch(wikiInput.value);
-      try { localStorage.setItem('resolvx-site-locale', locale); } catch (_) {}
+      try { localStorage.setItem('queryfixr-site-locale', locale); } catch (_) {}
       statusNode.textContent = translateUiCopy(locale, 'done');
     } catch (error) {
       restoreOriginalPageText();
-      activeSiteLocale = 'en-US';
       statusNode.textContent = translateUiCopy(locale, 'failed');
-      console.warn('ResolvX site translation failed:', error);
+      console.warn('QueryFixr site translation failed:', error);
     } finally {
       applyButton.disabled = false;
       const current = SITE_LANGUAGES.find((language) => language.code === locale);
@@ -636,11 +780,11 @@
     const label = document.createElement('label');
     label.textContent = translateUiCopy('en-US', 'label');
     const select = document.createElement('select');
-    select.id = 'resolvx-site-language';
+    select.id = 'queryfixr-site-language';
     select.setAttribute('aria-label', 'Choose website language');
     select.title = 'Translate public website copy through an external service. The site does not connect to Discord or ticket data.';
     const initial = (() => {
-      try { return localStorage.getItem('resolvx-site-locale') || navigator.language || 'en-US'; } catch (_) { return navigator.language || 'en-US'; }
+      try { return localStorage.getItem('queryfixr-site-locale') || navigator.language || 'en-US'; } catch (_) { return navigator.language || 'en-US'; }
     })();
     SITE_LANGUAGES.forEach((language) => {
       const option = document.createElement('option');
@@ -666,7 +810,7 @@
       button.textContent = translateUiCopy(code, 'button');
     });
     button.addEventListener('click', () => { void translateSitePage(select.value, status, button); });
-    const saved = (() => { try { return localStorage.getItem('resolvx-site-locale'); } catch (_) { return null; } })();
+    const saved = (() => { try { return localStorage.getItem('queryfixr-site-locale'); } catch (_) { return null; } })();
     if (saved && normalizeSiteLocale(saved) !== 'en-US') void translateSitePage(saved, status, button);
   }
   installSiteLanguageControl();
