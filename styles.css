@@ -2903,6 +2903,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visibl
   padding: 0 8px;
   border: 1px solid rgba(164, 176, 219, .22);
   border-radius: 10px;
+  color-scheme: dark;
   color: var(--text-primary, #eef0ff);
   background: rgba(18, 21, 37, .94);
   font: inherit;
@@ -3584,6 +3585,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visibl
   font: 11px var(--font);
 }
 .site-language-switcher select { width: 100%; }
+.site-language-switcher select option,
+.site-language-switcher select optgroup {
+  color: #f4f5fb;
+  background-color: #151827;
+}
+
 .site-language-switcher button {
   white-space: nowrap;
   border-color: rgba(116,231,231,.28);
@@ -3692,11 +3699,6 @@ button:disabled { cursor: not-allowed; }
   background: transparent;
   box-shadow: none;
   mix-blend-mode: normal;
-}
-.hero-copy h1 s {
-  text-decoration-thickness: .075em;
-  text-decoration-color: rgba(194, 199, 221, .72);
-  text-decoration-skip-ink: none;
 }
 .global-search-empty { margin: 0; padding: 16px; color: var(--muted); }
 .global-search-retry {

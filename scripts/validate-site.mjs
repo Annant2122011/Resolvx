@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const root = process.cwd();
 const htmlFiles = ['index.html', 'features.html', 'wiki.html'];
-const visibleFiles = [...htmlFiles, 'site.js', 'styles.css', 'mobile.css', 'README.md', 'favicon.svg', 'api/translate.js', 'netlify/functions/translate.js', 'scripts/test-search.mjs', 'scripts/test-translation-proxy.cjs'];
+const visibleFiles = [...htmlFiles, 'site.js', 'styles.css', 'mobile.css', 'README.md', 'api/translate.js', 'netlify/functions/translate.js', 'scripts/test-search.mjs', 'scripts/test-translation-proxy.cjs', 'scripts/test-client-translation.mjs'];
 const errors = [];
 const pageContents = new Map();
 const pageIds = new Map();
@@ -178,27 +178,19 @@ for (const file of htmlFiles) {
 }
 
 const suppliedLogoUrl = 'https://i.ibb.co/fdRDWXbH/3v-OKZCYL0-Rqkdu-OQ4t-PKA-Xt-Cc-OQu-N-Picsart-Ai-Image-Enhancer.png';
-const faviconSource = readFileSync(path.join(root, 'favicon.svg'), 'utf8');
-if (!/<svg\b[^>]*viewBox="0 0 512 512"/i.test(faviconSource) || !/<image\b[^>]*width="512"[^>]*height="512"/i.test(faviconSource)) {
-  report('favicon.svg: supplied transparent QF artwork must fill a 512 x 512 square viewBox');
-}
-if (/<rect\b[^>]*fill=["'](?:#000|#000000|black|#[0-9a-f]{3,8})/i.test(faviconSource)) {
-  report('favicon.svg: the favicon must preserve a transparent background');
-}
-if (!faviconSource.includes(suppliedLogoUrl)) {
-  report('favicon.svg: expected the supplied transparent QF artwork');
-}
 for (const file of htmlFiles) {
   const iconTags = [...pageContents.get(file).matchAll(/<link\b[^>]*\brel="icon"[^>]*>/gi)].map((match) => attributes(match[0]));
-  const pngIcon = iconTags.find((icon) => (icon.type || '').toLowerCase() === 'image/png');
-  const svgIcon = iconTags.find((icon) => (icon.type || '').toLowerCase() === 'image/svg+xml');
+  const pngIcons = iconTags.filter((icon) => (icon.type || '').toLowerCase() === 'image/png');
+  const pngIcon = pngIcons[0];
   const appleIcon = [...pageContents.get(file).matchAll(/<link\b[^>]*\brel="apple-touch-icon"[^>]*>/gi)]
     .map((match) => attributes(match[0]))[0];
-  if (!pngIcon || !pngIcon.href.startsWith(suppliedLogoUrl) || pngIcon.sizes !== '512x512') {
-    report(`${file}: PNG favicon must use the supplied QF image and advertise 512 x 512 dimensions`);
+  if (iconTags.length !== 1 || pngIcons.length !== 1 || !pngIcon ||
+      !pngIcon.href.startsWith(suppliedLogoUrl) || pngIcon.sizes !== '512x512') {
+    report(`${file}: use the supplied QF logo as one unambiguous 512 x 512 PNG favicon`);
   }
-  if (!svgIcon || !svgIcon.href.startsWith('favicon.svg')) {
-    report(`${file}: missing the local transparent square SVG favicon fallback`);
+  if (iconTags.some((icon) => (icon.type || '').toLowerCase() === 'image/svg+xml' ||
+      (icon.href || '').startsWith('favicon.svg'))) {
+    report(`${file}: remove the redundant SVG fallback favicon so it cannot compete with the primary logo icon`);
   }
   if (!appleIcon || !appleIcon.href.startsWith(suppliedLogoUrl)) {
     report(`${file}: Apple touch icon must use the supplied transparent QF artwork`);
@@ -304,6 +296,21 @@ if (!js.includes("event.key.toLowerCase() === 'k' && event.altKey") || js.includ
 }
 if (!js.includes("function installSiteLanguageControl()") || !js.includes("button.addEventListener('click', () => { void translateSitePage(select.value, status, button); });")) {
   report('site.js: the website language selector must install a working translate button');
+}
+if (!js.includes('function createTranslationBatches(values)') ||
+    !js.includes('async function translateBatchesWithConcurrency(') ||
+    !js.includes("indexError.code = 'SEARCH_INDEX_UNAVAILABLE'") ||
+    !js.includes('No partial translation was applied.')) {
+  report('site.js: translation must enforce bounded provider payloads, bounded concurrency, and visible cross-page search-index failures');
+}
+const dropdownStylesheet = readFileSync(path.join(root, 'styles.css'), 'utf8');
+if (!dropdownStylesheet.includes('.site-language-switcher select option') ||
+    !dropdownStylesheet.includes('color-scheme: dark;') ||
+    !dropdownStylesheet.includes('background-color: #151827;')) {
+  report('styles.css: translation dropdown options need explicit high-contrast dark menu colors');
+}
+if (/<s\b/i.test(pageContents.get('index.html')) || !pageContents.get('index.html').includes('<h1>QueryFixr<br>')) {
+  report('index.html: homepage brand name must display without strikethrough');
 }
 
 if (

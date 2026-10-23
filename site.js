@@ -1030,6 +1030,69 @@
     throw new Error('Translation did not complete after trying ' + endpoints.length + ' providers: ' +
       (lastError?.message || 'no provider completed the request'));
   }
+  const TRANSLATION_BATCH_MAX_ITEMS = 16;
+  const TRANSLATION_BATCH_MAX_CHARACTERS = 3600;
+  const TRANSLATION_TEXT_MAX_CHARACTERS = 2400;
+
+  function createTranslationBatches(values) {
+    const batches = [];
+    let currentValues = [];
+    let currentIndexes = [];
+    let currentCharacters = 0;
+    const flush = () => {
+      if (!currentValues.length) return;
+      batches.push({ values: currentValues, indexes: currentIndexes });
+      currentValues = [];
+      currentIndexes = [];
+      currentCharacters = 0;
+    };
+
+    values.forEach((value, index) => {
+      if (typeof value !== 'string' || !value.trim()) {
+        throw new Error('Translation input contains an empty text segment.');
+      }
+      if (value.length > TRANSLATION_TEXT_MAX_CHARACTERS) {
+        throw new Error('A text segment exceeds the translation provider limit. No partial translation was applied.');
+      }
+      if (currentValues.length >= TRANSLATION_BATCH_MAX_ITEMS ||
+          (currentValues.length > 0 && currentCharacters + value.length > TRANSLATION_BATCH_MAX_CHARACTERS)) {
+        flush();
+      }
+      currentValues.push(value);
+      currentIndexes.push(index);
+      currentCharacters += value.length;
+    });
+    flush();
+    return batches;
+  }
+
+  async function translateBatchesWithConcurrency(batches, targetApi, onProgress = () => {}, translateBatchFn = translateBatch) {
+    const results = new Array(batches.length);
+    let cursor = 0;
+    let completed = 0;
+    let firstError = null;
+    const workerCount = Math.min(3, batches.length);
+
+    async function worker() {
+      while (firstError === null) {
+        const index = cursor++;
+        if (index >= batches.length) return;
+        try {
+          results[index] = await translateBatchFn(batches[index].values, targetApi);
+        } catch (error) {
+          firstError = error;
+          return;
+        }
+        completed += 1;
+        onProgress(completed, batches.length);
+      }
+    }
+
+    await Promise.all(Array.from({ length: workerCount }, () => worker()));
+    if (firstError) throw firstError;
+    return results;
+  }
+
   function getSearchIndexDisplaySegments() {
     const segments = [];
     for (const item of searchItems) {
@@ -1085,6 +1148,8 @@
     const locale = normalizeSiteLocale(targetLocale);
     statusNode.textContent = translateUiCopy(locale, 'busy');
     applyButton.disabled = true;
+    const languageSelect = $('#queryfixr-site-language');
+    if (languageSelect) languageSelect.disabled = true;
     const selected = SITE_LANGUAGES.find((language) => language.code === locale);
     try {
       if (locale === 'en-US') {
@@ -1098,51 +1163,47 @@
       if (!selected) throw new Error('Unsupported website language: ' + locale);
 
       // Load every cross-page search snippet first so visible and future search results share the selected language.
-      try { await ensureSearchIndex(); } catch (indexError) {
-        console.warn('QueryFixr search index remains unavailable during translation:', indexError);
+      try {
+        await ensureSearchIndex();
+      } catch (indexError) {
+        indexError.code = 'SEARCH_INDEX_UNAVAILABLE';
+        throw indexError;
+      }
+      if (searchIndexState !== 'ready') {
+        const indexError = new Error('The cross-page search index is unavailable.');
+        indexError.code = 'SEARCH_INDEX_UNAVAILABLE';
+        throw indexError;
       }
 
       // Keep the current display intact until every page segment is translated successfully.
       const segments = collectTranslatableSegments();
       const texts = segments.map((segment) => segment.text);
       const translated = new Array(texts.length);
-      const batches = [];
-      let batch = [];
-      let batchIndexes = [];
-      let batchChars = 0;
-      const flush = () => {
-        if (!batch.length) return;
-        batches.push({ values: batch, indexes: batchIndexes });
-        batch = [];
-        batchIndexes = [];
-        batchChars = 0;
-      };
-      for (let i = 0; i < texts.length; i += 1) {
-        const value = texts[i];
-        if (batch.length >= 16 || (batch.length > 0 && batchChars + value.length > 3600)) flush();
-        batch.push(value);
-        batchIndexes.push(i);
-        batchChars += value.length;
-      }
-      flush();
+      const batches = createTranslationBatches(texts);
+      const batchResults = await translateBatchesWithConcurrency(batches, selected.api, (completed, total) => {
+        statusNode.textContent = translateUiCopy(locale, 'busy') + ' ' + completed + '/' + total;
+      });
+      batchResults.forEach((response, batchIndex) => {
+        response.forEach((value, index) => {
+          translated[batches[batchIndex].indexes[index]] = value;
+        });
+      });
 
-      for (let i = 0; i < batches.length; i += 1) {
-        const currentBatch = batches[i];
-        const response = await translateBatch(currentBatch.values, selected.api);
-        response.forEach((value, index) => { translated[currentBatch.indexes[index]] = value; });
-        statusNode.textContent = translateUiCopy(locale, 'busy') + ' ' + (i + 1) + '/' + batches.length;
-      }
+      const indexSegments = getSearchIndexDisplaySegments();
+      const indexValues = indexSegments.map((segment) => segment.text);
+      const indexBatches = createTranslationBatches(indexValues);
+      const indexResults = await translateBatchesWithConcurrency(indexBatches, selected.api, (completed, total) => {
+        statusNode.textContent = translateUiCopy(locale, 'busy') + ' ' + completed + '/' + total;
+      });
+      const indexTranslations = new Array(indexValues.length);
+      indexResults.forEach((response, batchIndex) => {
+        response.forEach((value, index) => {
+          indexTranslations[indexBatches[batchIndex].indexes[index]] = value;
+        });
+      });
 
-      const indexSegments = searchIndexState === 'ready' ? getSearchIndexDisplaySegments() : [];
-      if (indexSegments.length) {
-        const values = indexSegments.map((segment) => segment.text);
-        const indexTranslations = new Array(values.length);
-        for (let offset = 0; offset < values.length; offset += 16) {
-          const response = await translateBatch(values.slice(offset, offset + 16), selected.api);
-          response.forEach((value, j) => { indexTranslations[offset + j] = value; });
-        }
-        indexSegments.forEach((segment, index) => segment.apply(indexTranslations[index]));
-      }
+      // Apply DOM and search-index translations only after every request has succeeded.
+      indexSegments.forEach((segment, index) => segment.apply(indexTranslations[index]));
       segments.forEach((segment, index) => segment.apply(translated[index]));
       const runtimeSourceTexts = Object.values(lifecycleStates).flatMap((state) => [state.title, state.description, state.next]).concat(['Copied', 'Select & copy', 'Copied!', 'Copy manually', 'Copied command', 'Copy the command']);
       void translateRuntimeTexts(runtimeSourceTexts).catch((runtimeError) => console.warn('QueryFixr optional dynamic-copy prefetch failed:', runtimeError));
@@ -1156,9 +1217,12 @@
       statusNode.textContent = translateUiCopy(locale, 'done');
     } catch (error) {
       // The current page language is preserved; no partial page translation is applied.
-      statusNode.textContent = TRANSLATION_FAILURE_COPY[locale] || TRANSLATION_FAILURE_COPY['en-US'];
+      statusNode.textContent = error?.code === 'SEARCH_INDEX_UNAVAILABLE'
+        ? (SEARCH_RUNTIME_COPY[locale]?.indexError || SEARCH_RUNTIME_COPY['en-US'].indexError)
+        : (TRANSLATION_FAILURE_COPY[locale] || TRANSLATION_FAILURE_COPY['en-US']);
       console.warn('QueryFixr site translation failed:', error);
     } finally {
+      if (languageSelect) languageSelect.disabled = false;
       applyButton.disabled = false;
       applyButton.textContent = translateUiCopy(locale, 'button');
     }
@@ -1200,6 +1264,7 @@
       const code = normalizeSiteLocale(select.value);
       label.textContent = translateUiCopy(code, 'label');
       button.textContent = translateUiCopy(code, 'button');
+      status.textContent = '';
     });
     button.addEventListener('click', () => { void translateSitePage(select.value, status, button); });
     const saved = (() => { try { return localStorage.getItem('queryfixr-site-locale'); } catch (_) { return null; } })();
