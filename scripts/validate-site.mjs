@@ -178,10 +178,10 @@ for (const file of htmlFiles) {
 }
 
 const faviconSource = readFileSync(path.join(root, 'favicon-local.svg'), 'utf8');
-if (!/<svg\\b/i.test(faviconSource) || !/<title>QueryFixr<\\/title>/i.test(faviconSource)) {
+if (!/<svg\b/i.test(faviconSource) || !/<title>QueryFixr<\/title>/i.test(faviconSource)) {
   report('favicon-local.svg: missing a valid, named QueryFixr SVG favicon');
 }
-if (/<image\\b[^>]*href=["']https?:/i.test(faviconSource)) {
+if (/<image\b[^>]*href=["']https?:/i.test(faviconSource)) {
   report('favicon-local.svg: favicon must not depend on an externally hosted image');
 }
 for (const file of htmlFiles) {
