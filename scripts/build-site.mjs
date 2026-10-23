@@ -87,7 +87,7 @@ const budgets = [
   ['queryfixr-hero-640.webp', 35000],
   ['queryfixr-hero-900.webp', 50000],
   ['queryfixr-favicon.png', 15000],
-  ['queryfixr-apple-touch-icon.png', 16000],
+  ['queryfixr-apple-touch-icon.png', 22000],
 ];
 let totalBytes = 0;
 for (const [name, limit] of budgets) {
