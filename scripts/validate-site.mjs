@@ -28,16 +28,20 @@ function checkRelativeReference(fromFile, rawUrl, kind) {
   const url = rawUrl.trim();
   if (!url) return;
   if (/^javascript:/i.test(url)) {
-    report(`${fromFile}: unsafe javascript URL in ${kind}: ${url}`);
+    report(\`${fromFile}: unsafe javascript URL in ${kind}: ${url}\`);
     return;
   }
   if (isExternal(url)) return;
+  // This is a Vercel-managed runtime route, not a file that belongs in the static source tree.
+  // It powers optional analytics on Vercel and is not expected to exist on GitHub Pages.
+  if (url === '/_vercel/insights/script.js') return;
+
   const [beforeHash, rawFragment] = url.split('#', 2);
   let fragment = '';
   try {
     fragment = rawFragment ? decodeURIComponent(rawFragment) : '';
   } catch {
-    report(`${fromFile}: malformed URI fragment in ${kind}: ${url}`);
+    report(\`${fromFile}: malformed URI fragment in ${kind}: ${url}\`);
     return;
   }
   const beforeQuery = (beforeHash || '').split('?')[0];
@@ -45,20 +49,22 @@ function checkRelativeReference(fromFile, rawUrl, kind) {
     ? fromFile
     : (beforeQuery === '.' || beforeQuery === './')
       ? 'index.html'
-      : path.posix.normalize(path.posix.join(path.posix.dirname(fromFile), beforeQuery));
+      : beforeQuery.startsWith('/')
+        ? path.posix.normalize(beforeQuery.replace(/^\/+/, ''))
+        : path.posix.normalize(path.posix.join(path.posix.dirname(fromFile), beforeQuery));
   const targetPath = path.resolve(root, targetRelative);
   if (!targetPath.startsWith(root + path.sep) && targetPath !== root) {
-    report(`${fromFile}: ${kind} escapes the site root: ${url}`);
+    report(\`${fromFile}: ${kind} escapes the site root: ${url}\`);
     return;
   }
   if (!existsSync(targetPath)) {
-    report(`${fromFile}: missing ${kind} target ${url} (resolved to ${targetRelative})`);
+    report(\`${fromFile}: missing ${kind} target ${url} (resolved to ${targetRelative})\`);
     return;
   }
   if (!fragment) return;
   const target = pageContents.get(targetRelative);
   if (target && !pageIds.get(targetRelative)?.has(fragment)) {
-    report(`${fromFile}: broken anchor ${url} (no id="${fragment}" in ${targetRelative})`);
+    report(\`${fromFile}: broken anchor ${url} (no id="${fragment}" in ${targetRelative})\`);
   }
 }
 
