@@ -854,16 +854,13 @@
     // Prefer currently documented no-key LibreTranslate mirrors, then community mirrors,
     // and finally an independent Google web-translation endpoint as a best-effort backup.
     const publicMirrors = [
-      'https://translate.cutie.dating/translate',
-      'https://translate.fedilab.app/translate',
-      'https://translate.flossboxin.org.in/translate',
       'https://libretranslate.de/translate',
       'https://translate.mentality.rip/translate',
       'https://translate.argosopentech.com/translate',
       'https://translate.api.skitzen.com/translate',
       'https://trans.zillyhuhn.com/translate',
-      'https://translate.terraprint.co/translate',
-      'https://translate.astian.org/translate',
+      'https://libretranslate.esmailelbob.xyz/translate',
+      'https://translate.pussthecat.org/translate',
       GOOGLE_TRANSLATE_ENDPOINT,
     ];
     return [...new Set([configured, ...publicMirrors].filter(Boolean))];
