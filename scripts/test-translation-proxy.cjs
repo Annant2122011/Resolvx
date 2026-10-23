@@ -51,3 +51,88 @@ for (let i = 0; i < 180; i += 1) {
 assert.equal(_test.checkRateLimit(request), false, 'Requests beyond the per-minute quota should be throttled.');
 
 console.log('QueryFixr translation proxy tests passed: request validation, locale handling, limits, mirror selection, and rate limiting.');
+
+async function invokeVercelHandler(handler, request) {
+  const headers = {};
+  let statusCode = 200;
+  let body = null;
+  const response = {
+    setHeader(name, value) { headers[name] = value; return this; },
+    status(code) { statusCode = code; return this; },
+    json(value) { body = value; return this; },
+  };
+  await handler(request, response);
+  return { statusCode, headers, body };
+}
+
+async function runHandlerIntegrationChecks() {
+  const handler = require('../api/translate.js');
+  const netlify = require('../netlify/functions/translate.js');
+  const previousFetch = global.fetch;
+  const previousEndpoint = process.env.LIBRETRANSLATE_ENDPOINT;
+  try {
+    const health = await invokeVercelHandler(handler, {
+      method: 'GET',
+      headers: { host: 'queryfixr.example' },
+      socket: { remoteAddress: '198.51.100.40' },
+    });
+    assert.equal(health.statusCode, 200, 'The API health check should respond without contacting providers.');
+    assert.equal(health.body.ok, true);
+
+    const crossOrigin = await invokeVercelHandler(handler, {
+      method: 'POST',
+      headers: { host: 'queryfixr.example', origin: 'https://attacker.example', 'x-forwarded-for': '198.51.100.41' },
+      socket: { remoteAddress: '198.51.100.41' },
+      body: { q: ['hello'], target: 'fr' },
+    });
+    assert.equal(crossOrigin.statusCode, 403, 'Cross-origin POST requests should be rejected.');
+
+    const invalid = await invokeVercelHandler(handler, {
+      method: 'POST',
+      headers: { host: 'queryfixr.example', origin: 'https://queryfixr.example', 'x-forwarded-for': '198.51.100.42' },
+      socket: { remoteAddress: '198.51.100.42' },
+      body: { q: ['hello'], target: 'xx' },
+    });
+    assert.equal(invalid.statusCode, 400, 'Invalid translation requests should be rejected before any upstream request.');
+
+    process.env.LIBRETRANSLATE_ENDPOINT = 'https://translate.example.test/translate';
+    global.fetch = async (url) => ({
+      ok: true,
+      status: 200,
+      async json() {
+        const parsed = new URL(url);
+        const requestBody = parsed.search ? null : null;
+        void requestBody;
+        return { translatedText: ['Bonjour'] };
+      },
+    });
+    const translated = await invokeVercelHandler(handler, {
+      method: 'POST',
+      headers: { host: 'queryfixr.example', origin: 'https://queryfixr.example', 'x-forwarded-for': '198.51.100.43' },
+      socket: { remoteAddress: '198.51.100.43' },
+      body: { q: ['Hello'], target: 'fr' },
+    });
+    assert.equal(translated.statusCode, 200, 'A valid same-origin request should return translated text.');
+    assert.deepEqual(translated.body.translatedText, ['Bonjour']);
+
+    const netlifyHealth = await netlify.handler({
+      httpMethod: 'GET',
+      headers: { host: 'queryfixr.netlify.app', origin: 'https://queryfixr.netlify.app' },
+      body: null,
+      isBase64Encoded: false,
+    });
+    assert.equal(netlifyHealth.statusCode, 200, 'The Netlify adapter should expose the same proxy health check.');
+    assert.equal(JSON.parse(netlifyHealth.body).ok, true);
+  } finally {
+    global.fetch = previousFetch;
+    if (previousEndpoint === undefined) delete process.env.LIBRETRANSLATE_ENDPOINT;
+    else process.env.LIBRETRANSLATE_ENDPOINT = previousEndpoint;
+  }
+}
+
+runHandlerIntegrationChecks()
+  .then(() => console.log('QueryFixr translation proxy route checks passed: health, CORS, input errors, successful same-origin response, and Netlify adapter.'))
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
