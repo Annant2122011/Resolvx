@@ -131,7 +131,7 @@ for (const file of htmlFiles) {
     if (!/\b(?:noopener|noreferrer)\b/i.test(attrs.rel || '')) report(`${file}: target="_blank" link should include rel="noopener noreferrer": ${match[0].slice(0, 100)}`);
   }
   for (const match of source.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/gi)) {
-    const attrs = attributes(\`<button \${match[1]}>\`);
+    const attrs = attributes('<button ' + match[1] + '>');
     const readableText = match[2]
       .replace(/<[^>]*\baria-hidden=["']true["'][^>]*>[\s\S]*?<\/[^>]+>/gi, ' ')
       .replace(/<svg\b[\s\S]*?<\/svg>/gi, ' ')
@@ -140,12 +140,12 @@ for (const file of htmlFiles) {
       .replace(/\s+/g, ' ')
       .trim();
     if (!(attrs['aria-label'] || attrs['aria-labelledby'] || attrs.title || readableText)) {
-      report(\`\${file}: button has no accessible name: \${match[0].slice(0, 100)}\`);
+      report(file + ': button has no accessible name: ' + match[0].slice(0, 100));
     }
     if (attrs['aria-controls']) {
       for (const controlledId of attrs['aria-controls'].split(/\s+/)) {
         if (controlledId && !pageIds.get(file)?.has(controlledId)) {
-          report(\`\${file}: button aria-controls references missing id="\${controlledId}"\`);
+          report(file + ': button aria-controls references missing id="' + controlledId + '"');
         }
       }
     }
