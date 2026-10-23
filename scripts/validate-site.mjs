@@ -248,7 +248,7 @@ for (const cssFile of ['styles.css', 'mobile.css']) {
       [/\.global-search-form input,\s*\.wiki-search-input input,\s*#wiki-search,\s*\[data-global-search\]\s*\{[^}]*font-size:\s*16px/s, 'mobile search inputs must use at least 16px text to avoid iOS auto-zoom'],
     ];
     for (const [pattern, message] of mobileContracts) {
-      if (!pattern.test(source)) report(\`mobile.css: \${message}\`);
+      if (!pattern.test(source)) report(`mobile.css: ${message}`);
     }
   }
   for (const match of source.matchAll(/url\(\s*(['"]?)([^'")]+)\1\s*\)/gi)) {
