@@ -456,8 +456,8 @@ if (!mobileCss.includes('height: auto;') ||
   report('mobile.css: mobile CTA must size to its content and keep its full heading readable');
 }
 if (!js.includes('function installVisualMotionEnhancements()') ||
-    !js.includes(\"window.matchMedia('(prefers-reduced-motion: reduce)')\") ||
-    !js.includes(\"'IntersectionObserver' in window\") ||
+    !js.includes("window.matchMedia('(prefers-reduced-motion: reduce)')") ||
+    !js.includes("'IntersectionObserver' in window") ||
     !js.includes('window.requestAnimationFrame')) {
   report('site.js: visual motion must use progressive scroll reveals, reduced-motion checks, and frame-coalesced pointer highlights');
 }
