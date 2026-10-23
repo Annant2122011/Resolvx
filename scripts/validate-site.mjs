@@ -353,6 +353,13 @@ if (!translationProxySource.includes('MAX_TEXTS_PER_REQUEST = 16') ||
     !translationProxySource.includes('REQUEST_TIMEOUT_MS')) {
   report('api/translate.js: translation proxy must keep request-size limits and finite provider timeouts');
 }
+if (!translationProxySource.includes('endpoint === configuredEndpoint')) {
+  report('api/translate.js: a configured API key must only be sent to its own configured translation provider');
+}
+if (!js.includes("new URL('/.netlify/functions/translate', window.location.origin)") ||
+    !js.includes('const SAME_ORIGIN_TRANSLATION_ENDPOINT')) {
+  report('site.js: translation must support both Vercel and Netlify same-origin proxy routes');
+}
 if (!js.includes('brand-text-fallback') || !js.includes('hero-banner-fallback')) {
   report('site.js: externally hosted brand and hero images need graceful visual fallbacks');
 }
