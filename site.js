@@ -1272,4 +1272,85 @@
   }
   installSiteLanguageControl();
 
+
+  // Visual motion layer: reveal sections on scroll and add a restrained pointer spotlight.
+  function installVisualMotionEnhancements() {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const revealTargets = Array.from(document.querySelectorAll([
+      '.hero-copy',
+      '.hero-art.hero-banner-art',
+      '.trust-banner',
+      '.intro-grid > *',
+      '.capability-card',
+      '.workflow-copy',
+      '.workflow-demo',
+      '.principle-card',
+      '.faq-preview > *',
+      '.faq-preview-list > a',
+      '.closing-cta .cta-content',
+      '.closing-cta .cta-decoration',
+      '.page-hero',
+      '.feature-library-hero',
+      '.feature-filter',
+      '.wiki-hero',
+      '.wiki-search-card',
+      '.wiki-sidebar'
+    ].join(',')));
+    const pointerTargets = document.querySelectorAll([
+      '.capability-card',
+      '.principle-card',
+      '.catalog-card',
+      '.hero-art.hero-banner-art',
+      '.workflow-demo',
+      '.closing-cta:not(.compact-cta)'
+    ].join(','));
+
+    if (!reducedMotion.matches && 'IntersectionObserver' in window && revealTargets.length) {
+      document.documentElement.classList.add('motion-enhanced');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('motion-visible');
+          observer.unobserve(entry.target);
+        });
+      }, { threshold: 0.08, rootMargin: '0px 0px -7% 0px' });
+
+      revealTargets.forEach((element, index) => {
+        element.classList.add('motion-reveal');
+        element.style.setProperty('--motion-delay', String((index % 5) * 55) + 'ms');
+        if (element.matches('.hero-art.hero-banner-art, .workflow-demo, .closing-cta .cta-decoration')) {
+          element.classList.add('motion-slide-x');
+        }
+        observer.observe(element);
+      });
+    }
+
+    if (reducedMotion.matches || !finePointer.matches) return;
+    pointerTargets.forEach((element) => {
+      let framePending = false;
+      let latestX = 0;
+      let latestY = 0;
+      element.addEventListener('pointermove', (event) => {
+        if (event.pointerType === 'touch') return;
+        latestX = event.clientX;
+        latestY = event.clientY;
+        if (framePending) return;
+        framePending = true;
+        window.requestAnimationFrame(() => {
+          const bounds = element.getBoundingClientRect();
+          element.style.setProperty('--pointer-x', String(Math.round(latestX - bounds.left)) + 'px');
+          element.style.setProperty('--pointer-y', String(Math.round(latestY - bounds.top)) + 'px');
+          framePending = false;
+        });
+      }, { passive: true });
+      element.addEventListener('pointerleave', () => {
+        element.style.removeProperty('--pointer-x');
+        element.style.removeProperty('--pointer-y');
+      }, { passive: true });
+    });
+  }
+  installVisualMotionEnhancements();
+
+
 })();

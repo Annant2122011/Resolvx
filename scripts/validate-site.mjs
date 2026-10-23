@@ -434,6 +434,34 @@ if (!mobileCss.includes('aspect-ratio: auto;') ||
   report('mobile.css: CTA panels must be content-height on phones and use phone-sized center marks');
 }
 
+
+const finalCtaRuleStart = sharedCss.lastIndexOf('/* Final CTA correction: landscape means wide, not cropped to a forced ratio. */');
+const finalCtaMotionStart = sharedCss.lastIndexOf('/* Layered depth and expressive motion, without additional libraries. */');
+const finalCtaStyles = finalCtaRuleStart >= 0 ? sharedCss.slice(finalCtaRuleStart, finalCtaMotionStart > finalCtaRuleStart ? finalCtaMotionStart : undefined) : '';
+if (!finalCtaStyles.includes('aspect-ratio: auto;') ||
+    !finalCtaStyles.includes('min-height: clamp(480px, 42vw, 560px);') ||
+    !finalCtaStyles.includes('overflow-wrap: normal;') ||
+    !finalCtaStyles.includes('grid-template-columns: minmax(0, 1.12fr) minmax(270px, .88fr);')) {
+  report('styles.css: desktop landscape CTA must grow with its copy instead of clipping text to a forced aspect ratio');
+}
+if (!sharedCss.includes('@keyframes rx-orbit-clockwise') ||
+    !sharedCss.includes('@keyframes rx-orbit-float') ||
+    !sharedCss.includes('@keyframes rx-button-sheen') ||
+    !sharedCss.includes('.motion-enhanced .motion-reveal.motion-visible')) {
+  report('styles.css: enhanced motion needs orbit, button-sheen, and scroll-reveal definitions');
+}
+if (!mobileCss.includes('height: auto;') ||
+    !mobileCss.includes('min-height: 0;') ||
+    !mobileCss.includes('.closing-cta:not(.compact-cta) .cta-content h2')) {
+  report('mobile.css: mobile CTA must size to its content and keep its full heading readable');
+}
+if (!js.includes('function installVisualMotionEnhancements()') ||
+    !js.includes("window.matchMedia('(prefers-reduced-motion: reduce)')") ||
+    !js.includes("'IntersectionObserver' in window") ||
+    !js.includes('window.requestAnimationFrame')) {
+  report('site.js: visual motion must use progressive scroll reveals, reduced-motion checks, and frame-coalesced pointer highlights');
+}
+
 if (errors.length) {
   console.error(`QueryFixr site validation failed with ${errors.length} issue(s):`);
   for (const error of errors) console.error(' - ' + error);
