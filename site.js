@@ -286,16 +286,16 @@
   function normalizeSearchText(value) {
     return String(value || '')
       .normalize('NFKD')
-      .replace(/[\\u0300-\\u036f]/g, '')
+      .replace(/[\u0300-\u036f]/g, '')
       .replace(/[’‘`]/g, "'")
       .replace(/[–—‐‑]/g, ' ')
       .toLowerCase()
       .replace(/&/g, ' and ')
-      .replace(/[^\\p{L}\\p{N}]+/gu, ' ')
+      .replace(/[^\p{L}\p{N}]+/gu, ' ')
       .trim();
   }
   function searchTerms(query) {
-    return normalizeSearchText(query).split(/\\s+/u)
+    return normalizeSearchText(query).split(/\s+/u)
       .filter((term) => term.length > 1 && !SEARCH_STOP_WORDS.has(term));
   }
   function boundedEditDistanceOne(a, b) {
@@ -347,7 +347,7 @@
     const corpus = normalizeSearchText(corpusText);
     const terms = searchTerms(rawQuery);
     if (!terms.length || !corpus) return 0;
-    const tokens = corpus.split(/\\s+/u).filter(Boolean);
+    const tokens = corpus.split(/\s+/u).filter(Boolean);
     let hits = 0;
     let score = 0;
     for (const term of terms) {
