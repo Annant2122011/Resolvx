@@ -124,7 +124,7 @@
   const workflowDemo = $('[data-workflow-demo]');
   if (workflowDemo) {
     $$('[data-demo-state]', workflowDemo).forEach((button) => {
-      button.addEventListener('click', () => {
+      button.addEventListener('click', async () => {
         const state = lifecycleStates[button.dataset.demoState];
         if (!state) return;
         $$('[data-demo-state]', workflowDemo).forEach((candidate) => {
@@ -137,9 +137,10 @@
         const next = $('[data-state-next]', workflowDemo);
         const meter = $('[data-state-meter]', workflowDemo);
         const icon = $('[data-state-orb]', workflowDemo);
-        if (title) title.textContent = state.title;
-        if (description) description.textContent = state.description;
-        if (next) next.textContent = state.next;
+        const localizedState = await translateRuntimeTexts([state.title, state.description, state.next]);
+        if (title) title.textContent = localizedState[0];
+        if (description) description.textContent = localizedState[1];
+        if (next) next.textContent = localizedState[2];
         if (meter) meter.style.width = state.percent;
         if (icon) icon.textContent = state.icon;
       });
@@ -173,10 +174,11 @@
       const label = $('span', button);
       const originalLabel = label ? label.textContent : button.textContent;
       const success = await copyText(value);
-      if (label) label.textContent = success ? 'Copied' : 'Select & copy';
-      else button.textContent = success ? 'Copied!' : 'Copy manually';
+      const runtimeLabels = await translateRuntimeTexts([success ? 'Copied' : 'Select & copy', success ? 'Copied!' : 'Copy manually', success ? 'Copied command' : 'Copy the command']);
+      if (label) label.textContent = runtimeLabels[0];
+      else button.textContent = runtimeLabels[1];
       button.classList.toggle('is-copied', success);
-      button.setAttribute('aria-label', success ? ('Copied ' + value) : ('Copy the command ' + value));
+      button.setAttribute('aria-label', runtimeLabels[2] + ' ' + value);
       if (button._copyReset) window.clearTimeout(button._copyReset);
       button._copyReset = window.setTimeout(() => {
         if (label) label.textContent = originalLabel;
@@ -1114,6 +1116,18 @@
     'cs-CZ': 'Překlad se nepodařilo dokončit ani po vyzkoušení několika serverů. Aktuální jazyk stránky zůstal zachován. Zkuste to znovu.',
     'sv-SE': 'Översättningen kunde inte slutföras efter försök med flera servrar. Sidans nuvarande språk behölls. Försök igen.',
   };
+  async function translateRuntimeTexts(values) {
+    const locale = activeSiteLocale;
+    const selected = SITE_LANGUAGES.find((language) => language.code === locale);
+    if (!selected || selected.api === 'en') return values;
+    try {
+      const result = await translateBatch(values, selected.api);
+      return activeSiteLocale === locale ? result : values;
+    } catch (error) {
+      console.warn('QueryFixr dynamic UI translation could not complete:', error);
+      return values;
+    }
+  }
   async function translateSitePage(targetLocale, statusNode, applyButton) {
     const locale = normalizeSiteLocale(targetLocale);
     statusNode.textContent = translateUiCopy(locale, 'busy');
@@ -1177,6 +1191,8 @@
         indexSegments.forEach((segment, index) => segment.apply(indexTranslations[index]));
       }
       segments.forEach((segment, index) => segment.apply(translated[index]));
+      const runtimeSourceTexts = Object.values(lifecycleStates).flatMap((state) => [state.title, state.description, state.next]).concat(['Copied', 'Select & copy', 'Copied!', 'Copy manually', 'Copied command', 'Copy the command']);
+      void translateRuntimeTexts(runtimeSourceTexts).catch((runtimeError) => console.warn('QueryFixr optional dynamic-copy prefetch failed:', runtimeError));
       document.documentElement.lang = selected.code;
       document.documentElement.dir = selected.api === 'ar' ? 'rtl' : 'ltr';
       activeSiteLocale = locale;
