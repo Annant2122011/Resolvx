@@ -696,7 +696,6 @@
             credentials: 'omit',
             ...(controller ? { signal: controller.signal } : {}),
           });
-        }
         if (!response.ok) {
           if (timeoutId !== null) window.clearTimeout(timeoutId);
           throw new Error('Translation endpoint responded with HTTP ' + response.status);
