@@ -846,13 +846,12 @@
   const originalAttributeValues = new Map();
   const defaultDocumentTitle = document.title;
   const defaultDocumentDir = document.documentElement.getAttribute('dir');
-  const GOOGLE_TRANSLATE_ENDPOINT = 'https://translate.googleapis.com/translate_a/single';
+  const SAME_ORIGIN_TRANSLATION_ENDPOINT = new URL('api/translate', document.baseURI).href;
   const SITE_TRANSLATION_ENDPOINTS = (() => {
     const configured = typeof window.QUERYFIXR_TRANSLATION_ENDPOINT === 'string'
       ? window.QUERYFIXR_TRANSLATION_ENDPOINT.trim()
       : '';
-    // Prefer currently documented no-key LibreTranslate mirrors, then community mirrors,
-    // and finally an independent Google web-translation endpoint as a best-effort backup.
+    // Prefer the same-origin server proxy when available, then documented public mirrors.
     const publicMirrors = [
       'https://libretranslate.de/translate',
       'https://translate.mentality.rip/translate',
@@ -861,9 +860,8 @@
       'https://trans.zillyhuhn.com/translate',
       'https://libretranslate.esmailelbob.xyz/translate',
       'https://translate.pussthecat.org/translate',
-      GOOGLE_TRANSLATE_ENDPOINT,
     ];
-    return [...new Set([configured, ...publicMirrors].filter(Boolean))];
+    return [...new Set([configured, SAME_ORIGIN_TRANSLATION_ENDPOINT, ...publicMirrors].filter(Boolean))];
   })();
   const TRANSLATION_CACHE_KEY = 'queryfixr-translation-cache-v3';
   const TRANSLATION_CACHE_LIMIT = 2200;
@@ -960,76 +958,31 @@
     else document.documentElement.setAttribute('dir', defaultDocumentDir);
     document.documentElement.lang = 'en';
   }
-  async function requestGoogleTranslationBatch(values, targetApi, signal) {
-    const translated = new Array(values.length);
-    let nextIndex = 0;
-    let firstError = null;
-    const worker = async () => {
-      while (nextIndex < values.length) {
-        const index = nextIndex;
-        nextIndex += 1;
-        try {
-          const url = new URL(GOOGLE_TRANSLATE_ENDPOINT);
-          url.searchParams.set('client', 'gtx');
-          url.searchParams.set('sl', 'en');
-          url.searchParams.set('tl', targetApi);
-          url.searchParams.append('dt', 't');
-          url.searchParams.set('q', values[index]);
-          const response = await fetch(url.href, {
-            method: 'GET',
-            mode: 'cors',
-            credentials: 'omit',
-            cache: 'no-store',
-            headers: { Accept: 'application/json' },
-            ...(signal ? { signal } : {}),
-          });
-          if (!response.ok) {
-            const error = new Error('Google translation endpoint responded with HTTP ' + response.status);
-            error.status = response.status;
-            throw error;
-          }
-          const payload = await response.json();
-          const pieces = Array.isArray(payload?.[0]) ? payload[0] : [];
-          const value = pieces.map((piece) => Array.isArray(piece) && typeof piece[0] === 'string' ? piece[0] : '').join('');
-          if (!value.trim()) throw new Error('Google translation endpoint returned an empty translation');
-          translated[index] = value;
-        } catch (error) {
-          firstError = firstError || error;
-        }
-      }
-    };
-    await Promise.all(Array.from({ length: Math.min(4, values.length) }, () => worker()));
-    if (firstError) throw firstError;
-    return translated;
-  }
   async function requestTranslationBatch(endpoint, values, targetApi) {
     const controller = typeof AbortController === 'function' ? new AbortController() : null;
-    const timeoutMs = endpoint === GOOGLE_TRANSLATE_ENDPOINT ? 8000 : 4000;
+    const timeoutMs = endpoint === SAME_ORIGIN_TRANSLATION_ENDPOINT ? 8000 : 4000;
     const timeoutId = controller ? window.setTimeout(() => controller.abort(), timeoutMs) : null;
     try {
       let translated;
-      if (endpoint === GOOGLE_TRANSLATE_ENDPOINT) {
-        translated = await requestGoogleTranslationBatch(values, targetApi, controller?.signal);
-      } else {
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify({ q: values, source: 'en', target: targetApi, format: 'text' }),
-          mode: 'cors',
-          credentials: 'omit',
-          cache: 'no-store',
-          ...(controller ? { signal: controller.signal } : {}),
-        });
-        if (!response.ok) {
-          const error = new Error('Translation endpoint responded with HTTP ' + response.status);
-          error.status = response.status;
-          throw error;
-        }
-        const result = await response.json();
-        if (Array.isArray(result?.translatedText)) translated = result.translatedText;
-        else if (Array.isArray(result)) translated = result.map((item) => typeof item === 'string' ? item : item?.translatedText);
-        else if (typeof result?.translatedText === 'string' && values.length === 1) translated = [result.translatedText];
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ q: values, source: 'en', target: targetApi, format: 'text' }),
+        mode: 'cors',
+        credentials: 'omit',
+        cache: 'no-store',
+        ...(controller ? { signal: controller.signal } : {}),
+      });
+      if (!response.ok) {
+        const error = new Error('Translation endpoint responded with HTTP ' + response.status);
+        error.status = response.status;
+        throw error;
       }
+      const result = await response.json();
+      let translated;
+      if (Array.isArray(result?.translatedText)) translated = result.translatedText;
+      else if (Array.isArray(result)) translated = result.map((item) => typeof item === 'string' ? item : item?.translatedText);
+      else if (typeof result?.translatedText === 'string' && values.length === 1) translated = [result.translatedText];
       if (!Array.isArray(translated) || translated.length !== values.length ||
           translated.some((item) => typeof item !== 'string' || !item.trim())) {
         throw new Error('Translation endpoint returned an incomplete or unexpected response');
