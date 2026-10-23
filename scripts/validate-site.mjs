@@ -28,7 +28,7 @@ function checkRelativeReference(fromFile, rawUrl, kind) {
   const url = rawUrl.trim();
   if (!url) return;
   if (/^javascript:/i.test(url)) {
-    report(\`${fromFile}: unsafe javascript URL in ${kind}: ${url}\`);
+    report(`${fromFile}: unsafe javascript URL in ${kind}: ${url}`);
     return;
   }
   if (isExternal(url)) return;
@@ -41,7 +41,7 @@ function checkRelativeReference(fromFile, rawUrl, kind) {
   try {
     fragment = rawFragment ? decodeURIComponent(rawFragment) : '';
   } catch {
-    report(\`${fromFile}: malformed URI fragment in ${kind}: ${url}\`);
+    report(`${fromFile}: malformed URI fragment in ${kind}: ${url}`);
     return;
   }
   const beforeQuery = (beforeHash || '').split('?')[0];
@@ -54,17 +54,17 @@ function checkRelativeReference(fromFile, rawUrl, kind) {
         : path.posix.normalize(path.posix.join(path.posix.dirname(fromFile), beforeQuery));
   const targetPath = path.resolve(root, targetRelative);
   if (!targetPath.startsWith(root + path.sep) && targetPath !== root) {
-    report(\`${fromFile}: ${kind} escapes the site root: ${url}\`);
+    report(`${fromFile}: ${kind} escapes the site root: ${url}`);
     return;
   }
   if (!existsSync(targetPath)) {
-    report(\`${fromFile}: missing ${kind} target ${url} (resolved to ${targetRelative})\`);
+    report(`${fromFile}: missing ${kind} target ${url} (resolved to ${targetRelative})`);
     return;
   }
   if (!fragment) return;
   const target = pageContents.get(targetRelative);
   if (target && !pageIds.get(targetRelative)?.has(fragment)) {
-    report(\`${fromFile}: broken anchor ${url} (no id="${fragment}" in ${targetRelative})\`);
+    report(`${fromFile}: broken anchor ${url} (no id="${fragment}" in ${targetRelative})`);
   }
 }
 
