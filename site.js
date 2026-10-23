@@ -1037,6 +1037,11 @@
       }
       if (!selected) throw new Error('Unsupported website language: ' + locale);
 
+      // Load every cross-page search snippet first so visible and future search results share the selected language.
+      try { await ensureSearchIndex(); } catch (indexError) {
+        console.warn('QueryFixr search index remains unavailable during translation:', indexError);
+      }
+
       // Keep the current display intact until every page segment is translated successfully.
       const segments = collectTranslatableSegments();
       const texts = segments.map((segment) => segment.text);
