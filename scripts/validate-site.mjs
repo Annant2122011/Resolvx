@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const root = process.cwd();
 const htmlFiles = ['index.html', 'features.html', 'wiki.html'];
-const visibleFiles = [...htmlFiles, 'site.js', 'styles.css', 'mobile.css', 'README.md', 'favicon.svg'];
+const visibleFiles = [...htmlFiles, 'site.js', 'styles.css', 'mobile.css', 'README.md', 'favicon.svg', 'api/translate.js', 'netlify/functions/translate.js', 'scripts/test-search.mjs', 'scripts/test-translation-proxy.cjs'];
 const errors = [];
 const pageContents = new Map();
 const pageIds = new Map();
@@ -207,8 +207,11 @@ for (const file of htmlFiles) {
   if (!source.includes('class="header-brand-link"') || !source.includes('</a><span class="brand-tagline"')) {
     report(`${file}: only the QueryFixr logo should be clickable; keep the tagline outside its anchor`);
   }
-  if (!source.includes('data-brand="queryfixr-wordmark"')) {
-    report(`${file}: header must use the full-size QueryFixr wordmark asset`);
+  if (!source.includes('data-brand="queryfixr-qf-mark"') || !source.includes('class="brand-image brand-qf-logo"')) {
+    report(`${file}: header must use the supplied transparent QF logo mark`);
+  }
+  if (file === 'index.html' && !source.includes('class="hero-banner-image" src="https://i.ibb.co/mrg8Kh3y/Query-Fixr-3-D-brand-logo-2-K-20261022185526-Picsart-Ai-Image-Enhancer-clean.png"')) {
+    report('index.html: homepage hero must use the updated full-size QueryFixr wordmark');
   }
 }
 
@@ -278,13 +281,13 @@ if (!jsLines.some((line) => line.startsWith("const focusable = $$('input:not([di
 if (!js.includes("const featureCards = $$('[data-feature-card]');")) {
   report('site.js: feature filtering must select all feature cards with the collection helper');
 }
-if (!js.includes("const results = $$('.global-search-result', globalResults || document);")) {
-  report('site.js: global-search arrow navigation must select all results with the collection helper');
+if (!js.includes("const results = $$('[data-search-result]', globalResults || document);")) {
+  report('site.js: global-search arrow navigation must select all rendered search results with the collection helper');
 }
 if (!js.includes("if (!overlay.hidden && event.key === 'Tab')")) {
   report('site.js: global search must keep keyboard focus inside its modal dialog');
 }
-if (!js.includes("$('.brand-full-logo, .brand-qf-logo, .hero-banner-image, .cta-logo').forEach((image) => {")) {
+if (!js.includes("$$('.brand-full-logo, .brand-qf-logo, .hero-banner-image, .cta-logo').forEach((image) => {")) {
   report('site.js: artwork fallback initialization must iterate over all matching images');
 }
 if (!js.includes("wikiInput.addEventListener('input', () => applyWikiSearch(wikiInput.value));")) {
@@ -321,18 +324,73 @@ if (!commandDocumentation.includes('/supportforge ticket claim')) {
 if (js.includes('QUERYFIXR_TRANSLATION_API_KEY')) {
   report('site.js: do not send browser-exposed translation API keys to public endpoints');
 }
-if (!js.includes('window.setTimeout(() => controller.abort(), 10000)')) {
-  report('site.js: translation requests must have a finite timeout');
+if (!js.includes('window.setTimeout(() => controller.abort(), timeoutMs)') ||
+    !js.includes('const SAME_ORIGIN_TRANSLATION_ENDPOINT') ||
+    !js.includes('const TRANSLATION_CACHE_LIMIT = 2200')) {
+  report('site.js: translation must use bounded requests, a same-origin proxy, and a persistent bounded cache');
+}
+const netlifyTranslationProxySource = readFileSync(path.join(root, 'netlify/functions/translate.js'), 'utf8');
+if (!netlifyTranslationProxySource.includes("require('../../api/translate.js')") ||
+    !js.includes('NETLIFY_TRANSLATION_ENDPOINT')) {
+  report('Netlify deployment must expose the same-origin translation proxy and be listed as a client fallback.');
+}
+if (!js.includes('segments.push({ text: defaultDocumentTitle')) {
+  report('site.js: page translation must include the document title as translatable text.');
+}
+const translationProxySource = readFileSync(path.join(root, 'api/translate.js'), 'utf8');
+for (const contract of [
+  ['async function requestTranslationWithFailover(', 'multi-provider request failover'],
+  ['async function requestGoogleEndpoint(', 'independent final provider fallback'],
+  ['function normalizeRequestBody(body)', 'strict request validation'],
+  ['function checkRateLimit(req)', 'translation rate limiting'],
+  ['Cross-origin translation requests are not allowed.', 'same-origin request protection'],
+  ['module.exports._test', 'unit-test access to pure validation helpers'],
+]) {
+  if (!translationProxySource.includes(contract[0])) report('api/translate.js: missing ' + contract[1]);
+}
+if (!translationProxySource.includes('MAX_TEXTS_PER_REQUEST = 16') ||
+    !translationProxySource.includes('MAX_TOTAL_CHARACTERS = 4000') ||
+    !translationProxySource.includes('REQUEST_TIMEOUT_MS')) {
+  report('api/translate.js: translation proxy must keep request-size limits and finite provider timeouts');
+}
+if (!translationProxySource.includes('endpoint === configuredEndpoint')) {
+  report('api/translate.js: a configured API key must only be sent to its own configured translation provider');
+}
+if (!js.includes("new URL('/.netlify/functions/translate', window.location.origin)") ||
+    !js.includes('const SAME_ORIGIN_TRANSLATION_ENDPOINT')) {
+  report('site.js: translation must support both Vercel and Netlify same-origin proxy routes');
 }
 if (!js.includes('brand-text-fallback') || !js.includes('hero-banner-fallback')) {
   report('site.js: externally hosted brand and hero images need graceful visual fallbacks');
 }
 
-const knownArticleAnchors = [...js.matchAll(/url:\s*['"]wiki\.html#([^'"]+)['"]/g)].map((match) => match[1]);
-for (const anchor of new Set(knownArticleAnchors)) {
-  if (!allIds.has(anchor)) report(`site.js: global search points to missing wiki article #${anchor}`);
+const faqCount = [...wikiSource.matchAll(/\bdata-wiki-faq\b/g)].length;
+const homeSearchSectionCount = [...pageContents.get('index.html').matchAll(/<section\b[^>]*\bid=/gi)].length;
+const searchDestinationEstimate = featureCards.length + wikiArticles + faqCount + homeSearchSectionCount;
+for (const requiredPath of ['index.html', 'features.html', 'wiki.html']) {
+  if (!js.includes("path: '" + requiredPath + "'")) report(`site.js: global search index is missing ${requiredPath}`);
 }
-if (knownArticleAnchors.length === 0) report('site.js: no wiki destinations found in the global search index');
+for (const contract of [
+  ["async function buildSearchIndex()", 'cross-page search index builder'],
+  ["async function ensureSearchIndex()", 'shared search index loader'],
+  ["function boundedEditDistanceOne(", 'search typo tolerance'],
+  ["const SEARCH_SYNONYM_GROUPS = [", 'multilingual synonyms'],
+  ["doc.querySelectorAll('[data-feature-card]')", 'feature catalogue indexing'],
+  ["doc.querySelectorAll('[data-wiki-article]')", 'wiki article indexing'],
+  ["doc.querySelectorAll('[data-wiki-faq]')", 'individual FAQ indexing'],
+  ["main.querySelectorAll('section[id]')", 'homepage section indexing'],
+  ["searchScore(corpus, query)", 'ranked global search'],
+]) {
+  if (!js.includes(contract[0])) report(`site.js: global search must include ${contract[1]}`);
+}
+if (faqCount === 0) report('wiki.html: the search index has no FAQ entries available');
+if (!js.includes("item.hidden = !match;")) report('site.js: wiki search must filter individual FAQ answers');
+if (js.includes("faqItems.forEach((item) => { item.hidden = false; });")) {
+  report('site.js: a section-title match must not reveal unrelated FAQ answers');
+}
+if (!js.includes("const SEARCH_RUNTIME_COPY = Object.fromEntries([")) {
+  report('site.js: dynamically rendered search UI must have locale-aware labels');
+}
 
 for (const cssFile of ['styles.css', 'mobile.css']) {
   const source = readFileSync(path.join(root, cssFile), 'utf8');
@@ -355,12 +413,26 @@ for (const cssFile of ['styles.css', 'mobile.css']) {
   }
 }
 
+const sharedCss = readFileSync(path.join(root, 'styles.css'), 'utf8');
+const mobileCss = readFileSync(path.join(root, 'mobile.css'), 'utf8');
+if (!sharedCss.includes('aspect-ratio: 16 / 9')) {
+  report('styles.css: Home and Features CTA panels must use a landscape 16:9 ratio on desktop');
+}
+if (!sharedCss.includes('.closing-cta.compact-cta .cta-decoration .cta-logo') ||
+    !sharedCss.includes('width: clamp(190px, 18vw, 220px)')) {
+  report('styles.css: the actual orbital center logo must be enlarged independently of the rings');
+}
+if (!mobileCss.includes('aspect-ratio: auto;') ||
+    !mobileCss.includes('.closing-cta.compact-cta .cta-decoration .cta-logo')) {
+  report('mobile.css: CTA panels must be content-height on phones and use phone-sized center marks');
+}
+
 if (errors.length) {
   console.error(`QueryFixr site validation failed with ${errors.length} issue(s):`);
   for (const error of errors) console.error(' - ' + error);
   process.exitCode = 1;
 } else {
   console.log(
-    `QueryFixr site validation passed: ${htmlFiles.length} pages, ${featureCards.length} feature cards, ${wikiArticles} wiki articles, ${tocLinks.length} TOC links, ${new Set(knownArticleAnchors).size} distinct global-search destinations, valid internal links/anchors, no duplicate IDs, and balanced CSS.`,
+    `QueryFixr site validation passed: ${htmlFiles.length} pages, ${featureCards.length} feature cards, ${wikiArticles} wiki articles, ${faqCount} FAQ entries, ${tocLinks.length} TOC links, approximately ${searchDestinationEstimate} cross-page search destinations, valid internal links/anchors, no duplicate IDs, and balanced CSS.`,
   );
 }
