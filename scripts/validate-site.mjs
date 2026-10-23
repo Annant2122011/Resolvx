@@ -120,6 +120,16 @@ for (const file of htmlFiles) {
   for (const match of source.matchAll(/<button\b[^>]*>/gi)) {
     if (!/\s+type\s*=/i.test(match[0])) report(`${file}: button is missing an explicit type: ${match[0].slice(0, 100)}`);
   }
+  for (const attributeName of ['aria-labelledby', 'aria-describedby', 'aria-controls']) {
+    const referencePattern = new RegExp("\\\\b" + attributeName + "=[\"']([^\"']+)[\"']", 'gi');
+    for (const match of source.matchAll(referencePattern)) {
+      for (const referencedId of match[1].split(/\\s+/)) {
+        if (referencedId && !pageIds.get(file)?.has(referencedId)) {
+          report(file + ': ' + attributeName + ' references missing id="' + referencedId + '"');
+        }
+      }
+    }
+  }
   const labelForIds = new Set([...source.matchAll(/<label\b[^>]*\bfor=["']([^"']+)["']/gi)].map((match) => match[1]));
   for (const match of source.matchAll(/<(?:input|select|textarea)\b[^>]*>/gi)) {
     const attrs = attributes(match[0]);
@@ -228,6 +238,23 @@ if (
   !js.includes("mobileViewport.addListener(syncNavigationForViewport)")
 ) {
   report('site.js: mobile navigation must reset safely across viewport changes, including older Safari');
+}
+
+const commandDocumentation = wikiSource + '\n' + js;
+if (/\\/qf\\b/i.test(commandDocumentation)) {
+  report('wiki.html/site.js: stale /qf command root found; the bot currently registers /supportforge');
+}
+if (!commandDocumentation.includes('/supportforge ticket claim')) {
+  report('wiki.html: expected /supportforge command examples are missing');
+}
+if (js.includes('QUERYFIXR_TRANSLATION_API_KEY')) {
+  report('site.js: do not send browser-exposed translation API keys to public endpoints');
+}
+if (!js.includes('window.setTimeout(() => controller.abort(), 10000)')) {
+  report('site.js: translation requests must have a finite timeout');
+}
+if (!js.includes('brand-text-fallback') || !js.includes('hero-banner-fallback')) {
+  report('site.js: externally hosted brand and hero images need graceful visual fallbacks');
 }
 
 const knownArticleAnchors = [...js.matchAll(/url:\s*['"]wiki\.html#([^'"]+)['"]/g)].map((match) => match[1]);
