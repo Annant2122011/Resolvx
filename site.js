@@ -847,6 +847,7 @@
   const defaultDocumentTitle = document.title;
   const defaultDocumentDir = document.documentElement.getAttribute('dir');
   const SAME_ORIGIN_TRANSLATION_ENDPOINT = new URL('api/translate', document.baseURI).href;
+  const NETLIFY_TRANSLATION_ENDPOINT = new URL('/.netlify/functions/translate', window.location.origin).href;
   const SITE_TRANSLATION_ENDPOINTS = (() => {
     const configured = typeof window.QUERYFIXR_TRANSLATION_ENDPOINT === 'string'
       ? window.QUERYFIXR_TRANSLATION_ENDPOINT.trim()
@@ -861,7 +862,7 @@
       'https://libretranslate.esmailelbob.xyz/translate',
       'https://translate.pussthecat.org/translate',
     ];
-    return [...new Set([configured, SAME_ORIGIN_TRANSLATION_ENDPOINT, ...publicMirrors].filter(Boolean))];
+    return [...new Set([configured, SAME_ORIGIN_TRANSLATION_ENDPOINT, NETLIFY_TRANSLATION_ENDPOINT, ...publicMirrors].filter(Boolean))];
   })();
   const TRANSLATION_CACHE_KEY = 'queryfixr-translation-cache-v3';
   const TRANSLATION_CACHE_LIMIT = 2200;
@@ -963,7 +964,7 @@
   }
   async function requestTranslationBatch(endpoint, values, targetApi) {
     const controller = typeof AbortController === 'function' ? new AbortController() : null;
-    const timeoutMs = endpoint === SAME_ORIGIN_TRANSLATION_ENDPOINT ? 24000 : 4000;
+    const timeoutMs = endpoint === SAME_ORIGIN_TRANSLATION_ENDPOINT || endpoint === NETLIFY_TRANSLATION_ENDPOINT ? 24000 : 4000;
     const timeoutId = controller ? window.setTimeout(() => controller.abort(), timeoutMs) : null;
     try {
       const response = await fetch(endpoint, {
