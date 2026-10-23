@@ -15,7 +15,7 @@ The website is a product introduction and documentation experience. It does **no
 - `mobile.css` — dedicated mobile layout overrides for navigation, responsive content, touch targets, mobile wiki navigation, and short-screen search.
 - \`site.js\` — responsive navigation, multilingual global search, wiki article/FAQ filtering, feature-catalogue filtering, command-copy helpers, reading progress, opt-in website translation, and the local lifecycle explainer.
 - The supplied transparent QueryFixr logo PNG is used directly for the browser favicon and Apple touch icon: `https://i.ibb.co/fdRDWXbH/3v-OKZCYL0-Rqkdu-OQ4t-PKA-Xt-Cc-OQu-N-Picsart-Ai-Image-Enhancer.png`. The icons and full-size brand artwork are externally hosted.
-- The supplied full-size QueryFixr wordmark appears in the header; the transparent QF mark is used for the favicon, Apple touch icon, footer, and CTA artwork.
+- The transparent QF mark is used in all page headers, the favicon, Apple touch icon, footer, and CTA. The full-size QueryFixr wordmark is retained for the homepage hero artwork.
 - If the external wordmark or hero artwork fails to load, the site displays a local text/gradient fallback instead of leaving broken-image icons.
 
 ## Interaction notes
@@ -40,7 +40,10 @@ The public invite is intentionally omitted until a verified bot invitation URL i
 
 ## Search, translation, and brand assets
 
-- Wiki search, the feature catalogue filter, global search, and website translation share the main site script. A startup error in any global initialization must be treated as a blocker for all page interactions.
-- Global search uses the button or `Alt+K`; Ctrl+K is intentionally not intercepted because browsers reserve it for their own search/address UI.
-- `favicon.svg` provides a transparent 512 × 512 square view of the supplied QF mark. A direct PNG favicon and Apple touch icon remain as fallbacks using the same artwork.
-- The website language picker is inserted into navigation and translates public page text through an external service. The translation service may be unavailable; code blocks and command names are excluded.
+- Global search builds a same-origin index from homepage sections, feature cards, wiki guides, and individual FAQ answers. Search ranks exact terms first, accepts related synonyms and a bounded one-character typo, shows source categories, and supports keyboard navigation and retry if the index cannot load.
+- Wiki and feature filters use the same normalization, synonym, and typo-tolerant scoring model. FAQ answers stay individually filtered even when their parent section matches.
+- The transparent QF image is supplied by the existing image host; the 512 × 512 local SVG wrapper and direct PNG favicon reference use the same art. The wordmark remains the homepage hero artwork.
+- The website language selector translates page text and relevant accessibility/placeholder/metadata attributes, protects code and command samples, saves translated strings locally, and tries several translation providers. It caches completed batches and applies a page translation only when the requested batches complete, so a failed request does not silently reset a page that is already translated.
+- LibreTranslate mirrors are community-operated and their availability, CORS policy, rate limits, and language models can change. A Google web-translation endpoint is included as an independent best-effort backup, but that endpoint is not a guaranteed public API. A completely guaranteed translation SLA requires a controlled service endpoint or a supported paid API; browser-side code cannot ensure that an external service stays online.
+- Search scoring checks run in CI via `scripts/test-search.mjs`; structure, link, accessibility, brand, mobile-layout, translation, and search wiring checks run via `scripts/validate-site.mjs`.
+
