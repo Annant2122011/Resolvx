@@ -963,7 +963,6 @@
     const timeoutMs = endpoint === SAME_ORIGIN_TRANSLATION_ENDPOINT ? 8000 : 4000;
     const timeoutId = controller ? window.setTimeout(() => controller.abort(), timeoutMs) : null;
     try {
-      let translated;
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
