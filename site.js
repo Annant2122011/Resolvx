@@ -2,6 +2,7 @@
   'use strict';
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+  let activeSiteLocale = 'en-US';
 
   // Remote artwork must not leave broken-image icons in the header or hero.
   function installExternalImageFallbacks() {
@@ -9,7 +10,7 @@
       if (image.dataset.fallbackApplied === 'true') return;
       image.dataset.fallbackApplied = 'true';
 
-      if (image.classList.contains('brand-full-logo')) {
+      if (image.classList.contains('brand-full-logo') || image.classList.contains('brand-qf-logo')) {
         const fallback = document.createElement('span');
         fallback.className = 'brand-text-fallback';
         fallback.textContent = 'QueryFixr';
@@ -123,7 +124,7 @@
   const workflowDemo = $('[data-workflow-demo]');
   if (workflowDemo) {
     $$('[data-demo-state]', workflowDemo).forEach((button) => {
-      button.addEventListener('click', () => {
+      button.addEventListener('click', async () => {
         const state = lifecycleStates[button.dataset.demoState];
         if (!state) return;
         $$('[data-demo-state]', workflowDemo).forEach((candidate) => {
@@ -136,9 +137,10 @@
         const next = $('[data-state-next]', workflowDemo);
         const meter = $('[data-state-meter]', workflowDemo);
         const icon = $('[data-state-orb]', workflowDemo);
-        if (title) title.textContent = state.title;
-        if (description) description.textContent = state.description;
-        if (next) next.textContent = state.next;
+        const localizedState = await translateRuntimeTexts([state.title, state.description, state.next]);
+        if (title) title.textContent = localizedState[0];
+        if (description) description.textContent = localizedState[1];
+        if (next) next.textContent = localizedState[2];
         if (meter) meter.style.width = state.percent;
         if (icon) icon.textContent = state.icon;
       });
@@ -172,10 +174,11 @@
       const label = $('span', button);
       const originalLabel = label ? label.textContent : button.textContent;
       const success = await copyText(value);
-      if (label) label.textContent = success ? 'Copied' : 'Select & copy';
-      else button.textContent = success ? 'Copied!' : 'Copy manually';
+      const runtimeLabels = await translateRuntimeTexts([success ? 'Copied' : 'Select & copy', success ? 'Copied!' : 'Copy manually', success ? 'Copied command' : 'Copy the command']);
+      if (label) label.textContent = runtimeLabels[0];
+      else button.textContent = runtimeLabels[1];
       button.classList.toggle('is-copied', success);
-      button.setAttribute('aria-label', success ? ('Copied ' + value) : ('Copy the command ' + value));
+      button.setAttribute('aria-label', runtimeLabels[2] + ' ' + value);
       if (button._copyReset) window.clearTimeout(button._copyReset);
       button._copyReset = window.setTimeout(() => {
         if (label) label.textContent = originalLabel;
@@ -217,34 +220,9 @@
   }
 
   // Global index: feature page is a catalogue; detailed destinations live in the wiki.
-  const searchItems = [
-    { title: 'QueryFixr overview', description: 'Product purpose, current scope, and the boundary between the static site and Discord bot.', url: 'wiki.html#overview', keywords: 'about overview bot support discord help desk helpdesk product purpose static website' },
-    { title: 'Feature catalogue', description: 'Search the inventory of capabilities represented in the bot project.', url: 'features.html#feature-catalog', keywords: 'feature features capability capabilities list catalogue catalog inventory implemented current' },
-    { title: 'Getting started and permissions', description: 'Prepare the bot, database, permissions, and a safe first test ticket.', url: 'wiki.html#first-steps', keywords: 'start install setup onboarding requirements token permissions invite deploy test guild' },
-    { title: 'Ticket lifecycle and statuses', description: 'Create, claim, pend, resume, close, reopen, and archive a ticket.', url: 'wiki.html#ticket-lifecycle', keywords: 'ticket tickets request case open claimed pending waiting resume close reopen archive status state' },
-    { title: 'Duplicate prevention and ticket safety', description: 'Understand active-ticket prevention, cooldowns, state checks, and safe operations.', url: 'wiki.html#ticket-safety', keywords: 'duplicate cooldown spam already active repeated ticket create permission authorization safe transitions close order' },
-    { title: 'Departments, tags and use-case presets', description: 'Route requests to a department and maintain useful issue labels.', url: 'wiki.html#departments', keywords: 'department category tag labels routing preset technical support sales refund account abuse staff role' },
-    { title: 'Forms and reusable templates', description: 'Build versioned forms, validate answers, use conditional questions, and reuse templates.', url: 'wiki.html#forms', keywords: 'form schema field validation conditional template questionnaire intake branching activate deactivate' },
-    { title: 'Custom support panels', description: 'Draft, preview, style, secure, publish, update, and remove public ticket panels.', url: 'wiki.html#panels', keywords: 'panel custom buttons role restrict branding publish preview draft snapshot confirmation layout' },
-    { title: 'Ownership, priority and staff collaboration', description: 'Claim or reassign tickets, change priority, manage participants, and add internal notes.', url: 'wiki.html#team-tools', keywords: 'claim unclaim priority urgent critical assign reassign participants notes add remove user history staff' },
-    { title: 'Reports, categories and voice actions', description: 'Manage report intake and taxonomy; learn the setup limits of ticket voice actions.', url: 'wiki.html#reports-voice', keywords: 'report complaint abuse moderation category subcategory flag threshold voice audio call' },
-    { title: 'Transcripts, archive and recovery', description: 'Review what ticket records can be restored and what deleted Discord data cannot be recreated.', url: 'wiki.html#recovery', keywords: 'transcript html attachment reference archive restore recovery delete accidentally replay backup' },
-    { title: 'Settings dashboard, themes and layout', description: 'Configure server defaults, visual themes, navigation labels, and administrative controls.', url: 'wiki.html#settings', keywords: 'settings dashboard theme color palette customization layout reorder buttons title description footer' },
-    { title: 'Retention review and approved deletion', description: 'Review eligible closed or archived tickets before retention removal.', url: 'wiki.html#retention', keywords: 'retention archive cleanup purge delete eligible approve approval policy days privacy' },
-    { title: 'Audit, event history and developer view', description: 'Inspect ticket events, overall and daily summaries, and restricted developer audit controls.', url: 'wiki.html#audit', keywords: 'audit logging logs event summary daily developer access accumulation diagnostics' },
-    { title: 'Neon PostgreSQL, persistence and retries', description: 'Understand durable storage, outbox retries, rate limits, and operational failure handling.', url: 'wiki.html#storage-deployment', keywords: 'neon postgres postgresql database persistence durable outbox retry retry-after backoff rate-limit sqlite deployment' },
-    { title: 'Bot languages and website translation', description: 'Understand server-level bot localization and the separate opt-in website translator.', url: 'wiki.html#language-automation', keywords: 'language locale translate translation localization multilingual native website translator twenty-one languages' },
-    { title: 'Panel activity and control placement', description: 'Tune the supported rules that move ticket controls using message and visual-line thresholds.', url: 'wiki.html#panel-activity', keywords: 'auto move controls reposition bottom panel activity message cap visual line budget threshold' },
-    { title: 'Support hours and time zones', description: 'Set weekday schedules, IANA time zones, overrides, and outside-hours intake behavior.', url: 'wiki.html#support-hours', keywords: 'schedule timezone time-zone IANA opening hours business hours closed interval department panel outside-hours' },
-    { title: 'Inactivity warnings and auto-close', description: 'Configure idle thresholds, grace periods, and exemption roles or departments.', url: 'wiki.html#inactivity-automation', keywords: 'idle inactivity inactive timeout auto close autoclose warning grace deadline exemption roles department' },
-    { title: 'Ticket channels and private threads', description: 'Choose where new tickets live and compare permission and capacity implications.', url: 'wiki.html#ticket-workspace', keywords: 'workspace private channel text-channel private-thread thread threads permissions visibility capacity' },
-    { title: 'Premium demo mode', description: 'Use the demo entitlement toggle without mistaking it for subscription billing.', url: 'wiki.html#premium-demo', keywords: 'premium demo billing subscription payment entitlement pro tier paid simulated' },
-    { title: 'Setup troubleshooting and recovery checks', description: 'Triage command errors, interaction timeouts, missing permissions, database access, and stale panels.', url: 'wiki.html#troubleshooting', keywords: 'troubleshoot error stack trace exception unknown message interaction failed timeout permission database startup command registration subcommand' },
-    { title: 'Permissions and destructive-action safety', description: 'Understand admin gates, staff access, private ticket visibility, and confirmation requirements.', url: 'wiki.html#permissions-safety', keywords: 'permissions authorization administrator manage server staff role access ticket visibility privacy safe reset retention deletion confirmation' },
-    { title: 'Command explorer', description: 'Browse the slash-command families documented by the bot source.', url: 'wiki.html#commands', keywords: 'command commands slash reference syntax copy category panel form ticket settings audit premium settings-reports' },
-    { title: 'Roadmap and product boundaries', description: 'Separate implemented capabilities, live-acceptance requirements, and planned platform features.', url: 'wiki.html#roadmap', keywords: 'roadmap planned future unavailable workflow graph ai SLA CSAT knowledge base API dashboard OAuth' },
-    { title: 'Frequently asked questions', description: 'Answers about installation, translation, privacy, database choices, recovery, and troubleshooting.', url: 'wiki.html#faq', keywords: 'faq question answers help feature availability database restore error permissions translation' },
-  ];
+  const searchItems = [];
+  let searchIndexPromise = null;
+  let searchIndexState = 'idle';
 
   const SEARCH_EXPANSIONS = {
     'system-at-a-glance': 'about overview product purpose discord ticketing customer support help desk helpdesk workflow administration architecture current capabilities',
@@ -306,32 +284,198 @@
     'all','every','much','many','way','ways','work','works','working','use','using','make','get','want','need','best','page','de','het','een','und','der','die','das','ein','eine','les','des','un','una','las','los','que','pour','con','dla','jest','i','w','na','do','ze','ta','į','и','та','для','це','що','και','το','στο','της','σε','je','na','do','och','att','som',
   ]);
   function normalizeSearchText(value) {
-    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+    return String(value || '')
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[’‘`]/g, "'")
+      .replace(/[–—‐‑]/g, ' ')
+      .toLowerCase()
+      .replace(/&/g, ' and ')
+      .replace(/[^\p{L}\p{N}]+/gu, ' ')
+      .trim();
   }
   function searchTerms(query) {
-    return normalizeSearchText(query).split(/\s+/).filter((term) => term.length > 1 && !SEARCH_STOP_WORDS.has(term));
+    return normalizeSearchText(query).split(/\s+/u)
+      .filter((term) => term.length > 1 && !SEARCH_STOP_WORDS.has(term));
   }
-  function termMatchesCorpus(corpus, term) {
-    const group = SEARCH_SYNONYM_GROUPS.find((values) => values.some((value) => normalizeSearchText(value) === term));
-    if (!group) return corpus.includes(term);
-    return group.some((value) => corpus.includes(normalizeSearchText(value)));
+  function boundedEditDistanceOne(a, b) {
+    if (a === b) return true;
+    if (Math.abs(a.length - b.length) > 1 || Math.min(a.length, b.length) < 4) return false;
+    let i = 0, j = 0, edits = 0;
+    while (i < a.length && j < b.length) {
+      if (a[i] === b[j]) { i += 1; j += 1; continue; }
+      edits += 1;
+      if (edits > 1) return false;
+      if (a.length > b.length) i += 1;
+      else if (b.length > a.length) j += 1;
+      else { i += 1; j += 1; }
+    }
+    if (i < a.length || j < b.length) edits += 1;
+    return edits <= 1;
+  }
+  const synonymGroupFor = (term) => SEARCH_SYNONYM_GROUPS.find((values) =>
+    values.some((value) => normalizeSearchText(value) === term));
+  function bestTokenScore(term, tokens, corpus) {
+    let best = 0;
+    for (const candidate of tokens) {
+      if (candidate === term) best = Math.max(best, 7);
+      else if (candidate.startsWith(term) && term.length >= 2) best = Math.max(best, 4.3);
+      else if (term.startsWith(candidate) && candidate.length >= 4) best = Math.max(best, 2.1);
+      else if (term.length >= 5 && candidate.includes(term)) best = Math.max(best, 2.7);
+      else if (boundedEditDistanceOne(term, candidate)) best = Math.max(best, 1.7);
+      if (best >= 7) return best;
+    }
+    if (best) return best;
+    const group = synonymGroupFor(term);
+    if (!group) return 0;
+    for (const synonym of group) {
+      const alias = normalizeSearchText(synonym);
+      if (!alias) continue;
+      if (alias.includes(' ')) {
+        if (corpus.includes(alias)) best = Math.max(best, 2.9);
+      } else if (tokens.includes(alias)) {
+        best = Math.max(best, 3.1);
+      } else if (alias.length >= 3 && tokens.some((candidate) => candidate.startsWith(alias))) {
+        best = Math.max(best, 2.2);
+      }
+    }
+    return best;
+  }
+  function searchScore(corpusText, query) {
+    const rawQuery = String(query || '').trim();
+    if (!rawQuery) return 1;
+    const corpus = normalizeSearchText(corpusText);
+    const terms = searchTerms(rawQuery);
+    if (!terms.length || !corpus) return 0;
+    const tokens = corpus.split(/\s+/u).filter(Boolean);
+    let hits = 0;
+    let score = 0;
+    for (const term of terms) {
+      const part = bestTokenScore(term, tokens, corpus);
+      if (part > 0) { hits += 1; score += part; }
+    }
+    if (!hits) return 0;
+    const coverage = hits / terms.length;
+    const phrase = normalizeSearchText(rawQuery);
+    const phraseBonus = phrase.length > 2 && corpus.includes(phrase) ? 12 : 0;
+    const titleCompleteness = terms.length > 1 ? 0.35 + (coverage * 0.65) : 1;
+    return (score + coverage * 6 + phraseBonus) * titleCompleteness;
   }
   function matchesSearchCorpus(corpusText, query) {
-    if (!String(query || '').trim()) return true;
-    const corpus = normalizeSearchText(corpusText);
-    const terms = searchTerms(query);
-    if (!terms.length) return true;
-    return terms.every((term) => termMatchesCorpus(corpus, term));
+    return searchScore(corpusText, query) > 0;
   }
   function searchItemCorpus(item) {
-    const hash = (item.url.split('#')[1] || '').trim();
-    return [item.title, item.description, item.keywords, SEARCH_EXPANSIONS[hash] || ''].join(' ');
+    const hash = new URL(item.url, document.baseURI).hash.slice(1);
+    return [item.title, item.description, item.keywords, item.text, SEARCH_EXPANSIONS[hash] || ''].join(' ');
+  }
+  function safeText(element, selector) {
+    return (element.querySelector(selector)?.textContent || '').replace(/\\s+/gu, ' ').trim();
+  }
+  function indexRecord({ element, pageUrl, type, forcedUrl = null }) {
+    const title = safeText(element, 'h1,h2,h3,h4,summary') || element.getAttribute('aria-label') || '';
+    const text = (element.textContent || '').replace(/\\s+/gu, ' ').trim();
+    if (!title || text.length < 8) return null;
+    const description = safeText(element, 'p').slice(0, 280) || text.slice(0, 280);
+    const rawHref = forcedUrl || element.getAttribute('href') || (element.id ? pageUrl.pathname + '#' + element.id : pageUrl.href);
+    const url = new URL(rawHref, pageUrl).href;
+    return {
+      title,
+      description,
+      sourceTitle: title,
+      sourceDescription: description,
+      url,
+      keywords: element.getAttribute('data-search-keywords') || element.dataset?.searchKeywords || '',
+      text,
+      type,
+    };
+  }
+  async function buildSearchIndex() {
+    const pages = [
+      { path: 'index.html', type: 'Home' },
+      { path: 'features.html', type: 'Features' },
+      { path: 'wiki.html', type: 'Wiki' },
+    ];
+    const loaded = await Promise.all(pages.map(async (page) => {
+      const url = new URL(page.path, document.baseURI);
+      const response = await fetch(url.href, {
+        headers: { Accept: 'text/html' },
+        credentials: 'same-origin',
+        cache: 'force-cache',
+      });
+      if (!response.ok) throw new Error('Could not load ' + page.path + ' (HTTP ' + response.status + ')');
+      return { ...page, url, doc: new DOMParser().parseFromString(await response.text(), 'text/html') };
+    }));
+    const records = [];
+    const seen = new Set();
+    const add = (record) => {
+      if (!record) return;
+      const identity = record.type + '|' + record.url + '|' + normalizeSearchText(record.title);
+      if (seen.has(identity)) return;
+      seen.add(identity);
+      records.push(record);
+    };
+    for (const page of loaded) {
+      const { doc, url, type } = page;
+      if (type === 'Features') {
+        doc.querySelectorAll('[data-feature-card]').forEach((element) => add(indexRecord({ element, pageUrl: url, type })));
+        const heroHeading = doc.querySelector('main h1');
+        if (heroHeading) add(indexRecord({ element: heroHeading.closest('section') || heroHeading.parentElement, pageUrl: url, type, forcedUrl: url.href }));
+      } else if (type === 'Wiki') {
+        doc.querySelectorAll('[data-wiki-article]').forEach((element) => {
+          add(indexRecord({ element, pageUrl: url, type, forcedUrl: url.pathname + '#' + element.id }));
+        });
+        doc.querySelectorAll('[data-wiki-faq]').forEach((element) => {
+          const summary = safeText(element, 'summary');
+          if (!summary) return;
+          const description = safeText(element, 'p').slice(0, 280);
+          add({
+            title: summary,
+            description,
+            sourceTitle: summary,
+            sourceDescription: description,
+            url: url.pathname + '#faq',
+            keywords: '',
+            text: (element.textContent || '').replace(/\\s+/gu, ' ').trim(),
+            type: 'FAQ',
+          });
+        });
+      } else {
+        const main = doc.querySelector('main') || doc.body;
+        main.querySelectorAll('section[id]').forEach((element) => {
+          if (element.matches('.closing-cta')) return;
+          add(indexRecord({ element, pageUrl: url, type }));
+        });
+        main.querySelectorAll('.hero-copy, .capability-card').forEach((element) => add(indexRecord({ element, pageUrl: url, type })));
+      }
+    }
+    if (records.length < 40) throw new Error('Search index is incomplete: only ' + records.length + ' destinations were indexed');
+    return records.sort((a, b) => a.title.localeCompare(b.title));
+  }
+  async function ensureSearchIndex() {
+    if (searchIndexState === 'ready') return searchItems;
+    if (searchIndexPromise) return searchIndexPromise;
+    searchIndexState = 'loading';
+    searchIndexPromise = buildSearchIndex().then((records) => {
+      searchItems.splice(0, searchItems.length, ...records);
+      searchIndexState = 'ready';
+      return searchItems;
+    }).catch((error) => {
+      searchIndexState = 'error';
+      console.error('QueryFixr search index could not be prepared:', error);
+      throw error;
+    });
+    try {
+      return await searchIndexPromise;
+    } finally {
+      if (searchIndexState !== 'ready') searchIndexPromise = null;
+    }
   }
 
   const overlay = $('[data-search-overlay]');
   const globalInput = $('[data-global-search]');
   const globalResults = $('[data-global-results]');
   let previousFocus = null;
+  let previousSearchIndexStatus = '';
   const openSearch = () => {
     if (!overlay || !globalInput) return;
     const activeElement = document.activeElement;
@@ -347,6 +491,7 @@
     globalInput.value = '';
     renderGlobalResults('');
     window.requestAnimationFrame(() => globalInput.focus());
+    void ensureSearchIndex().then(() => renderGlobalResults(globalInput.value)).catch(() => renderGlobalResults(globalInput.value));
   };
   const closeSearch = () => {
     if (!overlay) return;
@@ -354,33 +499,115 @@
     document.body.classList.remove('search-open');
     if (previousFocus && typeof previousFocus.focus === 'function') previousFocus.focus();
   };
+  const SEARCH_RUNTIME_COPY = Object.fromEntries([
+    "en-US|Preparing cross-page search…|Search index unavailable. Check your connection and retry.|Retry search|No close matches. Try fewer words or synonyms.|Search the home page, features, wiki, and FAQs.|All guides visible|Home|Features|Wiki|FAQ|section|sections|FAQ answer|FAQ answers|of|capabilities",
+    "hi-IN|सभी पेजों की खोज तैयार हो रही है…|सर्च इंडेक्स उपलब्ध नहीं है। कनेक्शन जाँचें और फिर प्रयास करें।|फिर प्रयास करें|मिलते-जुलते परिणाम नहीं मिले। कम शब्द या समानार्थी शब्द आज़माएँ।|होम, फ़ीचर, विकि और FAQ की पूरी सामग्री खोजें।|सभी गाइड दिखाई दे रहे हैं|होम|फ़ीचर|विकी|FAQ|अनुभाग|अनुभाग|FAQ उत्तर|FAQ उत्तर|में से|क्षमताएँ",
+    "bn-IN|সব পৃষ্ঠার অনুসন্ধান প্রস্তুত হচ্ছে…|সার্চ ইনডেক্স পাওয়া যাচ্ছে না। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।|আবার চেষ্টা করুন|কাছাকাছি ফল নেই। কম শব্দ বা সমার্থক শব্দ ব্যবহার করুন।|হোম, ফিচার, উইকি ও FAQ-এর সব বিষয়বস্তু খুঁজুন।|সব গাইড দৃশ্যমান|হোম|ফিচার|উইকি|FAQ|বিভাগ|বিভাগ|FAQ উত্তর|FAQ উত্তর|এর মধ্যে|সক্ষমতা",
+    "es-ES|Preparando la búsqueda entre páginas…|Índice no disponible. Comprueba la conexión e inténtalo de nuevo.|Reintentar búsqueda|No hay coincidencias cercanas. Prueba menos palabras o sinónimos.|Busca en Inicio, funciones, wiki y preguntas frecuentes.|Todas las guías visibles|Inicio|Funciones|Wiki|FAQ|sección|secciones|respuesta FAQ|respuestas FAQ|de|funciones",
+    "fr-FR|Préparation de la recherche inter-pages…|Index indisponible. Vérifiez la connexion puis réessayez.|Réessayer|Aucun résultat proche. Essayez moins de mots ou des synonymes.|Recherchez dans l’accueil, les fonctions, le wiki et la FAQ.|Tous les guides visibles|Accueil|Fonctions|Wiki|FAQ|section|sections|réponse FAQ|réponses FAQ|sur|fonctions",
+    "de-DE|Suche über alle Seiten wird vorbereitet…|Suchindex nicht verfügbar. Verbindung prüfen und erneut versuchen.|Erneut suchen|Keine nahen Treffer. Verwenden Sie weniger Wörter oder Synonyme.|Startseite, Funktionen, Wiki und FAQ durchsuchen.|Alle Anleitungen sichtbar|Startseite|Funktionen|Wiki|FAQ|Abschnitt|Abschnitte|FAQ-Antwort|FAQ-Antworten|von|Funktionen",
+    "pt-BR|Preparando a busca entre páginas…|Índice indisponível. Verifique a conexão e tente novamente.|Tentar novamente|Nenhuma correspondência próxima. Tente menos palavras ou sinônimos.|Pesquise no Início, recursos, wiki e perguntas frequentes.|Todos os guias visíveis|Início|Recursos|Wiki|FAQ|seção|seções|resposta FAQ|respostas FAQ|de|recursos",
+    "ar|جارٍ إعداد البحث بين الصفحات…|الفهرس غير متاح. تحقق من الاتصال ثم حاول مجددًا.|إعادة البحث|لا توجد نتائج قريبة. جرّب كلمات أقل أو مرادفات.|ابحث في الرئيسية والميزات والويكي والأسئلة الشائعة.|كل الأدلة ظاهرة|الرئيسية|الميزات|الويكي|الأسئلة الشائعة|قسم|أقسام|إجابة شائعة|إجابات شائعة|من|ميزات",
+    "ja-JP|全ページ検索を準備しています…|検索インデックスを利用できません。接続を確認して再試行してください。|再試行|近い候補がありません。語数を減らすか類義語を試してください。|ホーム、機能、Wiki、FAQ全体を検索します。|すべてのガイドを表示|ホーム|機能|Wiki|FAQ|セクション|セクション|FAQ回答|FAQ回答|件中|機能",
+    "it-IT|Preparazione della ricerca tra le pagine…|Indice non disponibile. Controlla la connessione e riprova.|Riprova ricerca|Nessun risultato vicino. Prova meno parole o sinonimi.|Cerca in Home, funzionalità, wiki e FAQ.|Tutte le guide visibili|Home|Funzioni|Wiki|FAQ|sezione|sezioni|risposta FAQ|risposte FAQ|di|funzionalità",
+    "id-ID|Menyiapkan pencarian lintas halaman…|Indeks tidak tersedia. Periksa koneksi lalu coba lagi.|Coba lagi|Tidak ada hasil yang mendekati. Coba kata yang lebih sedikit atau sinonim.|Cari Beranda, fitur, wiki, dan FAQ.|Semua panduan terlihat|Beranda|Fitur|Wiki|FAQ|bagian|bagian|jawaban FAQ|jawaban FAQ|dari|fitur",
+    "ko-KR|전체 페이지 검색을 준비하는 중…|검색 색인을 사용할 수 없습니다. 연결을 확인하고 다시 시도하세요.|다시 검색|가까운 결과가 없습니다. 단어를 줄이거나 동의어를 사용해 보세요.|홈, 기능, 위키, FAQ 전체를 검색합니다.|모든 가이드 표시|홈|기능|위키|FAQ|섹션|섹션|FAQ 답변|FAQ 답변|중|기능",
+    "ru-RU|Подготовка поиска по всем страницам…|Индекс недоступен. Проверьте соединение и повторите попытку.|Повторить поиск|Близких совпадений нет. Попробуйте меньше слов или синонимы.|Поиск по главной странице, функциям, вики и FAQ.|Все руководства видны|Главная|Функции|Вики|FAQ|раздел|раздела|ответ FAQ|ответа FAQ|из|функции",
+    "zh-CN|正在准备跨页面搜索…|搜索索引不可用。请检查网络连接后重试。|重试搜索|没有接近的匹配项。请减少关键词或尝试同义词。|搜索主页、功能、Wiki 和常见问题的全部内容。|显示所有指南|主页|功能|Wiki|常见问题|个章节|个章节|条 FAQ 答案|条 FAQ 答案|共|项功能",
+    "tr-TR|Sayfalar arası arama hazırlanıyor…|Arama dizini kullanılamıyor. Bağlantıyı kontrol edip yeniden deneyin.|Yeniden ara|Yakın eşleşme yok. Daha az kelime veya eş anlamlı deneyin.|Ana sayfa, özellikler, wiki ve SSS içinde ara.|Tüm rehberler görünür|Ana sayfa|Özellikler|Wiki|SSS|bölüm|bölüm|SSS yanıtı|SSS yanıtı|içinden|özellik",
+    "nl-NL|Zoeken over alle pagina’s wordt voorbereid…|Zoekindex niet beschikbaar. Controleer de verbinding en probeer opnieuw.|Opnieuw zoeken|Geen nabije resultaten. Probeer minder woorden of synoniemen.|Zoek in Home, functies, wiki en FAQ.|Alle handleidingen zichtbaar|Home|Functies|Wiki|FAQ|sectie|secties|FAQ-antwoord|FAQ-antwoorden|van|functies",
+    "pl-PL|Przygotowywanie wyszukiwania na wszystkich stronach…|Indeks wyszukiwania jest niedostępny. Sprawdź połączenie i spróbuj ponownie.|Ponów wyszukiwanie|Brak podobnych wyników. Użyj mniej słów lub synonimów.|Przeszukaj stronę główną, funkcje, wiki i FAQ.|Wszystkie poradniki widoczne|Strona główna|Funkcje|Wiki|FAQ|sekcja|sekcje|odpowiedź FAQ|odpowiedzi FAQ|z|funkcje",
+    "uk-UA|Підготовка пошуку по всіх сторінках…|Індекс недоступний. Перевірте з’єднання та спробуйте знову.|Повторити пошук|Близьких збігів немає. Спробуйте менше слів або синоніми.|Пошук на головній сторінці, у функціях, вікі та FAQ.|Усі посібники видимі|Головна|Функції|Вікі|FAQ|розділ|розділи|відповідь FAQ|відповіді FAQ|з|функції",
+    "el-GR|Προετοιμασία αναζήτησης σε όλες τις σελίδες…|Το ευρετήριο δεν είναι διαθέσιμο. Ελέγξτε τη σύνδεση και δοκιμάστε ξανά.|Επανάληψη αναζήτησης|Δεν υπάρχουν κοντινά αποτελέσματα. Δοκιμάστε λιγότερες λέξεις ή συνώνυμα.|Αναζήτηση στην Αρχική, στις λειτουργίες, στο wiki και στις FAQ.|Όλοι οι οδηγοί ορατοί|Αρχική|Λειτουργίες|Wiki|FAQ|ενότητα|ενότητες|απάντηση FAQ|απαντήσεις FAQ|από|λειτουργίες",
+    "cs-CZ|Připravuje se vyhledávání napříč stránkami…|Index není dostupný. Zkontrolujte připojení a zkuste to znovu.|Zkusit znovu|Žádné blízké výsledky. Zkuste méně slov nebo synonyma.|Hledat na úvodní stránce, ve funkcích, wiki a FAQ.|Všechny návody jsou viditelné|Domů|Funkce|Wiki|FAQ|sekce|sekce|odpověď FAQ|odpovědi FAQ|z|funkce",
+    "sv-SE|Förbereder sökning över alla sidor…|Sökindexet är inte tillgängligt. Kontrollera anslutningen och försök igen.|Försök igen|Inga nära träffar. Prova färre ord eller synonymer.|Sök på startsidan, bland funktioner, i wikin och FAQ.|Alla guider visas|Startsida|Funktioner|Wiki|FAQ|avsnitt|avsnitt|FAQ-svar|FAQ-svar|av|funktioner",
+  ].map((row) => {
+    const [locale, preparing, indexError, retry, noMatches, prompt, allGuides, home, features, wiki, faq, sectionOne, sectionMany, answerOne, answerMany, of, capabilities] = row.split('|');
+    return [locale, { preparing, indexError, retry, noMatches, prompt, allGuides, home, features, wiki, faq, sectionOne, sectionMany, answerOne, answerMany, of, capabilities }];
+  }));
+  const searchRuntimeCopy = () => SEARCH_RUNTIME_COPY[activeSiteLocale] || SEARCH_RUNTIME_COPY['en-US'];
+  const searchRuntimeText = (key) => searchRuntimeCopy()[key] || SEARCH_RUNTIME_COPY['en-US'][key];
+  const searchRuntimeType = (type) => {
+    const copy = searchRuntimeCopy();
+    return type === 'Home' ? copy.home : type === 'Features' ? copy.features : type === 'Wiki' ? copy.wiki : type === 'FAQ' ? copy.faq : type;
+  };
+  const searchRuntimeWikiCount = (sections, answers) => {
+    const copy = searchRuntimeCopy();
+    return sections + ' ' + (sections === 1 ? copy.sectionOne : copy.sectionMany) + ' · ' +
+      answers + ' ' + (answers === 1 ? copy.answerOne : copy.answerMany);
+  };
+  const searchRuntimeFeatureCount = (visible, total, filtered) => {
+    const copy = searchRuntimeCopy();
+    return filtered ? visible + ' ' + copy.of + ' ' + total + ' ' + copy.capabilities
+      : total + ' ' + copy.capabilities;
+  };
+
   const renderGlobalResults = (query) => {
     if (!globalResults) return;
-    const visibleSearchItems = searchItems.filter((item) => matchesSearchCorpus(searchItemCorpus(item), query));
     globalResults.replaceChildren();
-    if (!visibleSearchItems.length) {
+    if (searchIndexState !== 'ready') {
+      const message = document.createElement('p');
+      message.className = 'global-search-empty';
+      message.setAttribute('role', 'status');
+      message.textContent = searchIndexState === 'error'
+        ? searchRuntimeText('indexError')
+        : searchRuntimeText('preparing');
+      globalResults.appendChild(message);
+      if (searchIndexState === 'error') {
+        const retry = document.createElement('button');
+        retry.type = 'button';
+        retry.className = 'global-search-retry';
+        retry.textContent = searchRuntimeText('retry');
+        retry.addEventListener('click', () => {
+          searchIndexPromise = null;
+          searchIndexState = 'idle';
+          renderGlobalResults(query);
+          void ensureSearchIndex().then(() => renderGlobalResults(globalInput?.value || query)).catch(() => renderGlobalResults(globalInput?.value || query));
+        });
+        globalResults.appendChild(retry);
+      }
+      return;
+    }
+    const ranked = searchItems.map((item) => {
+      const corpus = searchItemCorpus(item);
+      let score = searchScore(corpus, query);
+      score += searchScore(item.title, query) * 1.65;
+      score += searchScore(item.description, query) * 0.35;
+      return { item, score };
+    }).filter(({ score }) => score > 0);
+    ranked.sort((a, b) => b.score - a.score || a.item.title.localeCompare(b.item.title));
+    if (!String(query || '').trim()) ranked.splice(9);
+    else ranked.splice(10);
+    if (!ranked.length) {
       const empty = document.createElement('p');
       empty.className = 'global-search-empty';
-      empty.textContent = 'No matching pages or guides. Try a broader search.';
+      empty.textContent = String(query || '').trim()
+        ? searchRuntimeText('noMatches')
+        : searchRuntimeText('prompt');
       globalResults.appendChild(empty);
       return;
     }
-    visibleSearchItems.slice(0, 9).forEach((item, index) => {
+    ranked.forEach(({ item }, index) => {
       const anchor = document.createElement('a');
       anchor.href = item.url;
       anchor.className = 'global-search-result';
+      anchor.setAttribute('data-search-result', '');
+      anchor.setAttribute('aria-label', item.title + '. ' + item.type);
       const symbol = document.createElement('span');
       symbol.className = 'search-result-icon';
-      symbol.textContent = index === 0 ? '↗' : index === 1 ? '▦' : '⌁';
+      symbol.textContent = item.type === 'FAQ' ? '?' : item.type === 'Features' ? '▦' : item.type === 'Home' ? '⌂' : '↗';
       const body = document.createElement('span');
       body.className = 'search-result-copy';
       const title = document.createElement('strong');
       title.textContent = item.title;
       const description = document.createElement('small');
-      description.textContent = item.description;
-      body.append(title, description);
+      description.textContent = item.description || item.keywords || item.type;
+      const category = document.createElement('span');
+      category.className = 'search-result-category';
+      category.textContent = searchRuntimeType(item.type);
+      body.append(title, description, category);
       const key = document.createElement('kbd');
-      key.textContent = '↵';
+      key.textContent = String(index + 1);
       anchor.append(symbol, body, key);
       anchor.addEventListener('click', closeSearch);
       globalResults.appendChild(anchor);
@@ -423,17 +650,17 @@
         }
       }
       if (!overlay.hidden && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
-        const results = $$('.global-search-result', globalResults || document);
+        const results = $$('[data-search-result]', globalResults || document);
         if (results.length) {
           event.preventDefault();
           const currentIndex = results.indexOf(document.activeElement);
-          let nextIndex;
-          if (document.activeElement === globalInput) nextIndex = event.key === 'ArrowDown' ? 0 : results.length - 1;
-          else if (currentIndex < 0) nextIndex = 0;
-          else nextIndex = (currentIndex + (event.key === 'ArrowDown' ? 1 : -1) + results.length) % results.length;
+          const direction = event.key === 'ArrowDown' ? 1 : -1;
+          const nextIndex = document.activeElement === globalInput
+            ? (direction > 0 ? 0 : results.length - 1)
+            : (currentIndex < 0 ? 0 : (currentIndex + direction + results.length) % results.length);
           results[nextIndex].focus();
-          return;
         }
+        return;
       }
       const target = event.target;
       const typing = target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
@@ -442,9 +669,6 @@
         event.stopPropagation();
         if (overlay.hidden) openSearch();
         else closeSearch();
-      } else if (event.key === '/' && !event.ctrlKey && !event.metaKey && !event.altKey && !typing && overlay.hidden) {
-        event.preventDefault();
-        openSearch();
       }
     }, true);
   }
@@ -488,7 +712,8 @@
   };
 
   const applyWikiSearch = (query) => {
-    const normalized = query.trim();
+    const normalized = String(query || '').trim();
+    const hasQuery = normalized.length > 0;
     let visibleArticles = 0;
     let visibleFaqs = 0;
     wikiArticles.forEach((article) => {
@@ -497,35 +722,31 @@
       if (faqItems.length) {
         let matchedItems = 0;
         faqItems.forEach((item) => {
-          const sourceText = originalWikiFaqText.get(item) || item.textContent || '';
+          const sourceText = (originalWikiFaqText.get(item) || '') + ' ' + (item.textContent || '');
           const summaryText = (item.querySelector('summary')?.textContent || '').replace(/\s+/g, ' ').trim();
-          const extraTerms = FAQ_SEARCH_KEYWORDS[summaryText] || '';
-          const match = !normalized || matchesSearchCorpus(sourceText + ' ' + summaryText + ' ' + extraTerms, query);
+          const keywordTitle = Object.keys(FAQ_SEARCH_KEYWORDS).find((title) => sourceText.includes(title));
+          const extraTerms = FAQ_SEARCH_KEYWORDS[keywordTitle || summaryText] || '';
+          const match = !hasQuery || searchScore(sourceText + ' ' + summaryText + ' ' + extraTerms, query) > 0;
           item.hidden = !match;
           if (match) matchedItems += 1;
         });
-        const articleSource = originalWikiArticleText.get(article) || article.textContent || '';
+        const articleSource = (originalWikiArticleText.get(article) || '') + ' ' + (article.textContent || '');
         const titleText = (article.querySelector('h2')?.textContent || '') + ' ' + (article.querySelector('.article-eyebrow')?.textContent || '');
         const articleKeywords = (article.dataset.searchKeywords || '') + ' ' + (SEARCH_EXPANSIONS[article.id] || '');
-        const articleTitleMatches = matchesSearchCorpus(titleText + ' ' + articleKeywords, query);
-        if (normalized && matchedItems === 0 && articleTitleMatches) {
-          faqItems.forEach((item) => { item.hidden = false; });
-          matchedItems = faqItems.length;
-        }
-        matches = matchedItems > 0 || !normalized || matchesSearchCorpus(articleKeywords + ' ' + titleText, query);
+        matches = !hasQuery || matchedItems > 0 || searchScore(articleSource + ' ' + titleText + ' ' + articleKeywords, query) > 0;
         visibleFaqs += matchedItems;
       } else {
-        const sourceText = originalWikiArticleText.get(article) || article.textContent || '';
+        const sourceText = (originalWikiArticleText.get(article) || '') + ' ' + (article.textContent || '');
         const articleKeywords = (article.dataset.searchKeywords || '') + ' ' + (SEARCH_EXPANSIONS[article.id] || '');
-        matches = !normalized || matchesSearchCorpus(sourceText + ' ' + articleKeywords, query);
+        matches = !hasQuery || searchScore(sourceText + ' ' + articleKeywords, query) > 0;
       }
       article.hidden = !matches;
       if (matches) visibleArticles += 1;
       const link = tocByArticle.get(article.id);
       if (link) link.hidden = !matches;
     });
-    if (wikiNoResults) wikiNoResults.hidden = !normalized || visibleArticles > 0;
-    if (wikiCount) wikiCount.textContent = !normalized ? 'All guides visible' : (visibleArticles + ' section' + (visibleArticles === 1 ? '' : 's') + ' · ' + visibleFaqs + ' FAQ answer' + (visibleFaqs === 1 ? '' : 's'));
+    if (wikiNoResults) wikiNoResults.hidden = !hasQuery || visibleArticles > 0;
+    if (wikiCount) wikiCount.textContent = !hasQuery ? searchRuntimeText('allGuides') : searchRuntimeWikiCount(visibleArticles, visibleFaqs);
   };
   if (wikiInput) {
     wikiInput.addEventListener('input', () => applyWikiSearch(wikiInput.value));
@@ -559,9 +780,7 @@
       if (matches) visible += 1;
     });
     if (featureResultCount) {
-      featureResultCount.textContent = normalized
-        ? (visible + ' of ' + featureCards.length + ' capabilities')
-        : (featureCards.length + ' capabilities');
+      featureResultCount.textContent = searchRuntimeFeatureCount(visible, featureCards.length, Boolean(normalized));
     }
     if (featureNoResults) featureNoResults.hidden = !normalized || visible > 0;
   };
@@ -627,12 +846,75 @@
   const originalAttributeValues = new Map();
   const defaultDocumentTitle = document.title;
   const defaultDocumentDir = document.documentElement.getAttribute('dir');
-  const SITE_TRANSLATION_ENDPOINTS = [
-    (typeof window.QUERYFIXR_TRANSLATION_ENDPOINT === 'string' && window.QUERYFIXR_TRANSLATION_ENDPOINT.trim())
+  const GOOGLE_TRANSLATE_ENDPOINT = 'https://translate.googleapis.com/translate_a/single';
+  const SITE_TRANSLATION_ENDPOINTS = (() => {
+    const configured = typeof window.QUERYFIXR_TRANSLATION_ENDPOINT === 'string'
       ? window.QUERYFIXR_TRANSLATION_ENDPOINT.trim()
-      : 'https://translate.argosopentech.com/translate',
-    'https://libretranslate.de/translate',
-  ];
+      : '';
+    // Prefer currently documented no-key LibreTranslate mirrors, then community mirrors,
+    // and finally an independent Google web-translation endpoint as a best-effort backup.
+    const publicMirrors = [
+      'https://translate.cutie.dating/translate',
+      'https://translate.fedilab.app/translate',
+      'https://translate.flossboxin.org.in/translate',
+      'https://libretranslate.de/translate',
+      'https://translate.mentality.rip/translate',
+      'https://translate.argosopentech.com/translate',
+      'https://translate.api.skitzen.com/translate',
+      'https://trans.zillyhuhn.com/translate',
+      'https://translate.terraprint.co/translate',
+      'https://translate.astian.org/translate',
+      GOOGLE_TRANSLATE_ENDPOINT,
+    ];
+    return [...new Set([configured, ...publicMirrors].filter(Boolean))];
+  })();
+  const TRANSLATION_CACHE_KEY = 'queryfixr-translation-cache-v3';
+  const TRANSLATION_CACHE_LIMIT = 2200;
+  const translationCache = new Map();
+  const translationEndpointHealth = new Map();
+  let preferredTranslationEndpoint = '';
+  try {
+    const cached = JSON.parse(localStorage.getItem(TRANSLATION_CACHE_KEY) || '[]');
+    if (Array.isArray(cached)) {
+      cached.slice(-TRANSLATION_CACHE_LIMIT).forEach((entry) => {
+        if (Array.isArray(entry) && entry.length === 2 && typeof entry[0] === 'string' && typeof entry[1] === 'string') {
+          translationCache.set(entry[0], entry[1]);
+        }
+      });
+    }
+    preferredTranslationEndpoint = localStorage.getItem('queryfixr-translation-endpoint-v1') || '';
+  } catch (_) { /* Storage being disabled must not disable translation. */ }
+  const translationCacheKey = (target, source) => JSON.stringify([target, source]);
+  function persistTranslationCache() {
+    try {
+      while (translationCache.size > TRANSLATION_CACHE_LIMIT) {
+        translationCache.delete(translationCache.keys().next().value);
+      }
+      localStorage.setItem(TRANSLATION_CACHE_KEY, JSON.stringify(Array.from(translationCache.entries())));
+    } catch (_) { /* Current requests continue even if cache storage is full. */ }
+  }
+  function orderedTranslationEndpoints() {
+    const now = Date.now();
+    const healthy = SITE_TRANSLATION_ENDPOINTS.filter((endpoint) => (translationEndpointHealth.get(endpoint)?.retryAfter || 0) <= now);
+    const candidates = healthy.length ? healthy : SITE_TRANSLATION_ENDPOINTS;
+    return candidates.slice().sort((a, b) => {
+      if (a === preferredTranslationEndpoint) return -1;
+      if (b === preferredTranslationEndpoint) return 1;
+      return (translationEndpointHealth.get(a)?.failures || 0) - (translationEndpointHealth.get(b)?.failures || 0);
+    });
+  }
+  function markTranslationEndpointSuccess(endpoint) {
+    translationEndpointHealth.set(endpoint, { failures: 0, retryAfter: 0 });
+    preferredTranslationEndpoint = endpoint;
+    try { localStorage.setItem('queryfixr-translation-endpoint-v1', endpoint); } catch (_) {}
+  }
+  function markTranslationEndpointFailure(endpoint, error) {
+    const previous = translationEndpointHealth.get(endpoint) || { failures: 0, retryAfter: 0 };
+    const failures = previous.failures + 1;
+    const status = Number(error?.status || 0);
+    const cooldown = status === 429 ? 60000 : (status >= 500 || status === 0 ? 20000 : 90000);
+    translationEndpointHealth.set(endpoint, { failures, retryAfter: Date.now() + cooldown });
+  }
   const normalizeSiteLocale = (value) => SITE_LANGUAGES.find((language) => language.code.toLowerCase() === String(value || '').toLowerCase() || language.api === String(value || '').toLowerCase())?.code || 'en-US';
   const translateUiCopy = (code, key) => (SITE_LANGUAGE_UI[code] || SITE_LANGUAGE_UI['en-US'])[key] || SITE_LANGUAGE_UI['en-US'][key];
   function collectTranslatableSegments() {
@@ -652,12 +934,12 @@
       if (!text.trim()) continue;
       segments.push({ text, apply: (translated) => { node.nodeValue = leading + translated + trailing; } });
     }
-    const attrSelector = 'input[placeholder],textarea[placeholder],[aria-label],[title],meta[name="description"],meta[property^="og:"]';
+    const attrSelector = 'input[placeholder],textarea[placeholder],[aria-label],[title],[alt],meta[name="description"],meta[property^="og:"]';
     $$(attrSelector).forEach((element) => {
-      if (element.closest('.site-language-switcher,[data-no-translate],code,pre,script,style')) return;
+      if (element.closest('.site-language-switcher,[data-no-translate],code,pre,script,style,svg')) return;
       if (!originalAttributeValues.has(element)) {
         const attrs = {};
-        ['placeholder', 'aria-label', 'title', 'content'].forEach((name) => {
+        ['placeholder', 'aria-label', 'title', 'alt', 'content'].forEach((name) => {
           if (element.hasAttribute(name)) attrs[name] = element.getAttribute(name);
         });
         originalAttributeValues.set(element, attrs);
@@ -681,88 +963,251 @@
     else document.documentElement.setAttribute('dir', defaultDocumentDir);
     document.documentElement.lang = 'en';
   }
-  async function translateBatch(values, targetApi) {
-    let finalError = null;
-    for (const endpoint of SITE_TRANSLATION_ENDPOINTS) {
-      const controller = typeof AbortController === 'function' ? new AbortController() : null;
-      const timeoutId = controller ? window.setTimeout(() => controller.abort(), 10000) : null;
-      try {
-        const body = { q: values, source: 'en', target: targetApi, format: 'text' };
+  async function requestGoogleTranslationBatch(values, targetApi, signal) {
+    const translated = new Array(values.length);
+    let nextIndex = 0;
+    let firstError = null;
+    const worker = async () => {
+      while (nextIndex < values.length) {
+        const index = nextIndex;
+        nextIndex += 1;
+        try {
+          const url = new URL(GOOGLE_TRANSLATE_ENDPOINT);
+          url.searchParams.set('client', 'gtx');
+          url.searchParams.set('sl', 'en');
+          url.searchParams.set('tl', targetApi);
+          url.searchParams.append('dt', 't');
+          url.searchParams.set('q', values[index]);
+          const response = await fetch(url.href, {
+            method: 'GET',
+            mode: 'cors',
+            credentials: 'omit',
+            cache: 'no-store',
+            headers: { Accept: 'application/json' },
+            ...(signal ? { signal } : {}),
+          });
+          if (!response.ok) {
+            const error = new Error('Google translation endpoint responded with HTTP ' + response.status);
+            error.status = response.status;
+            throw error;
+          }
+          const payload = await response.json();
+          const pieces = Array.isArray(payload?.[0]) ? payload[0] : [];
+          const value = pieces.map((piece) => Array.isArray(piece) && typeof piece[0] === 'string' ? piece[0] : '').join('');
+          if (!value.trim()) throw new Error('Google translation endpoint returned an empty translation');
+          translated[index] = value;
+        } catch (error) {
+          firstError = firstError || error;
+        }
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(4, values.length) }, () => worker()));
+    if (firstError) throw firstError;
+    return translated;
+  }
+  async function requestTranslationBatch(endpoint, values, targetApi) {
+    const controller = typeof AbortController === 'function' ? new AbortController() : null;
+    const timeoutMs = endpoint === GOOGLE_TRANSLATE_ENDPOINT ? 8000 : 4000;
+    const timeoutId = controller ? window.setTimeout(() => controller.abort(), timeoutMs) : null;
+    try {
+      let translated;
+      if (endpoint === GOOGLE_TRANSLATE_ENDPOINT) {
+        translated = await requestGoogleTranslationBatch(values, targetApi, controller?.signal);
+      } else {
         const response = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify(body),
+          body: JSON.stringify({ q: values, source: 'en', target: targetApi, format: 'text' }),
           mode: 'cors',
           credentials: 'omit',
+          cache: 'no-store',
           ...(controller ? { signal: controller.signal } : {}),
         });
-        if (!response.ok) throw new Error('Translation endpoint responded with HTTP ' + response.status);
-        const result = await response.json();
-        let translated = null;
-        if (Array.isArray(result.translatedText)) translated = result.translatedText;
-        else if (Array.isArray(result)) translated = result.map((item) => typeof item === 'string' ? item : item.translatedText);
-        else if (typeof result.translatedText === 'string' && values.length === 1) translated = [result.translatedText];
-        if (!Array.isArray(translated) || translated.length !== values.length || translated.some((item) => typeof item !== 'string')) {
-          throw new Error('Translation endpoint returned an unexpected response shape');
+        if (!response.ok) {
+          const error = new Error('Translation endpoint responded with HTTP ' + response.status);
+          error.status = response.status;
+          throw error;
         }
-        return translated;
+        const result = await response.json();
+        if (Array.isArray(result?.translatedText)) translated = result.translatedText;
+        else if (Array.isArray(result)) translated = result.map((item) => typeof item === 'string' ? item : item?.translatedText);
+        else if (typeof result?.translatedText === 'string' && values.length === 1) translated = [result.translatedText];
+      }
+      if (!Array.isArray(translated) || translated.length !== values.length ||
+          translated.some((item) => typeof item !== 'string' || !item.trim())) {
+        throw new Error('Translation endpoint returned an incomplete or unexpected response');
+      }
+      markTranslationEndpointSuccess(endpoint);
+      return translated;
+    } catch (error) {
+      markTranslationEndpointFailure(endpoint, error);
+      throw error;
+    } finally {
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+    }
+  }
+  async function translateBatch(values, targetApi) {
+    const translations = new Array(values.length);
+    const missing = [];
+    const missingIndexes = [];
+    values.forEach((value, index) => {
+      const cached = translationCache.get(translationCacheKey(targetApi, value));
+      if (typeof cached === 'string' && cached.trim()) translations[index] = cached;
+      else {
+        missing.push(value);
+        missingIndexes.push(index);
+      }
+    });
+    if (!missing.length) return translations;
+    let lastError = null;
+    const endpoints = orderedTranslationEndpoints();
+    for (const endpoint of endpoints) {
+      try {
+        const response = await requestTranslationBatch(endpoint, missing, targetApi);
+        response.forEach((value, index) => {
+          translations[missingIndexes[index]] = value;
+          translationCache.set(translationCacheKey(targetApi, missing[index]), value);
+        });
+        persistTranslationCache();
+        return translations;
       } catch (error) {
-        finalError = error;
-      } finally {
-        if (timeoutId !== null) window.clearTimeout(timeoutId);
+        lastError = error;
       }
     }
-    throw finalError || new Error('No translation endpoint is available');
+    throw new Error('Translation did not complete after trying ' + endpoints.length + ' providers: ' +
+      (lastError?.message || 'no provider completed the request'));
+  }
+  function getSearchIndexDisplaySegments() {
+    const segments = [];
+    for (const item of searchItems) {
+      if (!item.sourceTitle) item.sourceTitle = item.title;
+      if (typeof item.sourceDescription !== 'string') item.sourceDescription = item.description || '';
+      if (item.sourceTitle.trim()) segments.push({ text: item.sourceTitle, apply: (value) => { item.title = value; } });
+      if (item.sourceDescription.trim()) segments.push({ text: item.sourceDescription, apply: (value) => { item.description = value; } });
+    }
+    return segments;
+  }
+  function restoreSearchIndexDisplayText() {
+    searchItems.forEach((item) => {
+      if (item.sourceTitle) item.title = item.sourceTitle;
+      if (typeof item.sourceDescription === 'string') item.description = item.sourceDescription;
+    });
+  }
+  const TRANSLATION_FAILURE_COPY = {
+    'en-US': 'Translation could not complete after trying multiple servers. Your current page language was kept. Please retry.',
+    'hi-IN': 'कई सर्वरों पर प्रयास के बाद भी अनुवाद पूरा नहीं हुआ। पृष्ठ की मौजूदा भाषा बरकरार है। कृपया फिर से प्रयास करें।',
+    'bn-IN': 'একাধিক সার্ভারে চেষ্টা করেও অনুবাদ সম্পূর্ণ হয়নি। পৃষ্ঠার বর্তমান ভাষা অপরিবর্তিত আছে। আবার চেষ্টা করুন।',
+    'es-ES': 'La traducción no se completó tras probar varios servidores. Se conservó el idioma actual de la página. Inténtalo de nuevo.',
+    'fr-FR': 'La traduction n’a pas abouti après plusieurs serveurs. La langue actuelle de la page a été conservée. Réessayez.',
+    'de-DE': 'Die Übersetzung konnte trotz mehrerer Server nicht abgeschlossen werden. Die aktuelle Seitensprache bleibt erhalten. Bitte erneut versuchen.',
+    'pt-BR': 'A tradução não foi concluída após várias tentativas em servidores diferentes. O idioma atual da página foi mantido. Tente novamente.',
+    ar: 'تعذرت إكمال الترجمة بعد تجربة عدة خوادم. تم الإبقاء على لغة الصفحة الحالية. يرجى المحاولة مجددًا.',
+    'ja-JP': '複数のサーバーを試しましたが翻訳を完了できませんでした。現在のページ言語を維持しています。もう一度お試しください。',
+    'it-IT': 'La traduzione non è riuscita dopo vari tentativi su server diversi. La lingua attuale della pagina è stata mantenuta. Riprova.',
+    'id-ID': 'Terjemahan tidak selesai setelah mencoba beberapa server. Bahasa halaman saat ini tetap dipertahankan. Silakan coba lagi.',
+    'ko-KR': '여러 서버를 시도했지만 번역을 완료하지 못했습니다. 현재 페이지 언어는 유지됩니다. 다시 시도해 주세요.',
+    'ru-RU': 'Не удалось завершить перевод после проверки нескольких серверов. Текущий язык страницы сохранён. Попробуйте ещё раз.',
+    'zh-CN': '尝试多个服务器后仍无法完成翻译。已保留当前页面语言，请重试。',
+    'tr-TR': 'Birden fazla sunucu denendi ancak çeviri tamamlanamadı. Sayfanın mevcut dili korundu. Lütfen yeniden deneyin.',
+    'nl-NL': 'De vertaling kon na pogingen via meerdere servers niet worden voltooid. De huidige paginataal is behouden. Probeer het opnieuw.',
+    'pl-PL': 'Nie udało się ukończyć tłumaczenia po próbach na wielu serwerach. Zachowano obecny język strony. Spróbuj ponownie.',
+    'uk-UA': 'Не вдалося завершити переклад після спроб на кількох серверах. Поточну мову сторінки збережено. Спробуйте ще раз.',
+    'el-GR': 'Η μετάφραση δεν ολοκληρώθηκε μετά από δοκιμές σε πολλούς διακομιστές. Διατηρήθηκε η τρέχουσα γλώσσα της σελίδας. Δοκιμάστε ξανά.',
+    'cs-CZ': 'Překlad se nepodařilo dokončit ani po vyzkoušení několika serverů. Aktuální jazyk stránky zůstal zachován. Zkuste to znovu.',
+    'sv-SE': 'Översättningen kunde inte slutföras efter försök med flera servrar. Sidans nuvarande språk behölls. Försök igen.',
+  };
+  async function translateRuntimeTexts(values) {
+    const locale = activeSiteLocale;
+    const selected = SITE_LANGUAGES.find((language) => language.code === locale);
+    if (!selected || selected.api === 'en') return values;
+    try {
+      const result = await translateBatch(values, selected.api);
+      return activeSiteLocale === locale ? result : values;
+    } catch (error) {
+      console.warn('QueryFixr dynamic UI translation could not complete:', error);
+      return values;
+    }
   }
   async function translateSitePage(targetLocale, statusNode, applyButton) {
     const locale = normalizeSiteLocale(targetLocale);
-    const copy = translateUiCopy(locale, 'busy');
-    statusNode.textContent = copy;
+    statusNode.textContent = translateUiCopy(locale, 'busy');
     applyButton.disabled = true;
     const selected = SITE_LANGUAGES.find((language) => language.code === locale);
     try {
-      restoreOriginalPageText();
       if (locale === 'en-US') {
+        restoreOriginalPageText();
+        restoreSearchIndexDisplayText();
+        activeSiteLocale = 'en-US';
         statusNode.textContent = translateUiCopy(locale, 'original');
         try { localStorage.setItem('queryfixr-site-locale', locale); } catch (_) {}
         return;
       }
+      if (!selected) throw new Error('Unsupported website language: ' + locale);
+
+      // Load every cross-page search snippet first so visible and future search results share the selected language.
+      try { await ensureSearchIndex(); } catch (indexError) {
+        console.warn('QueryFixr search index remains unavailable during translation:', indexError);
+      }
+
+      // Keep the current display intact until every page segment is translated successfully.
       const segments = collectTranslatableSegments();
       const texts = segments.map((segment) => segment.text);
       const translated = new Array(texts.length);
+      const batches = [];
       let batch = [];
       let batchIndexes = [];
       let batchChars = 0;
-      const flush = async () => {
+      const flush = () => {
         if (!batch.length) return;
-        const response = await translateBatch(batch, selected.api);
-        response.forEach((value, index) => { translated[batchIndexes[index]] = value; });
+        batches.push({ values: batch, indexes: batchIndexes });
         batch = [];
         batchIndexes = [];
         batchChars = 0;
       };
       for (let i = 0; i < texts.length; i += 1) {
-        const text = texts[i];
-        if (batch.length >= 18 || (batch.length > 0 && batchChars + text.length > 5200)) await flush();
-        batch.push(text);
+        const value = texts[i];
+        if (batch.length >= 16 || (batch.length > 0 && batchChars + value.length > 3600)) flush();
+        batch.push(value);
         batchIndexes.push(i);
-        batchChars += text.length;
+        batchChars += value.length;
       }
-      await flush();
-      segments.forEach((segment, index) => segment.apply(translated[index] || segment.text));
-      document.documentElement.lang = locale;
-      document.documentElement.dir = locale.toLowerCase().startsWith('ar') ? 'rtl' : 'ltr';
+      flush();
+
+      for (let i = 0; i < batches.length; i += 1) {
+        const currentBatch = batches[i];
+        const response = await translateBatch(currentBatch.values, selected.api);
+        response.forEach((value, index) => { translated[currentBatch.indexes[index]] = value; });
+        statusNode.textContent = translateUiCopy(locale, 'busy') + ' ' + (i + 1) + '/' + batches.length;
+      }
+
+      const indexSegments = searchIndexState === 'ready' ? getSearchIndexDisplaySegments() : [];
+      if (indexSegments.length) {
+        const values = indexSegments.map((segment) => segment.text);
+        const indexTranslations = new Array(values.length);
+        for (let offset = 0; offset < values.length; offset += 16) {
+          const response = await translateBatch(values.slice(offset, offset + 16), selected.api);
+          response.forEach((value, j) => { indexTranslations[offset + j] = value; });
+        }
+        indexSegments.forEach((segment, index) => segment.apply(indexTranslations[index]));
+      }
+      segments.forEach((segment, index) => segment.apply(translated[index]));
+      const runtimeSourceTexts = Object.values(lifecycleStates).flatMap((state) => [state.title, state.description, state.next]).concat(['Copied', 'Select & copy', 'Copied!', 'Copy manually', 'Copied command', 'Copy the command']);
+      void translateRuntimeTexts(runtimeSourceTexts).catch((runtimeError) => console.warn('QueryFixr optional dynamic-copy prefetch failed:', runtimeError));
+      document.documentElement.lang = selected.code;
+      document.documentElement.dir = selected.api === 'ar' ? 'rtl' : 'ltr';
+      activeSiteLocale = locale;
       if (wikiInput) applyWikiSearch(wikiInput.value);
+      if (featureSearchInput) applyFeatureSearch(featureSearchInput.value);
+      if (globalInput && searchIndexState === 'ready') renderGlobalResults(globalInput.value);
       try { localStorage.setItem('queryfixr-site-locale', locale); } catch (_) {}
       statusNode.textContent = translateUiCopy(locale, 'done');
     } catch (error) {
-      restoreOriginalPageText();
-      statusNode.textContent = translateUiCopy(locale, 'failed');
+      // The current page language is preserved; no partial page translation is applied.
+      statusNode.textContent = TRANSLATION_FAILURE_COPY[locale] || TRANSLATION_FAILURE_COPY['en-US'];
       console.warn('QueryFixr site translation failed:', error);
     } finally {
       applyButton.disabled = false;
-      const current = SITE_LANGUAGES.find((language) => language.code === locale);
-      if (current) applyButton.textContent = translateUiCopy(locale, 'button');
+      applyButton.textContent = translateUiCopy(locale, 'button');
     }
   }
   function installSiteLanguageControl() {
