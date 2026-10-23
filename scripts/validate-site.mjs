@@ -120,10 +120,14 @@ for (const file of htmlFiles) {
   for (const match of source.matchAll(/<button\b[^>]*>/gi)) {
     if (!/\s+type\s*=/i.test(match[0])) report(`${file}: button is missing an explicit type: ${match[0].slice(0, 100)}`);
   }
-  for (const attributeName of ['aria-labelledby', 'aria-describedby', 'aria-controls']) {
-    const referencePattern = new RegExp("\\\\b" + attributeName + "=[\"']([^\"']+)[\"']", 'gi');
+  const ariaReferencePatterns = [
+    ['aria-labelledby', /\baria-labelledby=["']([^"']+)["']/gi],
+    ['aria-describedby', /\baria-describedby=["']([^"']+)["']/gi],
+    ['aria-controls', /\baria-controls=["']([^"']+)["']/gi],
+  ];
+  for (const [attributeName, referencePattern] of ariaReferencePatterns) {
     for (const match of source.matchAll(referencePattern)) {
-      for (const referencedId of match[1].split(/\\s+/)) {
+      for (const referencedId of match[1].split(/\s+/)) {
         if (referencedId && !pageIds.get(file)?.has(referencedId)) {
           report(file + ': ' + attributeName + ' references missing id="' + referencedId + '"');
         }
@@ -241,7 +245,7 @@ if (
 }
 
 const commandDocumentation = wikiSource + '\n' + js;
-if (/\\/qf\\b/i.test(commandDocumentation)) {
+if (commandDocumentation.includes('/qf')) {
   report('wiki.html/site.js: stale /qf command root found; the bot currently registers /supportforge');
 }
 if (!commandDocumentation.includes('/supportforge ticket claim')) {
