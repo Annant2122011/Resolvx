@@ -1,7 +1,54 @@
 (() => {
   'use strict';
   const $ = (selector, root = document) => root.querySelector(selector);
-  const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+  const $ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+
+  // Remote artwork must not leave broken-image icons in the header or hero.
+  function installExternalImageFallbacks() {
+    const handleImageFailure = (image) => {
+      if (image.dataset.fallbackApplied === 'true') return;
+      image.dataset.fallbackApplied = 'true';
+
+      if (image.classList.contains('brand-full-logo')) {
+        const fallback = document.createElement('span');
+        fallback.className = 'brand-text-fallback';
+        fallback.textContent = 'QueryFixr';
+        image.replaceWith(fallback);
+        return;
+      }
+
+      if (image.classList.contains('hero-banner-image')) {
+        const fallback = document.createElement('div');
+        fallback.className = 'hero-banner-fallback';
+        fallback.setAttribute('role', 'img');
+        fallback.setAttribute('aria-label', 'QueryFixr product banner artwork unavailable');
+
+        const mark = document.createElement('span');
+        mark.className = 'hero-banner-fallback-mark';
+        mark.setAttribute('aria-hidden', 'true');
+        mark.textContent = 'Q';
+
+        const name = document.createElement('strong');
+        name.textContent = 'QueryFixr';
+
+        const tagline = document.createElement('span');
+        tagline.textContent = 'Queries Solved. Support Evolved.';
+        fallback.append(mark, name, tagline);
+        image.replaceWith(fallback);
+        return;
+      }
+
+      // The CTA logo is decorative; the orbit itself remains meaningful without it.
+      image.remove();
+    };
+
+    $('.brand-full-logo, .hero-banner-image, .cta-logo').forEach((image) => {
+      image.addEventListener('error', () => handleImageFailure(image), { once: true });
+      // A cached failure can occur before this deferred script installs listeners.
+      if (image.complete && image.naturalWidth === 0) handleImageFailure(image);
+    });
+  }
+  installExternalImageFallbacks();
 
   const menuToggle = $('.menu-toggle');
   const nav = $('.nav-links');
@@ -225,7 +272,7 @@
     'panel-activity': 'panel activity auto move move controls reposition ticket panel message cap visual line budget minimum messages threshold bottom placement control ordering',
     'premium-demo': 'premium demo entitlements tier status toggle simulated billing subscription payment no checkout free pro product mode',
     'troubleshooting': 'troubleshooting troubleshoot diagnostic stack trace error exception command registration invalid command application command 25 subcommands interaction failed unknown interaction unknown message unknown channel missing permissions permission overwrites database connection timeout postgres neon retry-after rate limit stale panel command deploy slash command startup build',
-    'commands': 'command slash commands syntax copy reference /qf settings-reports reporting taxonomy report-categories report-subcategory-add report-subcategory-edit report-subcategory-remove panel-create template-save locale',
+    'commands': 'command slash commands syntax copy reference /supportforge settings-reports reporting taxonomy report-categories report-subcategory-add report-subcategory-edit report-subcategory-remove panel-create template-save locale',
     'faq': 'faq questions answers troubleshooting help guide common problem error issue invite website disconnected production acceptance privacy translation locales restore limitations database use-case settings-reports',
     'roadmap': 'planned future not available roadmap workflow graph knowledge base quick replies sla csat customer satisfaction surveys api web dashboard oauth multi channel ai generative retrieval rag vector database real billing',
     'storage-deployment': 'neon postgresql postgres database persistence durable store outbox retry deploy deployment hosting github actions systemd env connection pool timeout rate limits backoff event record storage provider',
@@ -417,7 +464,7 @@
     'What does QueryFixr do?': 'purpose overview discord support ticket helpdesk request management',
     'Can I invite the bot from this website?': 'invite install add bot discord oauth authorization link missing setup',
     'Does the website run bot commands or show live tickets?': 'website static github pages vercel dashboard login api live data connection',
-    'Why is the slash-command root /qf?': 'slash command root rename brand registered name deployed command',
+    'Why is the slash-command root /supportforge?': 'slash command root rename brand registered name deployed command',
     'What does a member do to open a ticket?': 'create new support request ticket panel button department form intake',
     'Can I customize multiple public support panels?': 'multi-panel builder draft publish entry button roles emoji style order',
     'Are form templates the same as active forms?': 'template activate deactivate schema version form builder',
@@ -553,7 +600,7 @@
     { code: 'sv-SE', api: 'sv', label: 'Swedish', native: 'Svenska' },
   ];
   const SITE_LANGUAGE_UI = {
-    'en-US': { label: 'Language', button: 'Translate', busy: 'Translating this page…', done: 'Page translated. This is machine translation; wording may be imperfect. Code and command names are preserved.', original: 'Original English restored.', failed: 'Translation service unavailable. English text was restored. Try again later or configure a LibreTranslate endpoint.', },
+    'en-US': { label: 'Language', button: 'Translate', busy: 'Translating this page…', done: 'Page translated. This is machine translation; wording may be imperfect. Code and command names are preserved.', original: 'Original English restored.', failed: 'Translation service unavailable or timed out. English text was restored. Try again later or configure a public LibreTranslate endpoint.', },
     'hi-IN': { label: 'भाषा', button: 'अनुवाद करें', busy: 'पृष्ठ का अनुवाद हो रहा है…', done: 'पृष्ठ का मशीन अनुवाद हो गया। कुछ शब्द गलत हो सकते हैं; कोड और कमांड नाम नहीं बदले गए हैं।', original: 'मूल अंग्रेज़ी वापस आ गई।', failed: 'अनुवाद सेवा उपलब्ध नहीं है। अंग्रेज़ी पाठ बहाल कर दिया गया है।', },
     'bn-IN': { label: 'ভাষা', button: 'অনুবাদ করুন', busy: 'পাতাটি অনুবাদ করা হচ্ছে…', done: 'পাতাটি মেশিনে অনুবাদ করা হয়েছে। কিছু শব্দে ভুল থাকতে পারে; কোড ও কমান্ডের নাম অপরিবর্তিত।', original: 'মূল ইংরেজি ফিরিয়ে আনা হয়েছে।', failed: 'অনুবাদ পরিষেবা পাওয়া যাচ্ছে না। ইংরেজি লেখা ফিরিয়ে আনা হয়েছে।', },
     'es-ES': { label: 'Idioma', button: 'Traducir', busy: 'Traduciendo esta página…', done: 'Página traducida automáticamente. Puede haber imprecisiones; se conservan el código y los comandos.', original: 'Se ha restaurado el inglés original.', failed: 'El servicio de traducción no está disponible. Se ha restaurado el inglés.', },
@@ -638,14 +685,21 @@
     for (const endpoint of SITE_TRANSLATION_ENDPOINTS) {
       try {
         const body = { q: values, source: 'en', target: targetApi, format: 'text' };
-        if (typeof window.QUERYFIXR_TRANSLATION_API_KEY === 'string' && window.QUERYFIXR_TRANSLATION_API_KEY.trim()) body.api_key = window.QUERYFIXR_TRANSLATION_API_KEY.trim();
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify(body),
-          mode: 'cors',
-          credentials: 'omit',
-        });
+        const controller = typeof AbortController === 'function' ? new AbortController() : null;
+        const timeoutId = controller ? window.setTimeout(() => controller.abort(), 10000) : null;
+        let response;
+        try {
+          response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(body),
+            mode: 'cors',
+            credentials: 'omit',
+            ...(controller ? { signal: controller.signal } : {}),
+          });
+        } finally {
+          if (timeoutId !== null) window.clearTimeout(timeoutId);
+        }
         if (!response.ok) throw new Error('Translation endpoint responded with HTTP ' + response.status);
         const result = await response.json();
         let translated = null;
