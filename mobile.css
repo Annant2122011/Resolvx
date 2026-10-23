@@ -1101,3 +1101,54 @@
   .site-language-switcher { max-width: 142px; }
   .quick-search kbd { display: none; }
 }
+
+
+/* Mobile-specific lockup and CTA overrides. The content may grow vertically on narrow screens. */
+@media (max-width: 760px) {
+  .header-brand { gap: 5px; }
+  .header-brand .brand-qf-logo {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    aspect-ratio: 1;
+    object-fit: contain;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .header-brand .brand-tagline {
+    margin: 0;
+    gap: 3px;
+  }
+  .closing-cta,
+  .closing-cta:not(.compact-cta),
+  .closing-cta.compact-cta {
+    aspect-ratio: auto;
+  }
+  .closing-cta .cta-decoration .deco-center {
+    width: clamp(148px, 42vw, 170px);
+    height: clamp(148px, 42vw, 170px);
+  }
+  .closing-cta .cta-decoration .cta-logo {
+    width: clamp(148px, 42vw, 170px);
+    height: auto;
+    aspect-ratio: 1;
+  }
+}
+@media (max-width: 420px) {
+  .header-brand .brand-qf-logo {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+  }
+  .closing-cta .cta-decoration .deco-center {
+    width: 142px;
+    height: 142px;
+  }
+  .closing-cta .cta-decoration .cta-logo {
+    width: 142px;
+    height: auto;
+  }
+}
