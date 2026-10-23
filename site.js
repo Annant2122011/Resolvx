@@ -9,7 +9,7 @@
       if (image.dataset.fallbackApplied === 'true') return;
       image.dataset.fallbackApplied = 'true';
 
-      if (image.classList.contains('brand-full-logo')) {
+      if (image.classList.contains('brand-full-logo') || image.classList.contains('brand-qf-logo')) {
         const fallback = document.createElement('span');
         fallback.className = 'brand-text-fallback';
         fallback.textContent = 'QueryFixr';
