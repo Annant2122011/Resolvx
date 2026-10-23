@@ -358,7 +358,7 @@ if (!js.includes('brand-text-fallback') || !js.includes('hero-banner-fallback'))
 }
 
 const faqCount = [...wikiSource.matchAll(/\bdata-wiki-faq\b/g)].length;
-const homeSearchSectionCount = [...pageContents.get('index.html').matchAll(/<section\\b[^>]*\\bid=/gi)].length;
+const homeSearchSectionCount = [...pageContents.get('index.html').matchAll(/<section\b[^>]*\bid=/gi)].length;
 const searchDestinationEstimate = featureCards.length + wikiArticles + faqCount + homeSearchSectionCount;
 for (const requiredPath of ['index.html', 'features.html', 'wiki.html']) {
   if (!js.includes("path: '" + requiredPath + "'")) report(`site.js: global search index is missing ${requiredPath}`);
