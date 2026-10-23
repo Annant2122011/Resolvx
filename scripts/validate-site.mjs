@@ -177,6 +177,19 @@ for (const file of htmlFiles) {
   }
 }
 
+const faviconSource = readFileSync(path.join(root, 'favicon-local.svg'), 'utf8');
+if (!/<svg\\b/i.test(faviconSource) || !/<title>QueryFixr<\\/title>/i.test(faviconSource)) {
+  report('favicon-local.svg: missing a valid, named QueryFixr SVG favicon');
+}
+if (/<image\\b[^>]*href=["']https?:/i.test(faviconSource)) {
+  report('favicon-local.svg: favicon must not depend on an externally hosted image');
+}
+for (const file of htmlFiles) {
+  if (!pageContents.get(file).includes('href="favicon-local.svg"')) {
+    report(`${file}: must use the self-contained local favicon`);
+  }
+}
+
 const allIds = pageIds.get('wiki.html') || new Set();
 const wikiArticles = [...pageContents.get('wiki.html').matchAll(/<article\b[^>]*\bdata-wiki-article\b/g)].length;
 const tocLinks = [];
