@@ -1,6 +1,6 @@
 # QueryFixr website
 
-A responsive, three-page static website for QueryFixr, a Discord-first support ticket system. Built with plain HTML, CSS, and JavaScript, with no build step or package installation required.
+A responsive, three-page website frontend for QueryFixr, a Discord-first support ticket system. The pages use plain HTML, CSS, and JavaScript; Vercel and Netlify deployments also expose a small serverless translation proxy.
 
 The website is a product introduction and documentation experience. It does **not** connect to Discord, access live tickets, execute bot commands, or configure a server.
 
@@ -12,6 +12,7 @@ The website is a product introduction and documentation experience. It does **no
 - \`styles.css\` — shared visual system, responsive layouts, accessibility and reduced-motion refinements.
 - `.github/workflows/site-checks.yml` — runs the static site validator for pull requests and pushes to `main`.
 - `scripts/validate-site.mjs` — static checks for local links and anchors, duplicate IDs, wiki contents alignment, feature-card counts, accessible button names, mobile layout contracts, branding, and CSS structure.
+- `api/translate.js` and `netlify/functions/translate.js` — same-origin translation-proxy adapters for Vercel and Netlify. They validate request size/target languages, apply per-IP limits, fail over across upstreams, and keep optional API keys restricted to the explicitly configured provider.
 - `mobile.css` — dedicated mobile layout overrides for navigation, responsive content, touch targets, mobile wiki navigation, and short-screen search.
 - \`site.js\` — responsive navigation, multilingual global search, wiki article/FAQ filtering, feature-catalogue filtering, command-copy helpers, reading progress, opt-in website translation, and the local lifecycle explainer.
 - The supplied transparent QueryFixr logo PNG is used directly for the browser favicon and Apple touch icon: `https://i.ibb.co/fdRDWXbH/3v-OKZCYL0-Rqkdu-OQ4t-PKA-Xt-Cc-OQu-N-Picsart-Ai-Image-Enhancer.png`. The icons and full-size brand artwork are externally hosted.
@@ -45,5 +46,6 @@ The public invite is intentionally omitted until a verified bot invitation URL i
 - The transparent QF image is supplied by the existing image host; the 512 × 512 local SVG wrapper and direct PNG favicon reference use the same art. The wordmark remains the homepage hero artwork.
 - The website language selector translates page text and relevant accessibility/placeholder/metadata attributes, protects code and command samples, saves translated strings locally, and tries several translation providers. It caches completed batches and applies a page translation only when the requested batches complete, so a failed request does not silently reset a page that is already translated.
 - LibreTranslate mirrors are community-operated and their availability, CORS policy, rate limits, and language models can change. A Google web-translation endpoint is included as an independent best-effort backup, but that endpoint is not a guaranteed public API. A completely guaranteed translation SLA requires a controlled service endpoint or a supported paid API; browser-side code cannot ensure that an external service stays online.
+- On Vercel and Netlify the selector tries a same-origin serverless proxy before public mirrors. On static-only hosting, it skips naturally unavailable local routes and attempts the public mirrors directly. Completed translations are cached in the browser. External providers can all be unavailable at once, so no free, public setup can guarantee 100% uptime; the page keeps its current language rather than reverting to English when all providers fail.
 - Search scoring checks run in CI via `scripts/test-search.mjs`; structure, link, accessibility, brand, mobile-layout, translation, and search wiring checks run via `scripts/validate-site.mjs`.
 
