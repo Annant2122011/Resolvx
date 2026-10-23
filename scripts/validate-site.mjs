@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const root = process.cwd();
 const htmlFiles = ['index.html', 'features.html', 'wiki.html'];
-const visibleFiles = [...htmlFiles, 'site.js', 'styles.css', 'mobile.css', 'README.md', 'favicon-local.svg'];
+const visibleFiles = [...htmlFiles, 'site.js', 'styles.css', 'mobile.css', 'README.md'];
 const errors = [];
 const pageContents = new Map();
 const pageIds = new Map();
@@ -177,16 +177,12 @@ for (const file of htmlFiles) {
   }
 }
 
-const faviconSource = readFileSync(path.join(root, 'favicon-local.svg'), 'utf8');
-if (!/<svg\b/i.test(faviconSource) || !/<title>QueryFixr<\/title>/i.test(faviconSource)) {
-  report('favicon-local.svg: missing a valid, named QueryFixr SVG favicon');
-}
-if (/<image\b[^>]*href=["']https?:/i.test(faviconSource)) {
-  report('favicon-local.svg: favicon must not depend on an externally hosted image');
-}
+const suppliedLogoUrl = 'https://i.ibb.co/fdRDWXbH/3v-OKZCYL0-Rqkdu-OQ4t-PKA-Xt-Cc-OQu-N-Picsart-Ai-Image-Enhancer.png';
 for (const file of htmlFiles) {
-  if (!pageContents.get(file).includes('href="favicon-local.svg"')) {
-    report(`${file}: must use the self-contained local favicon`);
+  const faviconTag = pageContents.get(file).match(/<link\\b(?=[^>]*\\brel="icon")[^>]*>/i)?.[0];
+  const favicon = faviconTag ? attributes(faviconTag) : {};
+  if (favicon.href !== suppliedLogoUrl || (favicon.type || '').toLowerCase() !== 'image/png') {
+    report(`${file}: favicon must use the supplied transparent QueryFixr PNG`);
   }
 }
 
