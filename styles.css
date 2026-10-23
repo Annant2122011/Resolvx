@@ -3645,3 +3645,81 @@ button:disabled { cursor: not-allowed; }
 @media (min-width: 1121px) {
   .header-brand { gap: 7px; }
 }
+
+
+/* Consistent transparent QF lockup and landscape CTA proportions. */
+.header-brand {
+  gap: 6px;
+}
+.header-brand .brand-qf-logo {
+  display: block;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  aspect-ratio: 1;
+  object-fit: contain;
+  object-position: center;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  mix-blend-mode: normal;
+}
+.header-brand .brand-tagline {
+  margin: 0;
+  gap: 4px;
+}
+.closing-cta,
+.closing-cta:not(.compact-cta),
+.closing-cta.compact-cta {
+  aspect-ratio: 16 / 9;
+}
+.closing-cta .cta-decoration .deco-center {
+  width: clamp(190px, 18vw, 220px);
+  height: clamp(190px, 18vw, 220px);
+}
+.closing-cta .cta-decoration .cta-logo {
+  display: block;
+  width: clamp(190px, 18vw, 220px);
+  height: auto;
+  max-width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  mix-blend-mode: normal;
+}
+.hero-copy h1 s {
+  text-decoration-thickness: .075em;
+  text-decoration-color: rgba(194, 199, 221, .72);
+  text-decoration-skip-ink: none;
+}
+.global-search-empty { margin: 0; padding: 16px; color: var(--muted); }
+.global-search-retry {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  margin: 0 12px 12px;
+  padding: 8px 14px;
+  border: 1px solid rgba(116, 231, 231, .3);
+  border-radius: 10px;
+  color: var(--text);
+  background: rgba(116, 231, 231, .08);
+  cursor: pointer;
+}
+.search-result-category {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 5px;
+  padding: 2px 6px;
+  border: 1px solid rgba(190, 198, 255, .12);
+  border-radius: 5px;
+  color: #aeb6d0;
+  font: 9px var(--mono);
+  letter-spacing: .04em;
+}
