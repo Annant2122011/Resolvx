@@ -281,26 +281,191 @@
     'all','every','much','many','way','ways','work','works','working','use','using','make','get','want','need','best','page','de','het','een','und','der','die','das','ein','eine','les','des','un','una','las','los','que','pour','con','dla','jest','i','w','na','do','ze','ta','į','и','та','для','це','що','και','το','στο','της','σε','je','na','do','och','att','som',
   ]);
   function normalizeSearchText(value) {
-    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+    return String(value || '')
+      .normalize('NFKD')
+      .replace(/[\\u0300-\\u036f]/g, '')
+      .replace(/[’‘`]/g, "'")
+      .replace(/[–—‐‑]/g, ' ')
+      .toLowerCase()
+      .replace(/&/g, ' and ')
+      .replace(/[^\\p{L}\\p{N}]+/gu, ' ')
+      .trim();
   }
   function searchTerms(query) {
-    return normalizeSearchText(query).split(/\s+/).filter((term) => term.length > 1 && !SEARCH_STOP_WORDS.has(term));
+    return normalizeSearchText(query).split(/\\s+/u)
+      .filter((term) => term.length > 1 && !SEARCH_STOP_WORDS.has(term));
   }
-  function termMatchesCorpus(corpus, term) {
-    const group = SEARCH_SYNONYM_GROUPS.find((values) => values.some((value) => normalizeSearchText(value) === term));
-    if (!group) return corpus.includes(term);
-    return group.some((value) => corpus.includes(normalizeSearchText(value)));
+  function boundedEditDistanceOne(a, b) {
+    if (a === b) return true;
+    if (Math.abs(a.length - b.length) > 1 || Math.min(a.length, b.length) < 4) return false;
+    let i = 0, j = 0, edits = 0;
+    while (i < a.length && j < b.length) {
+      if (a[i] === b[j]) { i += 1; j += 1; continue; }
+      edits += 1;
+      if (edits > 1) return false;
+      if (a.length > b.length) i += 1;
+      else if (b.length > a.length) j += 1;
+      else { i += 1; j += 1; }
+    }
+    if (i < a.length || j < b.length) edits += 1;
+    return edits <= 1;
+  }
+  const synonymGroupFor = (term) => SEARCH_SYNONYM_GROUPS.find((values) =>
+    values.some((value) => normalizeSearchText(value) === term));
+  function bestTokenScore(term, tokens, corpus) {
+    let best = 0;
+    for (const candidate of tokens) {
+      if (candidate === term) best = Math.max(best, 7);
+      else if (candidate.startsWith(term) && term.length >= 2) best = Math.max(best, 4.3);
+      else if (term.startsWith(candidate) && candidate.length >= 4) best = Math.max(best, 2.1);
+      else if (term.length >= 5 && candidate.includes(term)) best = Math.max(best, 2.7);
+      else if (boundedEditDistanceOne(term, candidate)) best = Math.max(best, 1.7);
+      if (best >= 7) return best;
+    }
+    if (best) return best;
+    const group = synonymGroupFor(term);
+    if (!group) return 0;
+    for (const synonym of group) {
+      const alias = normalizeSearchText(synonym);
+      if (!alias) continue;
+      if (alias.includes(' ')) {
+        if (corpus.includes(alias)) best = Math.max(best, 2.9);
+      } else if (tokens.includes(alias)) {
+        best = Math.max(best, 3.1);
+      } else if (alias.length >= 3 && tokens.some((candidate) => candidate.startsWith(alias))) {
+        best = Math.max(best, 2.2);
+      }
+    }
+    return best;
+  }
+  function searchScore(corpusText, query) {
+    const rawQuery = String(query || '').trim();
+    if (!rawQuery) return 1;
+    const corpus = normalizeSearchText(corpusText);
+    const terms = searchTerms(rawQuery);
+    if (!terms.length || !corpus) return 0;
+    const tokens = corpus.split(/\\s+/u).filter(Boolean);
+    let hits = 0;
+    let score = 0;
+    for (const term of terms) {
+      const part = bestTokenScore(term, tokens, corpus);
+      if (part > 0) { hits += 1; score += part; }
+    }
+    if (!hits) return 0;
+    const coverage = hits / terms.length;
+    const phrase = normalizeSearchText(rawQuery);
+    const phraseBonus = phrase.length > 2 && corpus.includes(phrase) ? 12 : 0;
+    const titleCompleteness = terms.length > 1 ? 0.35 + (coverage * 0.65) : 1;
+    return (score + coverage * 6 + phraseBonus) * titleCompleteness;
   }
   function matchesSearchCorpus(corpusText, query) {
-    if (!String(query || '').trim()) return true;
-    const corpus = normalizeSearchText(corpusText);
-    const terms = searchTerms(query);
-    if (!terms.length) return true;
-    return terms.every((term) => termMatchesCorpus(corpus, term));
+    return searchScore(corpusText, query) > 0;
   }
   function searchItemCorpus(item) {
-    const hash = (item.url.split('#')[1] || '').trim();
-    return [item.title, item.description, item.keywords, SEARCH_EXPANSIONS[hash] || ''].join(' ');
+    const hash = new URL(item.url, document.baseURI).hash.slice(1);
+    return [item.title, item.description, item.keywords, item.text, SEARCH_EXPANSIONS[hash] || ''].join(' ');
+  }
+  function safeText(element, selector) {
+    return (element.querySelector(selector)?.textContent || '').replace(/\\s+/gu, ' ').trim();
+  }
+  function indexRecord({ element, pageUrl, type, forcedUrl = null }) {
+    const title = safeText(element, 'h1,h2,h3,h4,summary') || element.getAttribute('aria-label') || '';
+    const text = (element.textContent || '').replace(/\\s+/gu, ' ').trim();
+    if (!title || text.length < 8) return null;
+    const description = safeText(element, 'p').slice(0, 280) || text.slice(0, 280);
+    const rawHref = forcedUrl || element.getAttribute('href') || (element.id ? pageUrl.pathname + '#' + element.id : pageUrl.href);
+    const url = new URL(rawHref, pageUrl).href;
+    return {
+      title,
+      description,
+      sourceTitle: title,
+      sourceDescription: description,
+      url,
+      keywords: element.getAttribute('data-search-keywords') || element.dataset?.searchKeywords || '',
+      text,
+      type,
+    };
+  }
+  async function buildSearchIndex() {
+    const pages = [
+      { path: 'index.html', type: 'Home' },
+      { path: 'features.html', type: 'Features' },
+      { path: 'wiki.html', type: 'Wiki' },
+    ];
+    const loaded = await Promise.all(pages.map(async (page) => {
+      const url = new URL(page.path, document.baseURI);
+      const response = await fetch(url.href, {
+        headers: { Accept: 'text/html' },
+        credentials: 'same-origin',
+        cache: 'force-cache',
+      });
+      if (!response.ok) throw new Error('Could not load ' + page.path + ' (HTTP ' + response.status + ')');
+      return { ...page, url, doc: new DOMParser().parseFromString(await response.text(), 'text/html') };
+    }));
+    const records = [];
+    const seen = new Set();
+    const add = (record) => {
+      if (!record) return;
+      const identity = record.type + '|' + record.url + '|' + normalizeSearchText(record.title);
+      if (seen.has(identity)) return;
+      seen.add(identity);
+      records.push(record);
+    };
+    for (const page of loaded) {
+      const { doc, url, type } = page;
+      if (type === 'Features') {
+        doc.querySelectorAll('[data-feature-card]').forEach((element) => add(indexRecord({ element, pageUrl: url, type })));
+        const heroHeading = doc.querySelector('main h1');
+        if (heroHeading) add(indexRecord({ element: heroHeading.closest('section') || heroHeading.parentElement, pageUrl: url, type, forcedUrl: url.href }));
+      } else if (type === 'Wiki') {
+        doc.querySelectorAll('[data-wiki-article]').forEach((element) => {
+          add(indexRecord({ element, pageUrl: url, type, forcedUrl: url.pathname + '#' + element.id }));
+        });
+        doc.querySelectorAll('[data-wiki-faq]').forEach((element) => {
+          const summary = safeText(element, 'summary');
+          if (!summary) return;
+          const description = safeText(element, 'p').slice(0, 280);
+          add({
+            title: summary,
+            description,
+            sourceTitle: summary,
+            sourceDescription: description,
+            url: url.pathname + '#faq',
+            keywords: '',
+            text: (element.textContent || '').replace(/\\s+/gu, ' ').trim(),
+            type: 'FAQ',
+          });
+        });
+      } else {
+        const main = doc.querySelector('main') || doc.body;
+        main.querySelectorAll('section[id]').forEach((element) => {
+          if (element.matches('.closing-cta')) return;
+          add(indexRecord({ element, pageUrl: url, type }));
+        });
+        main.querySelectorAll('.hero-copy, .capability-card').forEach((element) => add(indexRecord({ element, pageUrl: url, type })));
+      }
+    }
+    if (records.length < 40) throw new Error('Search index is incomplete: only ' + records.length + ' destinations were indexed');
+    return records.sort((a, b) => a.title.localeCompare(b.title));
+  }
+  async function ensureSearchIndex() {
+    if (searchIndexState === 'ready') return searchItems;
+    if (searchIndexPromise) return searchIndexPromise;
+    searchIndexState = 'loading';
+    searchIndexPromise = buildSearchIndex().then((records) => {
+      searchItems.splice(0, searchItems.length, ...records);
+      searchIndexState = 'ready';
+      return searchItems;
+    }).catch((error) => {
+      searchIndexState = 'error';
+      console.error('QueryFixr search index could not be prepared:', error);
+      throw error;
+    });
+    try {
+      return await searchIndexPromise;
+    } finally {
+      if (searchIndexState !== 'ready') searchIndexPromise = null;
+    }
   }
 
   const overlay = $('[data-search-overlay]');
