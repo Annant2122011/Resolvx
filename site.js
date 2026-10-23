@@ -1,7 +1,8 @@
 (() => {
   'use strict';
   const $ = (selector, root = document) => root.querySelector(selector);
-  const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+  const $ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+  let activeSiteLocale = 'en-US';
 
   // Remote artwork must not leave broken-image icons in the header or hero.
   function installExternalImageFallbacks() {
@@ -822,58 +823,179 @@ enu live guild testing',
   const originalAttributeValues = new Map();
   const defaultDocumentTitle = document.title;
   const defaultDocumentDir = document.documentElement.getAttribute('dir');
-  const SITE_TRANSLATION_ENDPOINTS = [
-    (typeof window.QUERYFIXR_TRANSLATION_ENDPOINT === 'string' && window.QUERYFIXR_TRANSLATION_ENDPOINT.trim())
+  const SITE_TRANSLATION_ENDPOINTS = (() => {
+    const configured = typeof window.QUERYFIXR_TRANSLATION_ENDPOINT === 'string'
       ? window.QUERYFIXR_TRANSLATION_ENDPOINT.trim()
-      : 'https://translate.argosopentech.com/translate',
-    'https://libretranslate.de/translate',
-  ];
-  const normalizeSiteLocale = (value) => SITE_LANGUAGES.find((language) => language.code.toLowerCase() === String(value || '').toLowerCase() || language.api === String(value || '').toLowerCase())?.code || 'en-US';
-  const translateUiCopy = (code, key) => (SITE_LANGUAGE_UI[code] || SITE_LANGUAGE_UI['en-US'])[key] || SITE_LANGUAGE_UI['en-US'][key];
-  function collectTranslatableSegments() {
-    const segments = [];
-    const walker = document.createTreeWalker(document.documentElement, NodeFilter.SHOW_TEXT);
-    let node;
-    while ((node = walker.nextNode())) {
-      const parent = node.parentElement;
-      if (!parent || parent.closest('.site-language-switcher,[data-no-translate],script,style,noscript,code,pre,kbd,svg,textarea,option')) continue;
-      const sourceValue = node.nodeValue || '';
-      if (sourceValue.trim().length < 2) continue;
-      if (!originalTextNodes.has(node)) originalTextNodes.set(node, sourceValue);
-      const original = originalTextNodes.get(node);
-      const leading = original.match(/^\s*/u)?.[0] || '';
-      const trailing = original.match(/\s*$/u)?.[0] || '';
-      const text = original.slice(leading.length, original.length - trailing.length);
-      if (!text.trim()) continue;
-      segments.push({ text, apply: (translated) => { node.nodeValue = leading + translated + trailing; } });
-    }
-    const attrSelector = 'input[placeholder],textarea[placeholder],[aria-label],[title],meta[name="description"],meta[property^="og:"]';
-    $$(attrSelector).forEach((element) => {
-      if (element.closest('.site-language-switcher,[data-no-translate],code,pre,script,style')) return;
-      if (!originalAttributeValues.has(element)) {
-        const attrs = {};
-        ['placeholder', 'aria-label', 'title', 'content'].forEach((name) => {
-          if (element.hasAttribute(name)) attrs[name] = element.getAttribute(name);
-        });
-        originalAttributeValues.set(element, attrs);
+      : '';
+    const publicMirrors = [
+      'https://translate.fedilab.app/translate',
+      'https://translate.cutie.dating/translate',
+      'https://translate.argosopentech.com/translate',
+      'https://libretranslate.de/translate',
+      'https://trans.zillyhuhn.com/translate',
+      'https://translate.api.skitzen.com/translate',
+    ];
+    return [...new Set([configured, ...publicMirrors].filter(Boolean))];
+  })();
+  const TRANSLATION_CACHE_KEY = 'queryfixr-translation-cache-v3';
+  const TRANSLATION_CACHE_LIMIT = 2200;
+  const translationCache = new Map();
+  const translationEndpointHealth = new Map();
+  let preferredTranslationEndpoint = '';
+  try {
+    const cached = JSON.parse(localStorage.getItem(TRANSLATION_CACHE_KEY) || '[]');
+    if (Array.isArray(cached)) cached.slice(-TRANSLATION_CACHE_LIMIT).forEach((entry) => {
+      if (Array.isArray(entry) && entry.length === 2 && typeof entry[0] === 'string' && typeof entry[1] === 'string') {
+        translationCache.set(entry[0], entry[1]);
       }
-      const attrs = originalAttributeValues.get(element);
-      Object.entries(attrs).forEach(([name, value]) => {
-        if (!value || String(value).trim().length < 2) return;
-        segments.push({ text: String(value).trim(), apply: (translated) => element.setAttribute(name, translated) });
-      });
     });
-    return segments;
+    preferredTranslationEndpoint = localStorage.getItem('queryfixr-translation-endpoint-v1') || '';
+  } catch (_) { /* Private browsing and storage limits must not disable translation. */ }
+  const translationCacheKey = (target, source) => target + '\\u241f' + source;
+  function persistTranslationCache() {
+    try {
+      while (translationCache.size > TRANSLATION_CACHE_LIMIT) {
+        translationCache.delete(translationCache.keys().next().value);
+      }
+      localStorage.setItem(TRANSLATION_CACHE_KEY, JSON.stringify(Array.from(translationCache.entries())));
+    } catch (_) { /* The active translation does not depend on local storage being writable. */ }
   }
-  function restoreOriginalPageText() {
-    originalTextNodes.forEach((value, node) => { if (node.isConnected) node.nodeValue = value; });
-    originalAttributeValues.forEach((attrs, element) => {
-      if (!element.isConnected) return;
-      Object.entries(attrs).forEach(([name, value]) => element.setAttribute(name, value));
+  function orderedTranslationEndpoints() {
+    const now = Date.now();
+    const healthy = SITE_TRANSLATION_ENDPOINTS.filter((endpoint) => (translationEndpointHealth.get(endpoint)?.retryAfter || 0) <= now);
+    const candidates = healthy.length ? healthy : SITE_TRANSLATION_ENDPOINTS;
+    return candidates.slice().sort((a, b) => {
+      if (a === preferredTranslationEndpoint) return -1;
+      if (b === preferredTranslationEndpoint) return 1;
+      return (translationEndpointHealth.get(a)?.failures || 0) - (translationEndpointHealth.get(b)?.failures || 0);
     });
-    document.title = defaultDocumentTitle;
-    if (defaultDocumentDir === null) document.documentElement.removeAttribute('dir');
-    else document.documentElement.setAttribute('dir', defaultDocumentDir);
+  }
+  function markTranslationEndpointSuccess(endpoint) {
+    translationEndpointHealth.set(endpoint, { failures: 0, retryAfter: 0 });
+    preferredTranslationEndpoint = endpoint;
+    try { localStorage.setItem('queryfixr-translation-endpoint-v1', endpoint); } catch (_) {}
+  }
+  function markTranslationEndpointFailure(endpoint, error) {
+    const previous = translationEndpointHealth.get(endpoint) || { failures: 0, retryAfter: 0 };
+    const failures = previous.failures + 1;
+    const status = Number(error?.status || 0);
+    const cooldown = status === 429 ? 60000 : (status >= 500 || status === 0 ? 20000 : 90000);
+    translationEndpointHealth.set(endpoint, { failures, retryAfter: Date.now() + cooldown });
+  }
+  con  async function requestTranslationBatch(endpoint, values, targetApi) {
+    const controller = typeof AbortController === 'function' ? new AbortController() : null;
+    const timeoutId = controller ? window.setTimeout(() => controller.abort(), 7500) : null;
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ q: values, source: 'en', target: targetApi, format: 'text' }),
+        mode: 'cors',
+        credentials: 'omit',
+        cache: 'no-store',
+        ...(controller ? { signal: controller.signal } : {}),
+      });
+      if (!response.ok) {
+        const error = new Error('Translation endpoint responded with HTTP ' + response.status);
+        error.status = response.status;
+        throw error;
+      }
+      const result = await response.json();
+      let translated = null;
+      if (Array.isArray(result?.translatedText)) translated = result.translatedText;
+      else if (Array.isArray(result)) translated = result.map((item) => typeof item === 'string' ? item : item?.translatedText);
+      else if (typeof result?.translatedText === 'string' && values.length === 1) translated = [result.translatedText];
+      if (!Array.isArray(translated) || translated.length !== values.length ||
+          translated.some((item) => typeof item !== 'string' || !item.trim())) {
+        throw new Error('Translation endpoint returned an incomplete or unexpected response');
+      }
+      markTranslationEndpointSuccess(endpoint);
+      return translated;
+    } catch (error) {
+      markTranslationEndpointFailure(endpoint, error);
+      throw error;
+    } finally {
+      if (timeoutId !== null) window.clearTimeout(t  async function translateSitePage(targetLocale, statusNode, applyButton) {
+    const locale = normalizeSiteLocale(targetLocale);
+    statusNode.textContent = translateUiCopy(locale, 'busy');
+    applyButton.disabled = true;
+    const selected = SITE_LANGUAGES.find((language) => language.code === locale);
+    try {
+      if (locale === 'en-US') {
+        restoreOriginalPageText();
+        activeSiteLocale = 'en-US';
+        statusNode.textContent = translateUiCopy(locale, 'original');
+        try { localStorage.setItem('queryfixr-site-locale', locale); } catch (_) {}
+        if (searchIndexState === 'ready') restoreSearchIndexDisplayText();
+        return;
+      }
+      if (!selected) throw new Error('Unsupported website language: ' + locale);
+
+      // Keep the currently applied language on screen until every segment has translated.
+      const segments = collectTranslatableSegments();
+      const sourceTexts = segments.map((segment) => segment.text);
+      const translated = new Array(sourceTexts.length);
+      const batches = [];
+      let batch = [];
+      let batchIndexes = [];
+      let batchChars = 0;
+      const flush = () => {
+        if (!batch.length) return;
+        batches.push({ values: batch, indexes: batchIndexes });
+        batch = [];
+        batchIndexes = [];
+        batchChars = 0;
+      };
+      for (let i = 0; i < sourceTexts.length; i += 1) {
+        const value = sourceTexts[i];
+        if (batch.length >= 16 || (batch.length > 0 && batchChars + value.length > 3600)) flush();
+        batch.push(value);
+        batchIndexes.push(i);
+        batchChars += value.length;
+      }
+      flush();
+
+      for (let i = 0; i < batches.length; i += 1) {
+        const currentBatch = batches[i];
+        const response = await translateBatch(currentBatch.values, selected.api);
+        response.forEach((value, index) => { translated[currentBatch.indexes[index]] = value; });
+        statusNode.textContent = translateUiCopy(locale, 'busy') + ' ' + (i + 1) + '/' + batches.length;
+      }
+
+      // If the site-wide search index was loaded before translation, localize the visible snippets too.
+      const indexSegments = searchIndexState === 'ready' ? getSearchIndexDisplaySegments() : [];
+      if (indexSegments.length) {
+        const values = indexSegments.map((segment) => segment.text);
+        const indexTranslations = new Array(values.length);
+        let offset = 0;
+        for (let i = 0; i < values.length; i += 16) {
+          const group = values.slice(i, i + 16);
+          const translatedGroup = await translateBatch(group, selected.api);
+          translatedGroup.forEach((value, j) => { indexTranslations[offset + j] = value; });
+          offset += group.length;
+        }
+        indexSegments.forEach((segment, index) => segment.apply(indexTranslations[index]));
+      }
+
+      segments.forEach((segment, index) => segment.apply(translated[index]));
+      document.documentElement.lang = selected.code;
+      document.documentElement.dir = selected.api === 'ar' ? 'rtl' : 'ltr';
+      activeSiteLocale = locale;
+      if (wikiInput) applyWikiSearch(wikiInput.value);
+      if (featureSearchInput) applyFeatureSearch(featureSearchInput.value);
+      if (globalInput && searchIndexState === 'ready') renderGlobalResults(globalInput.value);
+      try { localStorage.setItem('queryfixr-site-locale', locale); } catch (_) {}
+      statusNode.textContent = translateUiCopy(locale, 'done');
+    } catch (error) {
+      // No segment is applied until all requests succeed, so an existing translation remains intact.
+      statusNode.textContent = translateUiCopy(locale, 'failed');
+      console.warn('QueryFixr site translation failed:', error);
+    } finally {
+      applyButton.disabled = false;
+      applyButton.textContent = translateUiCopy(locale, 'button');
+    }
+  }
+ocument.documentElement.setAttribute('dir', defaultDocumentDir);
     document.documentElement.lang = 'en';
   }
   async function translateBatch(values, targetApi) {
