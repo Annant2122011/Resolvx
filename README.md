@@ -15,8 +15,8 @@ The website is a product introduction and documentation experience. It does **no
 - `api/translate.js` and `netlify/functions/translate.js` — same-origin translation-proxy adapters for Vercel and Netlify. They validate request size/target languages, apply per-IP limits, fail over across upstreams, and keep optional API keys restricted to the explicitly configured provider.
 - `mobile.css` — dedicated mobile layout overrides for navigation, responsive content, touch targets, mobile wiki navigation, and short-screen search.
 - \`site.js\` — responsive navigation, multilingual global search, wiki article/FAQ filtering, feature-catalogue filtering, command-copy helpers, reading progress, opt-in website translation, and the local lifecycle explainer.
-- The original transparent QF mark and full-size QueryFixr hero artwork are fetched only in the build environment. The published site serves responsive local WebP variants plus small local PNG icons, so visitors do not download the original multi-megabyte PNGs.
-- The QF mark is reused in page headers, footer, favicon, Apple touch icon, and CTA; the homepage uses responsive 640 px and 900 px WebP hero variants.
+- The supplied transparent QueryFixr logo PNG is used directly for the browser favicon and Apple touch icon: `https://i.ibb.co/p6VGzczV/HTcx0584-Os-Oe-YAj-O5qp61-x5-PHKm89.png`. The icons and full-size brand artwork are externally hosted.
+- The transparent QF mark is used in all page headers, the favicon, Apple touch icon, footer, and CTA. The full-size QueryFixr wordmark is retained for the homepage hero artwork.
 - If the external wordmark or hero artwork fails to load, the site displays a local text/gradient fallback instead of leaving broken-image icons.
 
 ## Interaction notes
@@ -49,15 +49,3 @@ The public invite is intentionally omitted until a verified bot invitation URL i
 - On Vercel and Netlify the selector tries a same-origin serverless proxy before public mirrors. On static-only hosting, it skips naturally unavailable local routes and attempts the public mirrors directly. Completed translations are cached in the browser. External providers can all be unavailable at once, so no free, public setup can guarantee 100% uptime; the page keeps its current language rather than reverting to English when all providers fail.
 - Search scoring checks run in CI via `scripts/test-search.mjs`; structure, link, accessibility, brand, mobile-layout, translation, and search wiring checks run via `scripts/validate-site.mjs`.
 
-
-
-## Build and optimized image assets
-
-The build fetches the two source artworks in the build environment, creates responsive local WebP variants with the pinned `sharp` dependency, and copies the static pages and assets into `dist/`. Visitors only receive the optimized local variants; the original PNGs are not runtime dependencies.
-
-```sh
-npm install
-npm run build
-```
-
-GitHub Pages, Vercel, and Netlify are configured to publish the generated `dist/` output. The build reports each image's file size and fails if an asset or the combined optimized image bundle exceeds its budget. The source image host must remain reachable by the build environment.
