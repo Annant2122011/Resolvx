@@ -4405,16 +4405,13 @@ body::after {
   opacity: 0;
   translate: 0 25px;
   scale: .99;
-  filter: blur(4px);
   transition:
-    opacity .72s cubic-bezier(.18,.75,.25,1),
-    translate .72s cubic-bezier(.18,.75,.25,1),
-    scale .72s cubic-bezier(.18,.75,.25,1),
-    filter .72s cubic-bezier(.18,.75,.25,1);
+    opacity .62s cubic-bezier(.18,.75,.25,1),
+    translate .62s cubic-bezier(.18,.75,.25,1),
+    scale .62s cubic-bezier(.18,.75,.25,1);
   transition-delay: var(--motion-delay, 0ms);
-  will-change: opacity, translate, filter;
 }
-.motion-enhanced .motion-reveal.motion-visible { opacity: 1; translate: 0 0; scale: 1; filter: blur(0); }
+.motion-enhanced .motion-reveal.motion-visible { opacity: 1; translate: 0 0; scale: 1; }
 .motion-enhanced .motion-reveal.motion-slide-x { translate: 24px 0; }
 .motion-enhanced .motion-reveal.motion-slide-x.motion-visible { translate: 0 0; }
 @media (min-width: 761px) and (max-width: 920px) {

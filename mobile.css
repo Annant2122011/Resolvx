@@ -1394,3 +1394,19 @@
   .workflow-demo:hover, .hero-art.hero-banner-art:hover { transform: none; }
   .button:hover::after { display: none; }
 }
+
+
+/* Performance tuning: preserve the glass/depth aesthetic with lighter mobile compositing. */
+@media (max-width: 760px) {
+  .ambient-one,
+  .ambient-two {
+    /* The radial gradients are already soft; avoid large filtered off-screen layers. */
+    filter: none;
+  }
+
+  .site-header,
+  .nav-links {
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+}
