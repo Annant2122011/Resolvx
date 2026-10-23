@@ -14,7 +14,7 @@ The website is a product introduction and documentation experience. It does **no
 - `scripts/validate-site.mjs` — static checks for local links and anchors, duplicate IDs, wiki contents alignment, feature-card counts, accessible button names, mobile layout contracts, branding, and CSS structure.
 - `mobile.css` — dedicated mobile layout overrides for navigation, responsive content, touch targets, mobile wiki navigation, and short-screen search.
 - \`site.js\` — responsive navigation, multilingual global search, wiki article/FAQ filtering, feature-catalogue filtering, command-copy helpers, reading progress, opt-in website translation, and the local lifecycle explainer.
-- `favicon-local.svg` — fallback SVG wrapper pointing to the supplied QueryFixr icon; site pages load the icon image directly as the favicon.
+- `favicon-local.svg` — self-contained QueryFixr monogram favicon that does not depend on an external image host. The Apple touch icon and full-size brand artwork remain externally hosted.
 - The supplied QueryFixr wordmark is loaded from its image-host URL in the page header, footer, and CTA artwork.
 - If the external wordmark or hero artwork fails to load, the site displays a local text/gradient fallback instead of leaving broken-image icons.
 
