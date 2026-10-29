@@ -1277,7 +1277,7 @@
     select.setAttribute('aria-label', 'Choose website language');
     select.title = 'Translate public website copy through an external service. The site does not connect to Discord or ticket data.';
     const initial = (() => {
-      try { return localStorage.getItem('queryfixr-site-locale') || navigator.language || 'en-US'; } catch (_) { return navigator.language || 'en-US'; }
+      try { return localStorage.getItem('queryfixr-site-locale') || 'en-US'; } catch (_) { return 'en-US'; }
     })();
     SITE_LANGUAGES.forEach((language) => {
       const option = document.createElement('option');
