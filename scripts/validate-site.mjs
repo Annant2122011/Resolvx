@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 const root = process.cwd();
-const htmlFiles = ['index.html', 'features.html', 'wiki.html'];
+const htmlFiles = ['index.html', 'features.html', 'wiki.html', '404.html'];
 const visibleFiles = [...htmlFiles, 'site.js', 'styles.css', 'mobile.css', 'README.md', 'api/translate.js', 'netlify/functions/translate.js', 'scripts/test-search.mjs', 'scripts/test-translation-proxy.cjs', 'scripts/test-client-translation.mjs'];
 const errors = [];
 const pageContents = new Map();
@@ -103,6 +103,9 @@ for (const file of htmlFiles) {
   const htmlTag = source.match(/<html\b[^>]*>/i)?.[0] || '';
   if (!/\blang\s*=/i.test(htmlTag)) report(`${file}: root html element is missing a language declaration`);
   if (!/<meta\b[^>]*name=["']viewport["']/i.test(source)) report(`${file}: responsive viewport meta tag is missing`);
+  if (!/<a\b[^>]*class=["'][^"']*\bskip-link\b[^"']*["'][^>]*href=["']#main-content["']/i.test(source)) report(`${file}: keyboard users need a skip link to #main-content`);
+  if (!/<main\b[^>]*id=["']main-content["']/i.test(source)) report(`${file}: main landmark must expose id="main-content" for skip navigation`);
+  if (!/<meta\s+property=["']og:image["']/i.test(source) || !/<meta\s+name=["']twitter:card["']\s+content=["']summary_large_image["']/i.test(source)) report(`${file}: share previews need an Open Graph image and large Twitter card metadata`);
   pageContents.set(file, source);
   const ids = new Set();
   for (const match of source.matchAll(/\bid=["']([^"']+)["']/g)) {
@@ -304,6 +307,9 @@ if (!js.includes('function createTranslationBatches(values)') ||
   report('site.js: translation must enforce bounded provider payloads, bounded concurrency, and visible cross-page search-index failures');
 }
 const dropdownStylesheet = readFileSync(path.join(root, 'styles.css'), 'utf8');
+if (!dropdownStylesheet.includes('.skip-link:focus-visible') || !dropdownStylesheet.includes('#main-content {')) {
+  report('styles.css: skip navigation must be visible on focus and target the main landmark');
+}
 if (!dropdownStylesheet.includes('.site-language-switcher select option') ||
     !dropdownStylesheet.includes('color-scheme: dark;') ||
     !dropdownStylesheet.includes('background-color: #151827;')) {
@@ -330,6 +336,9 @@ if (!commandDocumentation.includes('/supportforge ticket claim')) {
 }
 if (js.includes('QUERYFIXR_TRANSLATION_API_KEY')) {
   report('site.js: do not send browser-exposed translation API keys to public endpoints');
+}
+if (!js.includes("localStorage.getItem('queryfixr-site-locale') || 'en-US'") || js.includes("localStorage.getItem('queryfixr-site-locale') || navigator.language")) {
+  report('site.js: the language selector must not imply a translation before one has been applied');
 }
 if (!js.includes('window.setTimeout(() => controller.abort(), timeoutMs)') ||
     !js.includes('const SAME_ORIGIN_TRANSLATION_ENDPOINT') ||
