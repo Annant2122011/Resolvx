@@ -13,6 +13,7 @@ The website is a product introduction and documentation experience. It does **no
 - \`styles.css\` — shared visual system, responsive layouts, keyboard skip-navigation styling, accessibility and reduced-motion refinements.
 - `.github/workflows/site-checks.yml` — runs the static site validator for pull requests and pushes to `main`.
 - `scripts/validate-site.mjs` — static checks for local links and anchors, duplicate IDs, wiki contents alignment, feature-card counts, accessible names, skip navigation, social preview metadata, mobile layout contracts, branding, and CSS structure.
+- `SITE_AUDIT.md` — dated findings, remediation summary, and production dependencies that still require verified external configuration.
 - `api/translate.js` and `netlify/functions/translate.js` — same-origin translation-proxy adapters for Vercel and Netlify. They validate request size/target languages, apply per-IP limits, fail over across upstreams, and keep optional API keys restricted to the explicitly configured provider.
 - `mobile.css` — dedicated mobile layout overrides for navigation, responsive content, touch targets, mobile wiki navigation, and short-screen search.
 - \`site.js\` — responsive navigation, multilingual global search, wiki article/FAQ filtering, feature-catalogue filtering, command-copy helpers, reading progress, opt-in website translation, and the local lifecycle explainer.
@@ -27,7 +28,7 @@ The website is a product introduction and documentation experience. It does **no
 - The ticket lifecycle demo changes illustrative text in the browser only. It does not create or edit Discord tickets.
 - The dashboard art and sample requests are clearly presented as a static concept, not live usage data.
 - The pages deliberately distinguish current capability areas, features that still need live test-guild acceptance, and roadmap-only work. The feature page is the inventory; the wiki explains behavior and limits.
-- The website language selector requests machine translation of public page copy from an external service. The selector defaults to English unless a previously selected translation is restored, so it does not imply that untranslated content has changed. Requests time out after 10 seconds per endpoint attempt and can fall back to a secondary endpoint. It is separate from the bot's server-level message locale and does not connect to Discord or send ticket data. Do not put API secrets in browser-side configuration; this static site cannot keep client-side keys private.
+- The website language selector requests machine translation of public page copy from an external service. The selector defaults to English unless a previously selected translation is restored, so it does not imply that untranslated content has changed. Browser requests use a 24-second timeout for same-origin proxy requests and 4 seconds per public-provider attempt. It is separate from the bot's server-level message locale and does not connect to Discord or send ticket data. Do not put API secrets in browser-side configuration; this static site cannot keep client-side keys private.
 
 ## Hosting and custom domain
 
